@@ -58,7 +58,10 @@
 #include "am_map.h"
 #include "e6y.h"//e6y
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
