@@ -52,8 +52,6 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 #include <errno.h>
 
-#include "TEXTSCREEN/txt_main.h"
-
 #include "doomdef.h"
 #include "m_argv.h"
 #include "d_main.h"
@@ -366,38 +364,6 @@ static void I_EndDoom(void)
       lump = (P_Random(pr_misc) & 1) ? lump_ed : lump_eb;
       break;
     }
-  }
-
-  if (lump != -1)
-  {
-    endoom_data = (const unsigned char *)W_CacheLumpNum(lump);
-    
-    // Set up text mode screen
-    TXT_Init();
-    
-    // Make sure the new window has the right title and icon
-    I_SetWindowCaption();
-    I_SetWindowIcon();
-    
-    // Write the data to the screen memory
-    screendata = TXT_GetScreenData();
-    memcpy(screendata, endoom_data, 4000);
-    
-    // Wait for a keypress
-    while (true)
-    {
-      TXT_UpdateScreen();
-      
-      if (TXT_GetChar() > 0)
-      {
-        break;
-      }
-      
-      TXT_Sleep(0);
-    }
-    
-    // Shut down text mode screen
-    TXT_Shutdown();
   }
 }
 

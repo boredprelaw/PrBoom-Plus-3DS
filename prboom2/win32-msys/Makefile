@@ -13,7 +13,6 @@ BUILD		:=	build
 
 SOURCES		:=	../src \
 				../src/SDL \
-				../src/TEXTSCREEN \
 				../src/PCSOUND \
 				../src/MUSIC
 
