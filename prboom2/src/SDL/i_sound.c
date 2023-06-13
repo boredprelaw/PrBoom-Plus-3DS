@@ -39,9 +39,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_LIBSDL2_MIXER
-#define HAVE_MIXER
-#endif
 
 #include "SDL.h"
 #include "SDL_audio.h"
@@ -51,10 +48,9 @@
 
 #include "SDL_version.h"
 #include "SDL_thread.h"
-#ifdef HAVE_MIXER
+
 #define USE_RWOPS
 #include "SDL_mixer.h"
-#endif
 
 #include "z_zone.h"
 
@@ -475,22 +471,6 @@ dboolean I_AnySoundStillPlaying(void)
 }
 
 
-//
-// This function loops all active (internal) sound
-//  channels, retrieves a given number of samples
-//  from the raw sound data, modifies it according
-//  to the current (internal) channel parameters,
-//  mixes the per channel samples into the given
-//  mixing buffer, and clamping it to the allowed
-//  range.
-//
-// This function currently supports only 16bit.
-//
-
-#ifndef HAVE_OWN_MUSIC
-static void Exp_UpdateMusic (void *buff, unsigned nsamp);
-#endif
-
 // from pcsound_sdl.c
 void PCSound_Mix_Callback(void *udata, Uint8 *stream, int len);
 
@@ -512,23 +492,10 @@ static void I_UpdateSound(void *unused, Uint8 *stream, int len)
   // Mixing channel index.
   int       chan;
 
-  if (snd_midiplayer == NULL) // This is but a temporary fix. Please do remove after a more definitive one!
-    memset(stream, 0, len);
-
   // NSM: when dumping sound, ignore the callback calls and only
   // service dumping calls
   if (dumping_sound && unused != (void *) 0xdeadbeef)
     return;
-
-#ifndef HAVE_OWN_MUSIC
-  // do music update
-  if (use_experimental_music)
-  {
-    SDL_LockMutex (musmutex);
-    Exp_UpdateMusic (stream, len / 4);
-    SDL_UnlockMutex (musmutex);
-  }
-#endif
 
   if (snd_pcspeaker)
   {
@@ -657,9 +624,9 @@ void I_ShutdownSound(void)
   if (sound_inited)
   {
     lprintf(LO_INFO, "I_ShutdownSound: ");
-#ifdef HAVE_MIXER
+
     Mix_CloseAudio();
-#endif
+
     SDL_CloseAudio();
     lprintf(LO_INFO, "\n");
     sound_inited = false;
@@ -695,56 +662,26 @@ void I_InitSound(void)
   // Secure and configure sound device first.
   lprintf(LO_INFO, "I_InitSound: ");
 
-  if (!use_experimental_music)
-  {
-#ifdef HAVE_MIXER
+  /* Initialize variables */
+  audio_rate = snd_samplerate;
+  audio_channels = 2;
+  audio_buffers = getSliceSize();
 
-    /* Initialize variables */
-    audio_rate = snd_samplerate;
-    audio_channels = 2;
-    audio_buffers = getSliceSize();
-
-    if (Mix_OpenAudioDevice(audio_rate, MIX_DEFAULT_FORMAT, audio_channels, audio_buffers,
-                            NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) < 0)
-    {
-      lprintf(LO_INFO,"couldn't open audio with desired format (%s)\n", SDL_GetError());
-      nosfxparm = true;
-      nomusicparm = true;
-      return;
-    }
-    // [FG] feed actual sample frequency back into config variable
-    Mix_QuerySpec(&snd_samplerate, NULL, NULL);
-    sound_inited_once = true;//e6y
-    sound_inited = true;
-    Mix_SetPostMix(I_UpdateSound, NULL);
-    lprintf(LO_INFO," configured audio device with %d samples/slice\n", audio_buffers);
-  }
-  else
-#else // HAVE_MIXER
-  }
-#endif // HAVE_MIXER
+  if (Mix_OpenAudioDevice(audio_rate, MIX_DEFAULT_FORMAT, audio_channels, audio_buffers,
+                          NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) < 0)
   {
-    // Open the audio device
-    audio.freq = snd_samplerate;
-#if ( SDL_BYTEORDER == SDL_BIG_ENDIAN )
-    audio.format = AUDIO_S16MSB;
-#else
-    audio.format = AUDIO_S16LSB;
-#endif
-    audio.channels = 2;
-    audio.samples = getSliceSize();
-    audio.callback = I_UpdateSound;
-    if ( SDL_OpenAudio(&audio, NULL) < 0 )
-    {
-      lprintf(LO_INFO, "couldn't open audio with desired format (%s))\n", SDL_GetError());
-      nosfxparm = true;
-      nomusicparm = true;
-      return;
-    }
-    sound_inited_once = true;//e6y
-    sound_inited = true;
-    lprintf(LO_INFO, " configured audio device with %d samples/slice\n", audio.samples);
+    lprintf(LO_INFO,"couldn't open audio with desired format (%s)\n", SDL_GetError());
+    nosfxparm = true;
+    nomusicparm = true;
+    return;
   }
+  // [FG] feed actual sample frequency back into config variable
+  Mix_QuerySpec(&snd_samplerate, NULL, NULL);
+  sound_inited_once = true;//e6y
+  sound_inited = true;
+  Mix_SetPostMix(I_UpdateSound, NULL);
+  lprintf(LO_INFO," configured audio device with %d samples/slice\n", audio_buffers);
+
   if (first_sound_init)
   {
     I_AtExit(I_ShutdownSound, true);
@@ -842,35 +779,11 @@ void I_ResampleStream (void *dest, unsigned nsamp, void (*proc) (void *dest, uns
   }
   sin[0] = sin[nreq * 2];
   sin[1] = sin[nreq * 2 + 1];
-}  
-  
-
-#ifndef HAVE_OWN_MUSIC
+}
 
 //
 // MUSIC API.
 //
-
-int use_experimental_music = -1;
-
-static void Exp_UpdateMusic (void *buff, unsigned nsamp);
-static int Exp_RegisterMusic (const char *filename, musicinfo_t *song);
-static int Exp_RegisterSong (const void *data, size_t len);
-static int Exp_RegisterSongEx (const void *data, size_t len, int try_mus2mid);
-static void Exp_SetMusicVolume (int volume);
-static void Exp_UnRegisterSong(int handle);
-static void Exp_StopSong(int handle);
-static void Exp_ResumeSong (int handle);
-static void Exp_PauseSong (int handle);
-static void Exp_PlaySong(int handle, int looping);
-static void Exp_InitMusic(void);
-static void Exp_ShutdownMusic(void);
-
-
-
-
-
-#ifdef HAVE_MIXER
 
 #include "mus2mid.h"
 
@@ -887,16 +800,8 @@ static char *music_tmp = NULL; /* cph - name of music temporary file */
 static const char *music_tmp_ext[] = { "", ".mp3", ".ogg" };
 #define MUSIC_TMP_EXT (sizeof(music_tmp_ext)/sizeof(*music_tmp_ext))
 
-#endif
-
 void I_ShutdownMusic(void)
 {
-  if (use_experimental_music)
-  {
-    Exp_ShutdownMusic ();
-    return;
-  }
-#ifdef HAVE_MIXER
   if (music_tmp) {
     int i;
     char *name;
@@ -913,17 +818,10 @@ void I_ShutdownMusic(void)
     free(music_tmp);
     music_tmp = NULL;
   }
-#endif
 }
 
 void I_InitMusic(void)
 {
-  if (use_experimental_music)
-  {
-    Exp_InitMusic ();
-    return;
-  }
-#ifdef HAVE_MIXER
   if (!music_tmp) {
 #ifndef _WIN32
     music_tmp = strdup("/tmp/"PACKAGE_TARNAME"-music-XXXXXX");
@@ -940,19 +838,10 @@ void I_InitMusic(void)
 #endif
     I_AtExit(I_ShutdownMusic, true);
   }
-  return;
-#endif
-  lprintf (LO_INFO, "I_InitMusic: Was compiled without SDL_Mixer support.  You should enable experimental music.\n");
 }
 
 void I_PlaySong(int handle, int looping)
 {
-  if (use_experimental_music)
-  {
-    Exp_PlaySong (handle, looping);
-    return;
-  }
-#ifdef HAVE_MIXER
   if ( music[handle] ) {
     //Mix_FadeInMusic(music[handle], looping ? -1 : 0, 500);
     Mix_PlayMusic(music[handle], looping ? -1 : 0);
@@ -960,19 +849,12 @@ void I_PlaySong(int handle, int looping)
     // haleyjd 10/28/05: make sure volume settings remain consistent
     I_SetMusicVolume(snd_MusicVolume);
   }
-#endif
 }
 
 extern int mus_pause_opt; // From m_misc.c
 
 void I_PauseSong (int handle)
 {
-  if (use_experimental_music)
-  {
-    Exp_PauseSong (handle);
-    return;
-  }
-#ifdef HAVE_MIXER
   switch(mus_pause_opt) {
   case 0:
       I_StopSong(handle);
@@ -993,18 +875,10 @@ void I_PauseSong (int handle)
     }
     break;
   }
-#endif
-  // Default - let music continue
 }
 
 void I_ResumeSong (int handle)
 {
-  if (use_experimental_music)
-  {
-    Exp_ResumeSong (handle);
-    return;
-  }
-#ifdef HAVE_MIXER
   switch(mus_pause_opt) {
   case 0:
       I_PlaySong(handle,1);
@@ -1023,31 +897,16 @@ void I_ResumeSong (int handle)
     }
     break;
   }
-#endif
-  /* Otherwise, music wasn't stopped */
 }
 
 void I_StopSong(int handle)
 {
-  if (use_experimental_music)
-  {
-    Exp_StopSong (handle);
-    return;
-  }
-#ifdef HAVE_MIXER
   // halt music playback
   Mix_HaltMusic();
-#endif
 }
 
 void I_UnRegisterSong(int handle)
 {
-  if (use_experimental_music)
-  {
-    Exp_UnRegisterSong (handle);
-    return;
-  }
-#ifdef HAVE_MIXER
   if ( music[handle] ) {
     Mix_FreeMusic(music[handle]);
     music[handle] = NULL;
@@ -1059,7 +918,6 @@ void I_UnRegisterSong(int handle)
       rw_midi = NULL;
     }
   }
-#endif
 }
 
 int I_RegisterSong(const void *data, size_t len)
@@ -1067,13 +925,6 @@ int I_RegisterSong(const void *data, size_t len)
   int i;
   char *name;
   dboolean io_errors = false;
-
-
-  if (use_experimental_music)
-  {
-    return Exp_RegisterSong (data, len);
-  }
-#ifdef HAVE_MIXER
 
   if (music_tmp == NULL)
     return 0;
@@ -1210,7 +1061,6 @@ int I_RegisterSong(const void *data, size_t len)
     }
   }
 
-#endif
   return (0);
 }
 
@@ -1218,14 +1068,6 @@ int I_RegisterSong(const void *data, size_t len)
 //           returns true if could not load the file
 int I_RegisterMusic( const char* filename, musicinfo_t *song )
 {
-  if (use_experimental_music)
-  {
-    return Exp_RegisterMusic (filename, song);
-    
-  }
-
-
-#ifdef HAVE_MIXER
   if (!filename) return 1;
   if (!song) return 1;
   music[0] = Mix_LoadMUS(filename);
@@ -1241,492 +1083,9 @@ int I_RegisterMusic( const char* filename, musicinfo_t *song )
       song->lumpnum = 0;
       return 0;
     }
-#else
-  return 1;
-#endif
 }
 
 void I_SetMusicVolume(int volume)
 {
-  if (use_experimental_music)
-  {
-    Exp_SetMusicVolume (volume);
-    return;
-  }
-#ifdef HAVE_MIXER
   Mix_VolumeMusic(volume*8);
-
-#endif
 }
-
-
-
-
-
-
-
-/********************************************************
-
-experimental music API
-
-********************************************************/
-
-
-
-// note that the "handle" passed around by s_sound is ignored
-// however, a handle is maintained for the individual music players
-
-const char *snd_soundfont; // soundfont name for synths that use it
-const char *snd_mididev; // midi device to use (portmidiplayer)
-
-#include "mus2mid.h"
-
-#include "MUSIC/musicplayer.h"
-
-#include "MUSIC/oplplayer.h"
-#include "MUSIC/madplayer.h"
-#include "MUSIC/dumbplayer.h"
-#include "MUSIC/flplayer.h"
-#include "MUSIC/vorbisplayer.h"
-#include "MUSIC/alsaplayer.h"
-#include "MUSIC/portmidiplayer.h"
-
-// list of possible music players
-static const music_player_t *music_players[] =
-{ // until some ui work is done, the order these appear is the autodetect order.
-  // of particular importance:  things that play mus have to be last, because
-  // mus2midi very often succeeds even on garbage input
-  &vorb_player, // vorbisplayer.h
-  &mp_player, // madplayer.h
-  &db_player, // dumbplayer.h
-  &fl_player, // flplayer.h
-  &opl_synth_player, // oplplayer.h
-  &pm_player, // portmidiplayer.h
-  &alsa_player, // alsaplayer.h
-  NULL
-};
-#define NUM_MUS_PLAYERS ((int)(sizeof (music_players) / sizeof (music_player_t *) - 1))
-
-
-static int music_player_was_init[NUM_MUS_PLAYERS];
-
-#define PLAYER_VORBIS     "vorbis player"
-#define PLAYER_MAD        "mad mp3 player"
-#define PLAYER_DUMB       "dumb tracker player"
-#define PLAYER_FLUIDSYNTH "fluidsynth midi player"
-#define PLAYER_OPL2       "opl2 synth player"
-#define PLAYER_PORTMIDI   "portmidi midi player"
-#define PLAYER_ALSA       "alsa midi player"
-
-// order in which players are to be tried
-char music_player_order[NUM_MUS_PLAYERS][200] =
-{
-  PLAYER_VORBIS,
-  PLAYER_MAD,
-  PLAYER_DUMB,
-  PLAYER_FLUIDSYNTH,
-  PLAYER_OPL2,
-  PLAYER_PORTMIDI,
-  PLAYER_ALSA,
-};
-
-// prefered MIDI device
-const char *snd_midiplayer;
-
-const char *midiplayers[midi_player_last + 1] = {
-  "sdl", "fluidsynth", "opl2", "portmidi", "alsa", NULL};
-
-static int current_player = -1;
-static const void *music_handle = NULL;
-
-// songs played directly from wad (no mus->mid conversion)
-// won't have this
-static void *song_data = NULL;
-
-int mus_fluidsynth_chorus;
-int mus_fluidsynth_reverb;
-int mus_fluidsynth_gain; // NSM  fine tune fluidsynth output level
-int mus_opl_gain; // NSM  fine tune OPL output level
-const char *mus_portmidi_reset_type; // portmidi reset type
-int mus_portmidi_reset_delay; // portmidi delay after reset
-int mus_portmidi_filter_sysex; // portmidi block sysex from midi files
-int mus_portmidi_reverb_level; // portmidi reverb send level
-int mus_portmidi_chorus_level; // portmidi chorus send level
-
-
-static void Exp_ShutdownMusic(void)
-{
-  int i;
-  S_StopMusic ();
-
-  for (i = 0; music_players[i]; i++)
-  {
-    if (music_player_was_init[i])
-      music_players[i]->shutdown ();
-  }
-
-  if (musmutex)
-  {
-    SDL_DestroyMutex (musmutex);
-    musmutex = NULL;
-  }
-}
-
-
-static void Exp_InitMusic(void)
-{
-  int i;
-  musmutex = SDL_CreateMutex ();
-
-
-  // todo not so greedy
-  for (i = 0; music_players[i]; i++)
-    music_player_was_init[i] = music_players[i]->init (snd_samplerate);
-  I_AtExit(Exp_ShutdownMusic, true);
-}
-
-static void Exp_PlaySong(int handle, int looping)
-{
-  if (music_handle)
-  {
-    SDL_LockMutex (musmutex);
-    music_players[current_player]->play (music_handle, looping);
-    music_players[current_player]->setvolume (snd_MusicVolume);
-    SDL_UnlockMutex (musmutex);
-  }
-
-}
-
-extern int mus_pause_opt; // From m_misc.c
-
-static void Exp_PauseSong (int handle)
-{
-  if (!music_handle)
-    return;
-
-  SDL_LockMutex (musmutex);
-  switch (mus_pause_opt)
-  {
-    case 0:
-      music_players[current_player]->stop ();
-      break;
-    case 1:
-      music_players[current_player]->pause ();
-      break;
-    default: // Default - let music continue
-      break;
-  }  
-  SDL_UnlockMutex (musmutex);
-}
-
-static void Exp_ResumeSong (int handle)
-{
-  if (!music_handle)
-    return;
-  
-  SDL_LockMutex (musmutex);
-  switch (mus_pause_opt)
-  {
-    case 0: // i'm not sure why we can guarantee looping=true here,
-            // but that's what the old code did
-      music_players[current_player]->play (music_handle, 1);
-      break;
-    case 1:
-      music_players[current_player]->resume ();
-      break;
-    default: // Default - music was never stopped
-      break;
-  }
-  SDL_UnlockMutex (musmutex);
-}
-
-static void Exp_StopSong(int handle)
-{
-  if (music_handle)
-  {
-    SDL_LockMutex (musmutex);
-    music_players[current_player]->stop ();
-    SDL_UnlockMutex (musmutex);
-  }
-}
-
-static void Exp_UnRegisterSong(int handle)
-{
-  if (music_handle)
-  {
-    SDL_LockMutex (musmutex);
-    music_players[current_player]->unregistersong (music_handle);
-    music_handle = NULL;
-    if (song_data)
-    {
-      free (song_data);
-      song_data = NULL;
-    }
-    SDL_UnlockMutex (musmutex);
-  }
-}
-
-static void Exp_SetMusicVolume (int volume)
-{
-  if (music_handle)
-  {
-    SDL_LockMutex (musmutex);
-    music_players[current_player]->setvolume (volume);
-    SDL_UnlockMutex (musmutex);
-  }
-}
-
-// returns 1 on success, 0 on failure
-static int Exp_RegisterSongEx (const void *data, size_t len, int try_mus2mid)
-{
-  int i, j;
-  dboolean io_errors = false;
-
-  MEMFILE *instream;
-  MEMFILE *outstream;
-  void *outbuf;
-  size_t outbuf_len;
-  int result;
-
-  //try_mus2mid = 0; // debug: supress mus2mid conversion completely
-
-
-  if (music_handle)
-    Exp_UnRegisterSong (0);
-
-
-  // e6y: new logic by me
-  // Now you can hear title music in deca.wad
-  // http://www.doomworld.com/idgames/index.php?id=8808
-  // Ability to use mp3 and ogg as inwad lump
-
-  if (len > 4 && memcmp(data, "MUS", 3) != 0)
-  {
-    // The header has no MUS signature
-    // Let's try to load this song directly
-  
-    // go through music players in order
-    int found = 0;
-
-    for (j = 0; j < NUM_MUS_PLAYERS; j++)
-    {
-      found = 0;
-      for (i = 0; music_players[i]; i++)
-      {
-        if (strcmp (music_players[i]->name (), music_player_order[j]) == 0)
-        {
-          found = 1;
-          if (music_player_was_init[i])
-          {
-            const void *temp_handle = music_players[i]->registersong (data, len);
-            if (temp_handle)
-            {
-              SDL_LockMutex (musmutex);
-              current_player = i;
-              music_handle = temp_handle;
-              SDL_UnlockMutex (musmutex);
-              lprintf (LO_INFO, "Exp_RegisterSongEx: Using player %s\n", music_players[i]->name ());
-              return 1;
-            }
-          }
-          else
-            lprintf (LO_INFO, "Exp_RegisterSongEx: Music player %s on preferred list but it failed to init\n", music_players[i]-> name ());
-        }
-      }
-      if (!found)
-        lprintf (LO_INFO, "Exp_RegisterSongEx: Couldn't find preferred music player %s in list\n  (typo or support not included at compile time)\n", music_player_order[j]);
-    }
-    // load failed
-  }
-
-
-
-
-  // load failed? try mus2mid
-  if (len > 4 && try_mus2mid)
-  {
-
-    instream = mem_fopen_read (data, len);
-    outstream = mem_fopen_write ();
-
-    // e6y: from chocolate-doom
-    // New mus -> mid conversion code thanks to Ben Ryves <benryves@benryves.com>
-    // This plays back a lot of music closer to Vanilla Doom - eg. tnt.wad map02
-    result = mus2mid(instream, outstream);
-    if (result != 0)
-    {
-      size_t muslen = len;
-      const unsigned char *musptr = (const unsigned char*)data;
-
-      // haleyjd 04/04/10: scan forward for a MUS header. Evidently DMX was
-      // capable of doing this, and would skip over any intervening data. That,
-      // or DMX doesn't use the MUS header at all somehow.
-      while (musptr < (const unsigned char*)data + len - sizeof(musheader))
-      {
-        // if we found a likely header start, reset the mus pointer to that location,
-        // otherwise just leave it alone and pray.
-        if (!strncmp ((const char*) musptr, "MUS\x1a", 4))
-        {
-          mem_fclose (instream);
-          instream = mem_fopen_read (musptr, muslen);
-          result = mus2mid (instream, outstream);
-          break;
-        }
-
-        musptr++;
-        muslen--;
-      }
-    }
-    if (result == 0)
-    {
-      mem_get_buf(outstream, &outbuf, &outbuf_len);
-
-      // recopy so we can free the MEMFILE
-      song_data = malloc (outbuf_len);
-      if (song_data)
-        memcpy (song_data, outbuf, outbuf_len);
-
-      mem_fclose(instream);
-      mem_fclose(outstream);
-
-      if (song_data)
-      { 
-        return Exp_RegisterSongEx (song_data, outbuf_len, 0);
-      }
-    }
-  }
-
-  lprintf (LO_ERROR, "Exp_RegisterSongEx: Failed\n");
-  return 0;
-}
-
-
-static int Exp_RegisterSong (const void *data, size_t len)
-{
-  Exp_RegisterSongEx (data, len, 1);
-  return 0;
-}
-
-// try register external music file (not in WAD)
-
-static int Exp_RegisterMusic (const char *filename, musicinfo_t *song)
-{
-  int len;
-
-  len = M_ReadFile (filename, (byte **) &song_data);
-
-  if (len == -1)
-  {
-    lprintf (LO_WARN, "Couldn't read %s\nAttempting to load default MIDI music.\n", filename);
-    return 1;
-  }
-
-  if (!Exp_RegisterSongEx (song_data, len, 1))
-  {
-    free (song_data);
-    song_data = NULL;
-    lprintf(LO_WARN, "Couldn't load music from %s\nAttempting to load default MIDI music.\n", filename);
-    return 1; // failure
-  }
-
-  song->data = 0;
-  song->handle = 0;
-  song->lumpnum = 0;
-  return 0;
-}
-
-static void Exp_UpdateMusic (void *buff, unsigned nsamp)
-{
-
-  if (!music_handle)
-  {
-    memset (buff, 0, nsamp * 4);
-    return;
-  }
-
-
-  music_players[current_player]->render (buff, nsamp);
-}
-
-void M_ChangeMIDIPlayer(void)
-{
-  int experimental_music;
-
-#ifdef HAVE_OWN_MUSIC
-  // do not bother about small memory leak
-  snd_midiplayer = strdup(midiplayers[midi_player_sdl]);
-  use_experimental_music = 0;
-  return;
-#endif
-
-  if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_sdl]))
-  {
-    experimental_music = false;
-  }
-  else
-  {
-    experimental_music = true;
-
-    if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_fluidsynth]))
-    {
-      strcpy(music_player_order[3], PLAYER_FLUIDSYNTH);
-      strcpy(music_player_order[4], PLAYER_OPL2);
-      strcpy(music_player_order[6], PLAYER_PORTMIDI);
-      strcpy(music_player_order[5], PLAYER_ALSA);
-    }
-    else if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_opl2]))
-    {
-      strcpy(music_player_order[3], PLAYER_OPL2);
-      strcpy(music_player_order[6], PLAYER_PORTMIDI);
-      strcpy(music_player_order[4], PLAYER_ALSA);
-      strcpy(music_player_order[5], PLAYER_FLUIDSYNTH);
-    }
-    else if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_alsa]))
-    {
-      strcpy(music_player_order[3], PLAYER_ALSA);
-      strcpy(music_player_order[5], PLAYER_FLUIDSYNTH);
-      strcpy(music_player_order[6], PLAYER_OPL2);
-      strcpy(music_player_order[4], PLAYER_PORTMIDI);
-    }
-    else if (!strcasecmp(snd_midiplayer, midiplayers[midi_player_portmidi]))
-    {
-      strcpy(music_player_order[3], PLAYER_PORTMIDI);
-      strcpy(music_player_order[6], PLAYER_ALSA);
-      strcpy(music_player_order[4], PLAYER_FLUIDSYNTH);
-      strcpy(music_player_order[5], PLAYER_OPL2);
-    }
-  }
-
-#if 1
-  if (use_experimental_music == -1)
-  {
-    use_experimental_music = experimental_music;
-  }
-  else
-  {
-    if (experimental_music && use_experimental_music)
-    {
-      S_StopMusic();
-      S_RestartMusic();
-    }
-  }
-#else
-  S_StopMusic();
-
-  if (use_experimental_music != experimental_music)
-  {
-    I_ShutdownMusic();
-
-    S_Stop();
-    I_ShutdownSound();
-
-    use_experimental_music = experimental_music;
-
-    I_InitSound();
-  }
-
-  S_RestartMusic();
-#endif
-}
-
-#endif

@@ -13,15 +13,14 @@ BUILD		:=	build
 
 SOURCES		:=	../src \
 				../src/SDL \
-				../src/PCSOUND \
-				../src/MUSIC
+				../src/PCSOUND
 
 INCLUDES	:=	../src
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-CFLAGS	:=	-m32 -static -O3 -ffast-math -D_WIN32 -DGL_DOOM -DHAVE_LIBSDL2_MIXER -DHAVE_DIRENT_H -DHAVE_LIBZ \
+CFLAGS	:=	-m32 -static -O3 -ffast-math -D_WIN32 -DGL_DOOM -DHAVE_DIRENT_H -DHAVE_LIBZ \
 			-DPACKAGE_NAME=\"PrBoom-Plus\" -DPACKAGE_VERSION=\"2.6.2\" -DPACKAGE_TARNAME=\"prboom-plus\" -DPACKAGE_HOMEPAGE=\"https://example.com\" \
 			-DPRBOOMDATADIR=\".\" -DDOOMWADDIR=\".\" `pkg-config --static --cflags sdl2 sdl2_mixer zlib`
 

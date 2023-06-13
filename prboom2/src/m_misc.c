@@ -441,27 +441,9 @@ default_t defaults[] =
    def_int, ss_none}, // 0 = kill music when paused, 1 = pause music, 2 = let music continue
   {"snd_channels",{&default_numChannels},{MAX_CHANNELS},1,MAX_CHANNELS,
    def_int,ss_none}, // number of audio events simultaneously // killough
-#ifdef _WIN32
-  {"snd_midiplayer",{NULL, &snd_midiplayer},{0,"fluidsynth"},UL,UL,def_str,ss_none},
-  {"snd_soundfont",{NULL, &snd_soundfont},{0,"TimGM6mb.sf2"},UL,UL,def_str,ss_none}, // soundfont name for synths that support it
-#else
-  {"snd_midiplayer",{NULL, &snd_midiplayer},{0,"sdl"},UL,UL,def_str,ss_none},
-  {"snd_soundfont",{NULL, &snd_soundfont},{0,"/usr/share/sounds/sf3/default-GM.sf3"},UL,UL,def_str,ss_none}, // soundfont name for synths that support it
-#endif
-  {"snd_mididev",{NULL, &snd_mididev},{0,""},UL,UL,def_str,ss_none}, // midi device to use for portmidiplayer and alsaplayer
   {"lowpass_filter",{&lowpass_filter},{0},0,1,
   def_bool,ss_none}, // low-pass filter borrowed from Chocolate Doom so upscaling old audio doesn't sound too horrible
   {"full_sounds",{&full_sounds},{0},0,1,def_bool,ss_none}, // disable sound cutoffs
-
-  {"mus_fluidsynth_chorus",{&mus_fluidsynth_chorus},{0},0,1,def_bool,ss_none},
-  {"mus_fluidsynth_reverb",{&mus_fluidsynth_reverb},{0},0,1,def_bool,ss_none},
-  {"mus_fluidsynth_gain",{&mus_fluidsynth_gain},{50},0,1000,def_int,ss_none}, // NSM  fine tune fluidsynth output level
-  {"mus_opl_gain",{&mus_opl_gain},{50},0,1000,def_int,ss_none}, // NSM  fine tune opl output level
-  {"mus_portmidi_reset_type",{NULL, &mus_portmidi_reset_type},{0,"gm"},UL,UL,def_str,ss_none}, // portmidi reset type (none, gs, gm, gm2, xg)
-  {"mus_portmidi_reset_delay",{&mus_portmidi_reset_delay},{0},0,2000,def_int,ss_none}, // portmidi delay after reset (milliseconds)
-  {"mus_portmidi_filter_sysex",{&mus_portmidi_filter_sysex},{1},0,1,def_bool,ss_none}, // portmidi block sysex from midi files
-  {"mus_portmidi_reverb_level",{&mus_portmidi_reverb_level},{-1},-1,127,def_int,ss_none}, // portmidi reverb send level
-  {"mus_portmidi_chorus_level",{&mus_portmidi_chorus_level},{-1},-1,127,def_int,ss_none}, // portmidi chorus send level
 
   {"Video settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"videomode",{NULL, &default_videomode},{0,"8bit"},UL,UL,def_str,ss_none},
