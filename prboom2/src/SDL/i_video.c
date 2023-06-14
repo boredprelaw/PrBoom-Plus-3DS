@@ -98,8 +98,6 @@ static int mouse_currently_grabbed = true;
 // Window resize state.
 static void ApplyWindowResize(SDL_Event *resize_event);
 
-const char *sdl_video_window_pos;
-
 static void ActivateMouse(void);
 static void DeactivateMouse(void);
 //static int AccelerateMouse(int val);
@@ -111,12 +109,7 @@ int gl_colorbuffer_bits=16;
 int gl_depthbuffer_bits=16;
 
 extern void M_QuitDOOM(int choice);
-int use_fullscreen;
-int desired_fullscreen;
-int exclusive_fullscreen;
-int render_vsync;
-int render_screen_multiply;
-int integer_scaling;
+
 int vanilla_keymap;
 SDL_Surface *screen;
 static SDL_Surface *buffer;
@@ -126,8 +119,6 @@ static SDL_Texture *sdl_texture;
 static SDL_GLContext sdl_glcontext;
 static unsigned int windowid = 0;
 static SDL_Rect src_rect = { 0, 0, 0, 0 };
-static int display_index;
-static SDL_DisplayMode desktop_mode = {.w = 16384, .h = 16384};
 
 ////////////////////////////////////////////////////////////////////////////
 // Input code
@@ -301,28 +292,11 @@ while (SDL_PollEvent(Event))
 {
   switch (Event->type) {
   case SDL_KEYDOWN:
-#ifdef MACOSX
-    if (Event->key.keysym.mod & KMOD_META)
-    {
-      // Switch windowed<->fullscreen if pressed <Command-F>
-      if (Event->key.keysym.sym == SDLK_f)
-      {
-        V_ToggleFullscreen();
-        break;
-      }
-    }
-#else
     if (Event->key.keysym.mod & KMOD_LALT)
     {
       // Prevent executing action on Alt-Tab
       if (Event->key.keysym.sym == SDLK_TAB)
       {
-        break;
-      }
-      // Switch windowed<->fullscreen if pressed Alt-Enter
-      else if (Event->key.keysym.sym == SDLK_RETURN)
-      {
-        V_ToggleFullscreen();
         break;
       }
       // Immediately exit on Alt+F4 ("Boss Key")
@@ -332,7 +306,6 @@ while (SDL_PollEvent(Event))
         break;
       }
     }
-#endif
     event.type = ev_keydown;
     event.data1 = I_TranslateKey(&Event->key.keysym);
     D_PostEvent(&event);
@@ -690,36 +663,15 @@ static void I_InitBuffersRes(void)
 }
 
 #define MAX_RESOLUTIONS_COUNT 128
-const char *screen_resolutions_list[MAX_RESOLUTIONS_COUNT] = {NULL};
-const char *screen_resolution = NULL;
 
 //
 // I_GetScreenResolution
-// Get current resolution from the config variable (WIDTHxHEIGHT format)
-// 640x480 if screen_resolution variable has wrong data
+// Always set 400x240 for 3DS
 //
 static void I_GetScreenResolution(void)
 {
-  int width, height;
-
-  desired_screenwidth = 640;
-  desired_screenheight = 480;
-
-  if (screen_resolution)
-  {
-    if (sscanf(screen_resolution, "%dx%d", &width, &height) == 2)
-    {
-      desired_screenwidth = width;
-      desired_screenheight = height;
-    }
-  }
-
-  // never exceed desktop resolution in fullscreen desktop mode
-  if (!exclusive_fullscreen)
-  {
-      desired_screenwidth = MIN(desired_screenwidth, desktop_mode.w);
-      desired_screenheight = MIN(desired_screenheight, desktop_mode.h);
-  }
+  desired_screenwidth = 400;
+  desired_screenheight = 240;
 }
 
 // make sure the canonical resolutions are always available
@@ -752,173 +704,6 @@ static int cmp_resolutions (const void *a, const void *b)
 
     return (wa == wb) ? ha - hb : wa - wb;
 }
-
-//
-// I_FillScreenResolutionsList
-// Get all the supported screen resolutions
-// and fill the list with them
-//
-static void I_FillScreenResolutionsList(void)
-{
-  SDL_DisplayMode mode;
-  int i, j, list_size, current_resolution_index, count;
-  char mode_name[256];
-
-  // do it only once
-  if (screen_resolutions_list[0])
-  {
-    return;
-  }
-
-  if (desired_screenwidth == 0 || desired_screenheight == 0)
-  {
-    I_GetScreenResolution();
-  }
-
-  // Don't call SDL_ListModes if SDL has not been initialized
-  count = 0;
-  if (!nodrawers)
-    count = SDL_GetNumDisplayModes(display_index);
-
-  list_size = 0;
-  current_resolution_index = -1;
-
-  // on success, SDL_GetNumDisplayModes() always returns at least 1
-  if (count > 0)
-  {
-    // -2 for the desired resolution and for NULL
-    count = MIN(count, MAX_RESOLUTIONS_COUNT - 2 - num_canonicals);
-
-    for(i = count - 1 + num_canonicals; i >= 0; i--)
-    {
-      int in_list = false;
-
-      // make sure the canonical resolutions are always available
-      if (i > count - 1)
-      {
-        // no hard-coded resolutions for mode-changing fullscreen
-        if (exclusive_fullscreen)
-          continue;
-
-        mode.w = canonicals[i - count].w;
-        mode.h = canonicals[i - count].h;
-      }
-      else
-      {
-        SDL_GetDisplayMode(display_index, i, &mode);
-      }
-
-      // never exceed desktop resolution in fullscreen desktop mode
-      if (!exclusive_fullscreen)
-        if (mode.w > desktop_mode.w || mode.h > desktop_mode.h)
-          continue;
-
-      doom_snprintf(mode_name, sizeof(mode_name), "%dx%d", mode.w, mode.h);
-
-      for(j = 0; j < list_size; j++)
-      {
-        if (!strcmp(mode_name, screen_resolutions_list[j]))
-        {
-          in_list = true;
-          break;
-        }
-      }
-
-      if (!in_list)
-      {
-        screen_resolutions_list[list_size] = strdup(mode_name);
-
-        if (mode.w == desired_screenwidth && mode.h == desired_screenheight)
-        {
-          current_resolution_index = list_size;
-        }
-
-        list_size++;
-      }
-    }
-    screen_resolutions_list[list_size] = NULL;
-  }
-
-  // [FG] if the desired resolution not in the list, append it
-  doom_snprintf(mode_name, sizeof(mode_name), "%dx%d", desired_screenwidth, desired_screenheight);
-
-  if (current_resolution_index == -1)
-  {
-    screen_resolutions_list[list_size] = strdup(mode_name);
-    list_size++;
-  }
-
-  // [FG] sort the list
-  SDL_qsort(screen_resolutions_list, list_size, sizeof(*screen_resolutions_list), cmp_resolutions);
-
-  // [FG] find the desired resolution again
-  for (i = 0; i < list_size; i++)
-  {
-    if (!strcmp(mode_name, screen_resolutions_list[i]))
-    {
-      current_resolution_index = i;
-      break;
-    }
-  }
-
-  assert(list_size > 0);
-  assert(current_resolution_index > -1);
-
-  screen_resolutions_list[list_size] = NULL;
-  screen_resolution = screen_resolutions_list[current_resolution_index];
-}
-
-// e6y
-// GLBoom use this function for trying to set the closest supported resolution if the requested mode can't be set correctly.
-// For example glboom.exe -geom 1025x768 -nowindow will set 1024x768.
-// It should be used only for fullscreen modes.
-static void I_ClosestResolution (int *width, int *height)
-{
-  int twidth, theight;
-  int cwidth = 0, cheight = 0;
-  int i, count;
-  unsigned int closest = UINT_MAX;
-  unsigned int dist;
-
-  if (!SDL_WasInit(SDL_INIT_VIDEO))
-    return;
-
-  count = SDL_GetNumDisplayModes(display_index);
-
-  if (count > 0)
-  {
-    for(i=0; i<count; ++i)
-    {
-      SDL_DisplayMode mode;
-      SDL_GetDisplayMode(display_index, i, &mode);
-
-      twidth = mode.w;
-      theight = mode.h;
-
-      if (twidth == *width && theight == *height)
-        return;
-
-      //if (iteration == 0 && (twidth < *width || theight < *height))
-      //  continue;
-
-      dist = (twidth - *width) * (twidth - *width) + 
-             (theight - *height) * (theight - *height);
-
-      if (dist < closest)
-      {
-        closest = dist;
-        cwidth = twidth;
-        cheight = theight;
-      }
-    }
-    if (closest != 4294967295u)
-    {
-      *width = cwidth;
-      *height = cheight;
-      return;
-    }
-  }
-}  
 
 int process_affinity_mask;
 int process_priority;
@@ -967,22 +752,15 @@ static void I_CalculateRes(int width, int height)
 // For example glboom.exe -geom 1025x768 -nowindow will set 1024x768.
 // It affects only fullscreen modes.
   if (V_GetMode() == VID_MODEGL) {
-    if ( desired_fullscreen )
-    {
-      I_ClosestResolution(&width, &height);
-    }
     SCREENWIDTH = width;
     SCREENHEIGHT = height;
     SCREENPITCH = SCREENWIDTH;
-  } else {
+  }
+  else {
     unsigned int count1, count2;
     int pitch1, pitch2;
 
-    if (desired_fullscreen && exclusive_fullscreen)
-    {
-      I_ClosestResolution(&width, &height);
-    }
-    SCREENWIDTH = width;//(width+15) & ~15;
+    SCREENWIDTH = width; //(width+15) & ~15;
     SCREENHEIGHT = height;
 
     // e6y
@@ -1029,35 +807,6 @@ void I_InitScreenResolution(void)
 
   if (init)
   {
-    //e6y: ability to change screen resolution from GUI
-    I_FillScreenResolutionsList();
-
-    // Video stuff
-    if ((p = M_CheckParm("-width")))
-      if (myargv[p+1])
-        desired_screenwidth = atoi(myargv[p+1]);
-
-    if ((p = M_CheckParm("-height")))
-      if (myargv[p+1])
-        desired_screenheight = atoi(myargv[p+1]);
-
-    if ((p = M_CheckParm("-fullscreen")))
-      use_fullscreen = 1;
-
-    if ((p = M_CheckParm("-nofullscreen")))
-      use_fullscreen = 0;
-
-    // e6y
-    // New command-line options for setting a window (-window) 
-    // or fullscreen (-nowindow) mode temporarily which is not saved in cfg.
-    // It works like "-geom" switch
-    desired_fullscreen = use_fullscreen;
-    if ((p = M_CheckParm("-window")))
-      desired_fullscreen = 0;
-
-    if ((p = M_CheckParm("-nowindow")))
-      desired_fullscreen = 1;
-
     // e6y
     // change the screen size for the current session only
     // syntax: -geom WidthxHeight[w|f]
@@ -1078,16 +827,6 @@ void I_InitScreenResolution(void)
       {
         w = desired_screenwidth;
         h = desired_screenheight;
-      }
-      else
-      {
-        if (count >= 4)
-        {
-          if (tolower(c) == 'w')
-            desired_fullscreen = 0;
-          if (tolower(c) == 'f')
-            desired_fullscreen = 1;
-        }
       }
     }
   }
@@ -1228,10 +967,7 @@ video_mode_t I_GetModeFromString(const char *modestr)
 void I_UpdateVideoMode(void)
 {
   int init_flags = 0;
-  int screen_multiply;
   int actualheight;
-  const dboolean novsync = M_CheckParm("-timedemo") || \
-                           M_CheckParm("-fastdemo");
 
   if(sdl_window)
   {
@@ -1264,30 +1000,10 @@ void I_UpdateVideoMode(void)
     sdl_texture = NULL;
   }
 
-  // e6y: initialisation of screen_multiply
-  screen_multiply = render_screen_multiply;
-
   // Initialize SDL with this graphics mode
   if (V_GetMode() == VID_MODEGL) {
     init_flags = SDL_WINDOW_OPENGL;
   }
-
-  // Fullscreen desktop for software renderer only - DTIED
-  if (desired_fullscreen)
-  {
-    if (V_GetMode() == VID_MODEGL || exclusive_fullscreen)
-      init_flags |= SDL_WINDOW_FULLSCREEN;
-    else
-      init_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-  }
-
-  // In windowed mode, the window can be resized while the game is
-  // running.  This feature is disabled on OS X, as it adds an ugly
-  // scroll handle to the corner of the screen.
-#ifndef MACOSX
-  if (!desired_fullscreen && V_GetMode() != VID_MODEGL)
-    init_flags |= SDL_WINDOW_RESIZABLE;
-#endif
 
   if (V_GetMode() == VID_MODEGL)
   {
@@ -1321,10 +1037,8 @@ void I_UpdateVideoMode(void)
   }
   else
   {
-    int flags = SDL_RENDERER_TARGETTEXTURE;
-
-    if (render_vsync && !novsync)
-      flags |= SDL_RENDERER_PRESENTVSYNC;
+    // Always use vsync on 3DS
+    int flags = SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC;
 
     sdl_window = SDL_CreateWindow(
       PACKAGE_NAME " " PACKAGE_VERSION,
@@ -1346,21 +1060,6 @@ void I_UpdateVideoMode(void)
     SDL_SetWindowMinimumSize(sdl_window, SCREENWIDTH, actualheight);
     SDL_RenderSetLogicalSize(sdl_renderer, SCREENWIDTH, actualheight);
 
-    // [FG] make sure initial window size is always >= 640x480
-    while (screen_multiply*SCREENWIDTH < 640 || screen_multiply*actualheight < 480)
-    {
-      screen_multiply++;
-    }
-
-    // [FG] apply screen_multiply to initial window size
-    if (!desired_fullscreen)
-    {
-      SDL_SetWindowSize(sdl_window, screen_multiply*SCREENWIDTH, screen_multiply*actualheight);
-    }
-
-    // [FG] force integer scales
-    SDL_RenderSetIntegerScale(sdl_renderer, integer_scaling);
-
     screen = SDL_CreateRGBSurface(0, SCREENWIDTH, SCREENHEIGHT, V_GetNumPixelBits(), 0, 0, 0, 0);
     buffer = SDL_CreateRGBSurface(0, SCREENWIDTH, SCREENHEIGHT, 32, 0, 0, 0, 0);
     SDL_FillRect(buffer, NULL, 0);
@@ -1369,22 +1068,6 @@ void I_UpdateVideoMode(void)
 
     if(screen == NULL) {
       I_Error("Couldn't set %dx%d video mode [%s]", SCREENWIDTH, SCREENHEIGHT, SDL_GetError());
-    }
-  }
-
-  display_index = SDL_GetWindowDisplayIndex(sdl_window);
-  SDL_GetDesktopDisplayMode(display_index, &desktop_mode);
-
-  if (sdl_video_window_pos)
-  {
-    int x, y;
-    if (sscanf(sdl_video_window_pos, "%d,%d", &x, &y) == 2)
-    {
-      SDL_SetWindowPosition(sdl_window, x, y);
-    }
-    if (strcmp(sdl_video_window_pos, "center") == 0)
-    {
-      SDL_SetWindowPosition(sdl_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     }
   }
 
@@ -1405,7 +1088,8 @@ void I_UpdateVideoMode(void)
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
   {
-    SDL_GL_SetSwapInterval(((render_vsync && !novsync) ? 1 : 0));
+    // Always use vsync on 3DS
+    SDL_GL_SetSwapInterval(1);
   }
 #endif
 
@@ -1566,7 +1250,7 @@ static void I_ReadMouse(void)
     return;
   }
 
-  if (!mouse_currently_grabbed && !desired_fullscreen)
+  if (!mouse_currently_grabbed)
   {
     mouse_currently_grabbed = true;
   }
@@ -1582,11 +1266,6 @@ static dboolean MouseShouldBeGrabbed()
   // if the window doesnt have focus, never grab it
   if (!window_focused)
     return false;
-
-  // always grab the mouse when full screen (dont want to 
-  // see the mouse pointer)
-  if (desired_fullscreen)
-    return true;
 
   // if we specify not to grab the mouse, never grab
   if (!mouse_enabled)
@@ -1622,18 +1301,6 @@ static void UpdateFocus(void)
     {
       window_focused = true;
     }
-  }
-
-  // e6y
-  // Reuse of a current palette to avoid black screen at software fullscreen modes
-  // after switching to OS and back
-  if (desired_fullscreen && window_focused)
-  {
-    // currentPaletteIndex?
-    if (st_palette < 0)
-      st_palette = 0;
-
-    V_SetPalette(st_palette);
   }
 
 #ifdef GL_DOOM

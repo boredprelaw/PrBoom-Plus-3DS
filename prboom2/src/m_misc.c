@@ -444,14 +444,6 @@ default_t defaults[] =
 
   {"Video settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"videomode",{NULL, &default_videomode},{0,"8bit"},UL,UL,def_str,ss_none},
-  /* 640x480 default resolution */
-  {"screen_resolution",{NULL, &screen_resolution},{0,"640x480"},UL,UL,def_str,ss_none},
-  {"use_fullscreen",{&use_fullscreen},{0},0,1, /* proff 21/05/2000 */
-   def_bool,ss_none},
-  {"exclusive_fullscreen",{&exclusive_fullscreen},{0},0,1, // [FG] mode-changing fullscreen
-  def_bool,ss_none},
-  {"render_vsync",{&render_vsync},{1},0,1,
-   def_bool,ss_none},
   {"translucency",{&default_translucency},{1},0,1,   // phares
    def_bool,ss_none}, // enables translucency
   {"tran_filter_pct",{&tran_filter_pct},{66},0,100,         // killough 2/21/98
@@ -1048,8 +1040,6 @@ default_t defaults[] =
   {"cap_wipescreen", {&cap_wipescreen},{0},0,1,def_bool,ss_none},
 
   {"Prboom-plus video settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"sdl_video_window_pos", {NULL,&sdl_video_window_pos}, {0,"center"},UL,UL,
-   def_str,ss_none},
   {"palette_ondamage", {&palette_ondamage},  {1},0,1,
    def_bool,ss_stat},
   {"palette_onbonus", {&palette_onbonus},  {1},0,1,
@@ -1057,10 +1047,6 @@ default_t defaults[] =
   {"palette_onpowers", {&palette_onpowers},  {1},0,1,
    def_bool,ss_stat},
   {"render_wipescreen", {&render_wipescreen},  {1},0,1,
-   def_bool,ss_stat},
-  {"render_screen_multiply", {&render_screen_multiply},  {1},1,5,
-   def_int,ss_stat},
-  {"integer_scaling", {&integer_scaling},  {0},0,1,
    def_bool,ss_stat},
   {"render_aspect", {&render_aspect},  {0},0,4,
    def_int,ss_stat},

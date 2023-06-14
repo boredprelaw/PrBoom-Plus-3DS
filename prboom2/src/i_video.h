@@ -50,17 +50,8 @@
 #pragma interface
 #endif
 
-extern int render_vsync;
-extern int render_screen_multiply;
-extern int integer_scaling;
-
 extern SDL_Window *sdl_window;
 extern SDL_Renderer *sdl_renderer;
-
-extern const char *screen_resolutions_list[];
-extern const char *screen_resolution;
-
-extern const char *sdl_video_window_pos;
 
 void I_PreInitGraphics(void); /* CPhipps - do stuff immediately on start */
 void I_InitScreenResolution(void); /* init resolution */
@@ -98,10 +89,6 @@ void I_StartTic (void);
  */
 
 void I_StartFrame (void);
-
-extern int use_fullscreen;  /* proff 21/05/2000 */
-extern int desired_fullscreen; //e6y
-extern int exclusive_fullscreen;
 
 void I_UpdateRenderSize(void);	// Handle potential
 extern int renderW;		// resolution scaling

@@ -1093,10 +1093,16 @@ void gld_InitDrawScene(void)
 void gld_Finish(void)
 {
   gld_Set2DMode();
-  if (gl_finish && !render_vsync && 0)
+
+  // TODO: Why did someone disable this?
+  // Might be because vsync ON already waits for GL commands to finish,
+  // whereas vsync OFF needs a manual wait in code, like here.
+  // Anyway, might be useful for 3DS later on...
+  if (gl_finish && 0)
   {
     glFinish();
   }
+
   SDL_GL_SwapWindow(sdl_window);
 }
 

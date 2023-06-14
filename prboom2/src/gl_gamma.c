@@ -128,25 +128,6 @@ int gld_SetGammaRamp(int gamma)
   }
   else
   {
-    if (first && desired_fullscreen)
-    {
-      // From GZDoom:
-      //
-      // Fix for Radeon 9000, possibly other R200s: When the device is
-      // reset, it resets the gamma ramp, but the driver apparently keeps a
-      // cached copy of the ramp that it doesn't update, so when
-      // SetGammaRamp is called later to handle the NeedGammaUpdate flag,
-      // it doesn't do anything, because the gamma ramp is the same as the
-      // one passed in the last call, even though the visible gamma ramp 
-      // actually has changed.
-      //
-      // So here we force the gamma ramp to something absolutely horrible and
-      // trust that we will be able to properly set the gamma later
-      first = false;
-      memset(gammatable, 0, sizeof(gammatable));
-      SDL_SetWindowGammaRamp(sdl_window, NULL, NULL, gammatable);
-    }
-
     SDL_CalculateGammaRamp(g, gammatable);
 
     // has no effect sometimes on Intel Graphics

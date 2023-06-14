@@ -304,9 +304,7 @@ void M_ChangeTextureParams(void);
 void M_General(int);      // killough 10/98
 void M_DrawCompat(void);  // killough 10/98
 void M_DrawGeneral(void); // killough 10/98
-void M_ChangeFullScreen(void);
 void M_ChangeVideoMode(void);
-void M_ChangeUseGLSurface(void);
 void M_ChangeApplyPalette(void);
 
 menu_t NewDef;                                              // phares 5/04/98
@@ -3262,24 +3260,20 @@ static const char *gltexformats[] = {
   "GL_RGBA","GL_RGB5_A1", "GL_RGBA4", NULL};
 
 setup_menu_t gen_settings1[] = { // General Settings screen1
-
   {"Video",                          S_SKIP|S_TITLE,     m_null, G_X, G_Y+ 1*8},
   {"Video mode",                     S_CHOICE,           m_null, G_X, G_Y+ 2*8, {"videomode"}, 0, 0, M_ChangeVideoMode, videomodes},
-  {"Screen Resolution",              S_CHOICE,           m_null, G_X, G_Y+ 3*8, {"screen_resolution"}, 0, 0, M_ChangeVideoMode, screen_resolutions_list},
-  {"Aspect Ratio",                   S_CHOICE,           m_null, G_X, G_Y+ 4*8, {"render_aspect"}, 0, 0, M_ChangeAspectRatio, render_aspects_list},
-  {"Fullscreen Video mode",          S_YESNO,            m_null, G_X, G_Y+ 5*8, {"use_fullscreen"}, 0, 0, M_ChangeFullScreen},
-  {"Status Bar and Menu Appearance", S_CHOICE,           m_null, G_X, G_Y+ 6*8, {"render_stretch_hud"}, 0, 0, M_ChangeStretch, render_stretch_list},
-  {"Vertical Sync",                  S_YESNO,            m_null, G_X, G_Y+ 7*8, {"render_vsync"}, 0, 0, M_ChangeVideoMode},
+  {"Aspect Ratio",                   S_CHOICE,           m_null, G_X, G_Y+ 3*8, {"render_aspect"}, 0, 0, M_ChangeAspectRatio, render_aspects_list},
+  {"Status Bar and Menu Appearance", S_CHOICE,           m_null, G_X, G_Y+ 4*8, {"render_stretch_hud"}, 0, 0, M_ChangeStretch, render_stretch_list},
   
-  {"Enable Translucency",            S_YESNO,            m_null, G_X, G_Y+ 9*8, {"translucency"}, 0, 0, M_Trans},
-  {"Translucency filter percentage", S_NUM,              m_null, G_X, G_Y+10*8, {"tran_filter_pct"}, 0, 0, M_Trans},
-  {"Uncapped Framerate",             S_YESNO,            m_null, G_X, G_Y+11*8, {"uncapped_framerate"}, 0, 0, M_ChangeUncappedFrameRate},
+  {"Enable Translucency",            S_YESNO,            m_null, G_X, G_Y+ 6*8, {"translucency"}, 0, 0, M_Trans},
+  {"Translucency filter percentage", S_NUM,              m_null, G_X, G_Y+ 7*8, {"tran_filter_pct"}, 0, 0, M_Trans},
+  {"Uncapped Framerate",             S_YESNO,            m_null, G_X, G_Y+ 8*8, {"uncapped_framerate"}, 0, 0, M_ChangeUncappedFrameRate},
 
-  {"Sound & Music",                  S_SKIP|S_TITLE,     m_null, G_X, G_Y+13*8},
-  {"Number of Sound Channels",       S_NUM|S_PRGWARN,    m_null, G_X, G_Y+14*8, {"snd_channels"}},
-  {"Enable v1.1 Pitch Effects",      S_YESNO,            m_null, G_X, G_Y+15*8, {"pitched_sounds"}},
-  {"PC Speaker emulation",           S_YESNO|S_PRGWARN,  m_null, G_X, G_Y+16*8, {"snd_pcspeaker"}},
-  {"disable sound cutoffs",          S_YESNO,            m_null, G_X, G_Y+17*8, {"full_sounds"}},
+  {"Sound & Music",                  S_SKIP|S_TITLE,     m_null, G_X, G_Y+10*8},
+  {"Number of Sound Channels",       S_NUM|S_PRGWARN,    m_null, G_X, G_Y+11*8, {"snd_channels"}},
+  {"Enable v1.1 Pitch Effects",      S_YESNO,            m_null, G_X, G_Y+12*8, {"pitched_sounds"}},
+  {"PC Speaker emulation",           S_YESNO|S_PRGWARN,  m_null, G_X, G_Y+13*8, {"snd_pcspeaker"}},
+  {"disable sound cutoffs",          S_YESNO,            m_null, G_X, G_Y+14*8, {"full_sounds"}},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
@@ -3395,24 +3389,20 @@ setup_menu_t gen_settings4[] = { // General Settings screen3
 };
 
 setup_menu_t gen_settings5[] = { // General Settings screen3
-  {"Software Options",               S_SKIP|S_TITLE, m_null, G_X, G_Y+1*8},
-  {"Screen Multiple Factor (1-None)", S_NUM,m_null,G_X,G_Y+2*8, {"render_screen_multiply"}, 0, 0, M_ChangeScreenMultipleFactor},
-  {"Integer Screen Scaling",    S_YESNO,  m_null, G_X, G_Y+3*8, {"integer_scaling"}, 0, 0, M_ChangeScreenMultipleFactor},
 #ifdef GL_DOOM
-  {"OpenGL Options",             S_SKIP|S_TITLE,m_null,G_X,G_Y+5*8},
-  {"Multisampling (0-None)",    S_NUM|S_PRGWARN|S_CANT_GL_ARB_MULTISAMPLEFACTOR,m_null,G_X,G_Y+6*8, {"render_multisampling"}, 0, 0, M_ChangeMultiSample},
-  {"Field Of View",             S_NUM,    m_null, G_X, G_Y+ 7*8, {"render_fov"}, 0, 0, M_ChangeFOV},
-  {"Sector Light Mode",         S_CHOICE, m_null, G_X, G_Y+ 8*8, {"gl_lightmode"}, 0, 0, M_ChangeLightMode, gl_lightmodes},
-  {"Allow Fog",                 S_YESNO,  m_null, G_X, G_Y+ 9*8, {"gl_fog"}, 0, 0, M_ChangeAllowFog},
-  {"Simple Shadows",            S_YESNO,  m_null, G_X, G_Y+10*8, {"gl_shadows"}},
-  {"Thing Sprite Fuzz",         S_CHOICE, m_null, G_X, G_Y+11*8, {"gl_thingspritefuzzmode"}, 0, 0, 0, gl_spritefuzzmodes},
-  {"Weapon Sprite Fuzz",        S_CHOICE, m_null, G_X, G_Y+12*8, {"gl_weaponspritefuzzmode"}, 0, 0, 0, gl_spritefuzzmodes},
-
-  {"Paper Items",               S_YESNO,  m_null, G_X, G_Y+13*8, {"render_paperitems"}},
-  {"Smooth sprite edges",       S_YESNO,  m_null, G_X, G_Y+14*8, {"gl_sprite_blend"}},
-  {"Adjust Sprite Clipping",    S_CHOICE, m_null, G_X, G_Y+15*8, {"gl_spriteclip"}, 0, 0, M_ChangeSpriteClip, gl_spriteclipmodes},
-  {"Item out of Floor offset",  S_NUM,    m_null, G_X, G_Y+16*8, {"gl_sprite_offset"}, 0, 0, M_ChangeSpriteClip},
-  {"Health Bar Above Monsters", S_YESNO,  m_null, G_X, G_Y+17*8, {"health_bar"}},
+  {"OpenGL Options",             S_SKIP|S_TITLE,m_null,G_X,G_Y+1*8},
+  {"Multisampling (0-None)",    S_NUM|S_PRGWARN|S_CANT_GL_ARB_MULTISAMPLEFACTOR,m_null,G_X,G_Y+2*8, {"render_multisampling"}, 0, 0, M_ChangeMultiSample},
+  {"Field Of View",             S_NUM,    m_null, G_X, G_Y+ 3*8, {"render_fov"}, 0, 0, M_ChangeFOV},
+  {"Sector Light Mode",         S_CHOICE, m_null, G_X, G_Y+ 4*8, {"gl_lightmode"}, 0, 0, M_ChangeLightMode, gl_lightmodes},
+  {"Allow Fog",                 S_YESNO,  m_null, G_X, G_Y+ 5*8, {"gl_fog"}, 0, 0, M_ChangeAllowFog},
+  {"Simple Shadows",            S_YESNO,  m_null, G_X, G_Y+ 6*8, {"gl_shadows"}},
+  {"Thing Sprite Fuzz",         S_CHOICE, m_null, G_X, G_Y+ 7*8, {"gl_thingspritefuzzmode"}, 0, 0, 0, gl_spritefuzzmodes},
+  {"Weapon Sprite Fuzz",        S_CHOICE, m_null, G_X, G_Y+ 8*8, {"gl_weaponspritefuzzmode"}, 0, 0, 0, gl_spritefuzzmodes},
+  {"Paper Items",               S_YESNO,  m_null, G_X, G_Y+ 9*8, {"render_paperitems"}},
+  {"Smooth sprite edges",       S_YESNO,  m_null, G_X, G_Y+10*8, {"gl_sprite_blend"}},
+  {"Adjust Sprite Clipping",    S_CHOICE, m_null, G_X, G_Y+11*8, {"gl_spriteclip"}, 0, 0, M_ChangeSpriteClip, gl_spriteclipmodes},
+  {"Item out of Floor offset",  S_NUM,    m_null, G_X, G_Y+12*8, {"gl_sprite_offset"}, 0, 0, M_ChangeSpriteClip},
+  {"Health Bar Above Monsters", S_YESNO,  m_null, G_X, G_Y+13*8, {"health_bar"}},
 #endif
 
   {"<- PREV",S_SKIP|S_PREV, m_null,KB_PREV, KB_Y+20*8, {gen_settings4}},
@@ -3502,18 +3492,7 @@ void M_Trans(void) // To reset translucency after setting it in menu
     R_InitTranMap(0);
 }
 
-// To (un)set fullscreen video after menu changes
-void M_ChangeFullScreen(void)
-{
-  V_ToggleFullscreen();
-}
-
 void M_ChangeVideoMode(void)
-{
-  V_ChangeScreenResolution();
-}
-
-void M_ChangeUseGLSurface(void)
 {
   V_ChangeScreenResolution();
 }
