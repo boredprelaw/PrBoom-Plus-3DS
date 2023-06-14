@@ -1149,7 +1149,7 @@ static void P_LoadZNodes(int lump, int glnodes, int compressed)
   byte *output;
 #endif
 
-  data = W_CacheLumpNum(lump);
+  data = (byte*)W_CacheLumpNum(lump);
   len =  W_LumpLength(lump);
 
   if (compressed == ZDOOM_ZNOD_NODES)

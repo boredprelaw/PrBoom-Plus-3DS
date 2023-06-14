@@ -1444,7 +1444,7 @@ const char *BaseName(const char *filename)
 {
   char *basename;
 
-  basename = filename + strlen(filename) - 1;
+  basename = (char*)filename + strlen(filename) - 1;
 
   while (basename > filename && *basename != '/' && *basename != '\\')
     basename--;
