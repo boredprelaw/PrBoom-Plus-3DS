@@ -260,7 +260,6 @@ int     mb_weapon7;
 int     mb_weapon8;
 int     mb_weapon9;
 
-int     key_screenshot;             // killough 2/22/98: screenshot key
 int     mousebfire;
 int     mousebstrafe;
 int     mousebforward;
@@ -1142,10 +1141,6 @@ void G_Ticker (void)
         case ga_worlddone:
           G_DoWorldDone ();
           break;
-        case ga_screenshot:
-          M_ScreenShot ();
-          gameaction = ga_nothing;
-          break;
         case ga_nothing:
           break;
         }
@@ -1567,11 +1562,6 @@ void G_DoReborn (int playernum)
         }
       P_SpawnPlayer (playernum, &playerstarts[playernum]);
     }
-}
-
-void G_ScreenShot (void)
-{
-  gameaction = ga_screenshot;
 }
 
 // DOOM Par Times

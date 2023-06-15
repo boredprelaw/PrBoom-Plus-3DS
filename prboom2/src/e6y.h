@@ -84,10 +84,6 @@ extern int demo_curr_tic;
 extern int demo_playerscount;
 extern char demo_len_st[80];
 
-extern int avi_shot_time;
-extern int avi_shot_num;
-extern const char *avi_shot_fname;
-
 extern dboolean doSkip;
 extern dboolean demo_stoponnext;
 extern dboolean demo_stoponend;

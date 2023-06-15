@@ -47,10 +47,6 @@
 #include <sys/wait.h>
 #endif
 
-#ifdef USE_SDL_NET
- #include "SDL.h"
-#endif
-
 #include "doomtype.h"
 #include "doomstat.h"
 #include "d_net.h"
@@ -499,7 +495,6 @@ void TryRunTics (void)
 #endif
         M_Ticker(); return;
       }
-      //if ((displaytime) < (tic_vars.next-SDL_GetTicks()))
       if (gametic > 0)
       {
         WasRenderedInTryRunTics = true;

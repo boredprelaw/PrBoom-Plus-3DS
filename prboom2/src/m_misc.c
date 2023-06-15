@@ -29,7 +29,6 @@
  * DESCRIPTION:
  *  Main loop menu stuff.
  *  Default Config File.
- *  PCX Screenshots.
  *
  *-----------------------------------------------------------------------------*/
 
@@ -79,9 +78,6 @@
 #include "gl_struct.h"
 #include "g_overflow.h"
 #include "e6y.h"
-
-// NSM
-#include "i_capture.h"
 
 #include "m_io.h"
 
@@ -735,10 +731,6 @@ default_t defaults[] =
   {"key_prevweapon",  {&key_prevweapon},      {KEYD_MWHEELDOWN},
    0,MAX_KEY,def_key,ss_keys}, // key to cycle to the previous weapon
 
-  // killough 2/22/98: screenshot key
-  {"key_screenshot",  {&key_screenshot},      {'*'}            ,
-   0,MAX_KEY,def_key,ss_keys}, // key to take a screenshot
-
   {"Joystick settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"joy_left",{&joyleft},{0},  UL,UL,def_int,ss_none},
   {"joy_right",{&joyright},{0},UL,UL,def_int,ss_none},
@@ -1008,8 +1000,6 @@ default_t defaults[] =
   {"Prboom-plus misc settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"showendoom", {&showendoom},  {0},0,1,
    def_bool,ss_stat},
-  {"screenshot_dir", {NULL,&screenshot_dir}, {0,""},UL,UL,
-   def_str,ss_none},
   {"health_bar", {&health_bar}, {0},0,1,
    def_bool,ss_stat},
   {"health_bar_full_length", {&health_bar_full_length}, {1},0,1,
@@ -1020,17 +1010,6 @@ default_t defaults[] =
    def_int,ss_stat},
   {"health_bar_green", {&health_bar_green}, {0},0,100,
    def_int,ss_stat},
-
-  // NSM
-  {"Video capture encoding settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"cap_soundcommand",{NULL, &cap_soundcommand},{0,"ffmpeg -f s16le -ar %s -ac 2 -i - -c:a libopus -y temp_a.nut"},UL,UL,def_str,ss_none},
-  {"cap_videocommand",{NULL, &cap_videocommand},{0,"ffmpeg -f rawvideo -pix_fmt rgb24 -r %r -s %wx%h -i - -c:v libx264 -y temp_v.nut"},UL,UL,def_str,ss_none},
-  {"cap_muxcommand",{NULL, &cap_muxcommand},{0,"ffmpeg -i temp_v.nut -i temp_a.nut -c copy -y %f"},UL,UL,def_str,ss_none},
-  {"cap_tempfile1",{NULL, &cap_tempfile1},{0,"temp_a.nut"},UL,UL,def_str,ss_none},
-  {"cap_tempfile2",{NULL, &cap_tempfile2},{0,"temp_v.nut"},UL,UL,def_str,ss_none},
-  {"cap_remove_tempfiles", {&cap_remove_tempfiles},{1},0,1,def_bool,ss_none},
-  {"cap_fps", {&cap_fps},{60},16,300,def_int,ss_none},
-  {"cap_wipescreen", {&cap_wipescreen},{0},0,1,def_bool,ss_none},
 
   {"Prboom-plus video settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"palette_ondamage", {&palette_ondamage},  {1},0,1,
@@ -1665,124 +1644,6 @@ void M_LoadDefaults (void)
   //e6y: Check on existence of prboom.wad
   if (!(wad_files[0] = I_FindFile(PACKAGE_TARNAME ".wad", "")))
     I_Error("PrBoom-Plus.wad not found. Can't continue.");
-}
-
-
-//
-// SCREEN SHOTS
-//
-
-//
-// M_ScreenShot
-//
-// Modified by Lee Killough so that any number of shots can be taken,
-// the code is faster, and no annoying "screenshot" message appears.
-
-// CPhipps - modified to use its own buffer for the image
-//         - checks for the case where no file can be created (doesn't occur on POSIX systems, would on DOS)
-//         - track errors better
-//         - split into 2 functions
-
-//
-// M_DoScreenShot
-// Takes a screenshot into the names file
-
-const char *screenshot_dir;
-
-void M_DoScreenShot (const char* fname)
-{
-  if (I_ScreenShot(fname) != 0)
-    doom_printf("M_ScreenShot: Error writing screenshot\n");
-}
-
-#ifndef SCREENSHOT_DIR
-#define SCREENSHOT_DIR "."
-#endif
-
-#ifdef HAVE_LIBSDL2_IMAGE
-#define SCREENSHOT_EXT ".png"
-#else
-#define SCREENSHOT_EXT ".bmp"
-#endif
-
-const char* M_CheckWritableDir(const char *dir)
-{
-  static char *base = NULL;
-  static int base_len = 0;
-
-  const char *result = NULL;
-  int len;
-
-  if (!dir || !(len = strlen(dir)))
-  {
-    return NULL;
-  }
-
-  if (len + 1 > base_len)
-  {
-    base_len = len + 1;
-    base = malloc(len + 1);
-  }
-
-  if (base)
-  {
-    strcpy(base, dir);
-
-    if (base[len - 1] != '\\' && base[len - 1] != '/')
-      strcat(base, "/");
-    if (!M_access(base, O_RDWR))
-    {
-      base[strlen(base) - 1] = 0;
-      result = base;
-    }
-  }
-
-  return result;
-}
-
-void M_ScreenShot(void)
-{
-  static int shot;
-  char       *lbmname = NULL;
-  int        startshot;
-  const char *shot_dir = NULL;
-  int p;
-  int        success = 0;
-
-  if ((p = M_CheckParm("-shotdir")) && (p < myargc - 1))
-    shot_dir = M_CheckWritableDir(myargv[p + 1]);
-  if (!shot_dir)
-    shot_dir = M_CheckWritableDir(screenshot_dir);
-  if (!shot_dir)
-#ifdef _WIN32
-    shot_dir = M_CheckWritableDir(I_DoomExeDir());
-#else
-    shot_dir = (!M_access(SCREENSHOT_DIR, 2) ? SCREENSHOT_DIR : NULL);
-#endif
-
-  if (shot_dir)
-  {
-    startshot = shot; // CPhipps - prevent infinite loop
-
-    do {
-      int size = doom_snprintf(NULL, 0, "%s/doom%02d" SCREENSHOT_EXT, shot_dir, shot);
-      lbmname = realloc(lbmname, size+1);
-      doom_snprintf(lbmname, size+1, "%s/doom%02d" SCREENSHOT_EXT, shot_dir, shot);
-      shot++;
-    } while (!M_access(lbmname,0) && (shot != startshot) && (shot < 10000));
-
-    if (M_access(lbmname,0))
-    {
-      S_StartSound(NULL,gamemode==commercial ? sfx_radio : sfx_tink);
-      M_DoScreenShot(lbmname); // cph
-      success = 1;
-    }
-    free(lbmname);
-    if (success) return;
-  }
-
-  doom_printf ("M_ScreenShot: Couldn't create screenshot");
-  return;
 }
 
 int M_StrToInt(const char *s, int *l)

@@ -91,9 +91,6 @@
 #include "r_demo.h"
 #include "e6y.h"
 
-// NSM
-#include "i_capture.h"
-
 #include "i_glob.h"
 
 #include "m_io.h"
@@ -241,10 +238,6 @@ static void D_Wipe(void)
       I_UpdateNoBlit();
       M_Drawer();                   // menu is drawn even on top of wipes
       I_FinishUpdate();             // page flip or blit buffer
-      if (capturing_video && !doSkip && cap_wipescreen)
-      {
-        I_CaptureFrame();
-      }
     }
   while (!done);
 }
@@ -439,11 +432,6 @@ void D_Display (fixed_t frac)
   I_EndDisplay();
 }
 
-// CPhipps - Auto screenshot Variables
-
-static int auto_shot_count, auto_shot_time;
-static const char *auto_shot_fname;
-
 //
 //  D_DoomLoop()
 //
@@ -461,77 +449,39 @@ static void D_DoomLoop(void)
     I_uSleep(quickstart_window_ms * 1000);
 
   for (;;)
+  {
+    WasRenderedInTryRunTics = false;
+    // frame syncronous IO operations
+    I_StartFrame ();
+
+    if (ffmap == gamemap) ffmap = 0;
+
+    // process one or more tics
+    if (singletics)
+      {
+        I_StartTic ();
+        G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
+        if (advancedemo)
+          D_DoAdvanceDemo ();
+        M_Ticker ();
+        G_Ticker ();
+        P_Checksum(gametic);
+        gametic++;
+        maketic++;
+      }
+    else
+      TryRunTics (); // will run at least one tic
+
+    // killough 3/16/98: change consoleplayer to displayplayer
+    if (players[displayplayer].mo) // cph 2002/08/10
+      S_UpdateSounds(players[displayplayer].mo);// move positional sounds
+
+    // Update display, next frame, with current state.
+    if (!movement_smooth || !WasRenderedInTryRunTics || gamestate != wipegamestate)
     {
-      WasRenderedInTryRunTics = false;
-      // frame syncronous IO operations
-      I_StartFrame ();
-
-      if (ffmap == gamemap) ffmap = 0;
-
-      // process one or more tics
-      if (singletics)
-        {
-          I_StartTic ();
-          G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
-          if (advancedemo)
-            D_DoAdvanceDemo ();
-          M_Ticker ();
-          G_Ticker ();
-          P_Checksum(gametic);
-          gametic++;
-          maketic++;
-        }
-      else
-        TryRunTics (); // will run at least one tic
-
-      // killough 3/16/98: change consoleplayer to displayplayer
-      if (players[displayplayer].mo) // cph 2002/08/10
-        S_UpdateSounds(players[displayplayer].mo);// move positional sounds
-
-      // Update display, next frame, with current state.
-      if (!movement_smooth || !WasRenderedInTryRunTics || gamestate != wipegamestate)
-      {
-        // NSM
-        if (capturing_video && !doSkip)
-        {
-          dboolean first = true;
-          int cap_step = TICRATE * FRACUNIT / cap_fps;
-          cap_frac += cap_step;
-          while(cap_frac <= FRACUNIT)
-          {
-            isExtraDDisplay = !first;
-            first = false;
-            D_Display(cap_frac);
-            isExtraDDisplay = false;
-            I_CaptureFrame();
-            cap_frac += cap_step;
-          }
-          cap_frac -= FRACUNIT + cap_step;
-        }
-        else
-        {
-          D_Display(I_GetTimeFrac());
-        }
-      }
-
-      // CPhipps - auto screenshot
-      if (auto_shot_fname && !--auto_shot_count) {
-  auto_shot_count = auto_shot_time;
-  M_DoScreenShot(auto_shot_fname);
-      }
-//e6y
-      if (avi_shot_fname && !doSkip)
-      {
-        int len;
-        char *avi_shot_curr_fname;
-        avi_shot_num++;
-        len = snprintf(NULL, 0, "%s%06d.tga", avi_shot_fname, avi_shot_num);
-        avi_shot_curr_fname = malloc(len+1);
-        sprintf(avi_shot_curr_fname, "%s%06d.tga", avi_shot_fname, avi_shot_num);
-        M_DoScreenShot(avi_shot_curr_fname);
-        free(avi_shot_curr_fname);
-      }
-}
+      D_Display(I_GetTimeFrac());
+    }
+  }
 }
 
 //
@@ -2157,20 +2107,9 @@ static void D_DoomMainSetup(void)
   if (!(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
     I_InitGraphics();
 
-  // NSM
-  if ((p = M_CheckParm("-viddump")) && (p < myargc-1))
-  {
-    I_CapturePrep(myargv[p + 1]);
-  }
-
   //jff 9/3/98 use logical output routine
   lprintf(LO_INFO,"ST_Init: Init status bar.\n");
   ST_Init();
-
-  // CPhipps - auto screenshots
-  if ((p = M_CheckParm("-autoshot")) && (p < myargc-2))
-    if ((auto_shot_count = auto_shot_time = atoi(myargv[p+1])))
-      auto_shot_fname = myargv[p+2];
 
   if ((p = M_CheckParm("-statdump")) && (p < myargc-1))
   {

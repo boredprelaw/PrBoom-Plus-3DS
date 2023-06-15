@@ -57,8 +57,6 @@
 #endif
 #include <sys/stat.h>
 
-#include "SDL.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -101,7 +99,7 @@
 
 void I_uSleep(unsigned long usecs)
 {
-    SDL_Delay(usecs/1000);
+    usleep(usecs);
 }
 
 #ifndef PRBOOM_SERVER
@@ -261,10 +259,6 @@ int I_Filelength(int handle)
 
 #ifndef PRBOOM_SERVER
 
-// Return the path where the executable lies -- Lee Killough
-// proff_fs 2002-07-04 - moved to i_system
-#ifdef _WIN32
-
 void I_SwitchToWindow(HWND hwnd)
 {
   typedef BOOL (WINAPI *TSwitchToThisWindow) (HWND wnd, BOOL restore);
@@ -322,73 +316,6 @@ const char* I_GetTempDir(void)
   return tmp_path;
 }
 
-#elif defined(AMIGA)
-
-const char *I_DoomExeDir(void)
-{
-  return "PROGDIR:";
-}
-
-const char* I_GetTempDir(void)
-{
-  return "PROGDIR:";
-}
-
-#elif defined(MACOSX)
-
-/* Defined elsewhere */
-
-#else
-// cph - V.Aguilar (5/30/99) suggested return ~/.lxdoom/, creating
-//  if non-existant
-// cph 2006/07/23 - give prboom+ its own dir
-static const char prboom_dir[] = {"prboom-plus"};
-
-const char *I_DoomExeDir(void)
-{
-  static char *base;
-  struct stat data_dir;
-
-  if (!base)        // cache multiple requests
-    {
-      char *home = M_getenv("HOME");
-      char *p_home = strdup(home);
-      size_t len = strlen(home);
-      size_t p_len = (len + strlen(prboom_dir) + 3);
-
-      // I've had trouble with trailing slashes before...
-      if (p_home[len-1] == '/') p_home[len-1] = 0;
-
-      base = malloc(p_len);
-      snprintf(base, p_len, "%s/.%s", p_home, prboom_dir);
-      free(p_home);
-
-      // if ~/.$prboom_dir doesn't exist,
-      // create and use directory in XDG_DATA_HOME
-      if (M_stat(base, &data_dir) || !S_ISDIR(data_dir.st_mode))
-        {
-          // SDL creates this directory if it doesn't exist
-          char *prefpath = SDL_GetPrefPath("", prboom_dir);
-          size_t prefsize = strlen(prefpath);
-
-          free(base);
-          base = strdup(prefpath);
-          // SDL_GetPrefPath always returns with trailing slash
-          if (base[prefsize-1] == '/') base[prefsize-1] = 0;
-          SDL_free(prefpath);
-        }
-//    mkdir(base, S_IRUSR | S_IWUSR | S_IXUSR);
-    }
-  return base;
-}
-
-const char *I_GetTempDir(void)
-{
-  return "/tmp";
-}
-
-#endif
-
 /*
  * HasTrailingSlash
  *
@@ -417,8 +344,6 @@ dboolean HasTrailingSlash(const char* dn)
  * Searches the standard dirs for a named WAD file
  * The dirs are listed at the start of the function
  */
-
-#ifndef MACOSX /* OSX defines its search paths elsewhere. */
 
 #ifdef _WIN32
 #define PATH_SEPARATOR ';'
@@ -551,7 +476,5 @@ const char* I_FindFile2(const char* wfname, const char* ext)
 {
   return (const char*) I_FindFileInternal(wfname, ext, true);
 }
-
-#endif
 
 #endif // PRBOOM_SERVER

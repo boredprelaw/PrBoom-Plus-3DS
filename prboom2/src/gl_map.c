@@ -33,11 +33,6 @@
 
 #include <math.h>
 
-#include "SDL.h"
-#ifdef HAVE_LIBSDL2_IMAGE
-#include "SDL_image.h"
-#endif
-
 #include "gl_opengl.h"
 #include "gl_intern.h"
 #include "w_wad.h"
@@ -85,33 +80,7 @@ void gld_InitMapPics(void)
     am_icons[i].lumpnum = lump;
     if (lump != -1)
     {
-      SDL_Surface *surf = NULL;
-#ifdef HAVE_LIBSDL2_IMAGE
-      SDL_Surface *surf_raw;
-
-      surf_raw = IMG_Load_RW(SDL_RWFromConstMem(W_CacheLumpNum(lump), W_LumpLength(lump)), true);
-
-      surf = SDL_ConvertSurface(surf_raw, &RGBAFormat, 0);
-      SDL_FreeSurface(surf_raw);
-#endif
-
       W_UnlockLumpNum(lump);
-
-      if (surf)
-      {
-        glGenTextures(1, &am_icons[i].tex_id);
-        glBindTexture(GL_TEXTURE_2D, am_icons[i].tex_id);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
-        glTexImage2D(GL_TEXTURE_2D, 0, gl_tex_format, surf->w, surf->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surf->pixels);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);//tex_filter[MIP_PATCH].min_filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//tex_filter[MIP_PATCH].mag_filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-
-        SDL_FreeSurface(surf);
-      }
     }
 
     i++;

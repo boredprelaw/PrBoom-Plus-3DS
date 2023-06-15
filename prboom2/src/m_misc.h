@@ -46,9 +46,6 @@ dboolean M_WriteFile (char const* name, const void* source, size_t length);
 
 int M_ReadFile (char const* name,byte** buffer);
 
-void M_ScreenShot (void);
-void M_DoScreenShot (const char*); // cph
-
 void M_LoadDefaults (void);
 
 void M_SaveDefaults (void);
@@ -125,8 +122,6 @@ int M_DoubleToInt(double x);
 char* M_Strlwr(char* str);
 char* M_Strupr(char* str);
 char* M_StrRTrim(char* str);
-
-extern const char *screenshot_dir;
 
 typedef struct array_s
 {

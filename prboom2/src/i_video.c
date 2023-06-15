@@ -71,7 +71,6 @@
 #include "d_deh.h"
 #include "i_joy.h"
 #include "i_video.h"
-#include "i_capture.h"
 #include "z_zone.h"
 #include "s_sound.h"
 #include "sounds.h"
@@ -605,10 +604,6 @@ void I_FinishUpdate (void)
 }
 
 //
-// I_ScreenShot - moved to i_sshot.c
-//
-
-//
 // I_SetPalette
 //
 void I_SetPalette (int pal)
@@ -944,9 +939,6 @@ void I_UpdateVideoMode(void)
 
   if(sdl_window)
   {
-    // video capturing cannot be continued with new screen settings
-    I_CaptureFinish();
-
 #ifdef GL_DOOM
     if (V_GetMode() == VID_MODEGL)
     {

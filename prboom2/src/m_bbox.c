@@ -30,7 +30,6 @@
  *      Main loop menu stuff.
  *      Random number LUT.
  *      Default Config File.
- *      PCX Screenshots.
  *
  *-----------------------------------------------------------------------------*/
 

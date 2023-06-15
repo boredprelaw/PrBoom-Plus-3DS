@@ -51,7 +51,6 @@
 #include "i_system.h"
 #include "m_argv.h"
 #include "e6y.h"//e6y
-#include "i_capture.h"
 
 int cons_error_mask = -1-LO_INFO; /* all but LO_INFO when redir'd */
 int cons_output_mask = -1;        /* all output enabled */
@@ -104,7 +103,7 @@ void I_Error(const char *error, ...)
   va_end(argptr);
   lprintf(LO_ERROR, "%s\n", errmsg);
 #ifdef _WIN32
-  if (!M_CheckParm ("-nodraw") && !capturing_video) {
+  if (!M_CheckParm ("-nodraw")) {
     I_MessageBox(errmsg, PRB_MB_OK);
   }
 #endif

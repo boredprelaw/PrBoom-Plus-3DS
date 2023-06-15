@@ -98,10 +98,6 @@ int demo_tics_count;
 int demo_curr_tic;
 char demo_len_st[80];
 
-int avi_shot_time;
-int avi_shot_num;
-const char *avi_shot_fname;
-
 dboolean doSkip;
 dboolean demo_stoponnext;
 dboolean demo_stoponend;
@@ -288,8 +284,7 @@ void e6y_InitCommandLine(void)
 
   if ((IsDemoPlayback() || IsDemoContinue()) && (warpmap != -1 || demo_skiptics))
     G_SkipDemoStart();
-  if ((p = M_CheckParm("-avidemo")) && (p < myargc-1))
-    avi_shot_fname = myargv[p + 1];
+
   stats_level = M_CheckParm("-levelstat");
 
   if ((stroller = M_CheckParm("-stroller")))

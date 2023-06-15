@@ -63,7 +63,6 @@ void G_SecretExitLevel(void);
 void G_WorldDone(void);
 void G_EndGame(void); /* cph - make m_menu.c call a G_* function for this */
 void G_Ticker(void);
-void G_ScreenShot(void);
 void G_ReloadDefaults(void);     // killough 3/1/98: loads game defaults
 int  G_SaveGameName(char *, size_t, int, dboolean); /* killough 3/22/98: sets savegame filename */
 void G_SetFastParms(int);        // killough 4/10/98: sets -fast parameters
@@ -191,7 +190,6 @@ extern int  key_map_grid;                                           // phares
 extern int  key_map_rotate; // cph - map rotation
 extern int  key_map_overlay;// cph - map overlay
 extern int  key_map_textured;  //e6y: textured automap
-extern int  key_screenshot;    // killough 2/22/98 -- add key for screenshot
 extern int  autorun;           // always running?                   // phares
 extern int  mousebfire;
 extern int  mousebstrafe;

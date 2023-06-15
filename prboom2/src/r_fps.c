@@ -39,7 +39,6 @@
 #include "r_demo.h"
 #include "r_fps.h"
 #include "i_system.h"
-#include "i_capture.h"
 #include "e6y.h"
 
 int movement_smooth_default;
@@ -75,10 +74,7 @@ void D_Display(fixed_t frac);
 
 void M_ChangeUncappedFrameRate(void)
 {
-  if (capturing_video)
-    movement_smooth = true;
-  else
-    movement_smooth = (singletics ? false : movement_smooth_default);
+  movement_smooth = (singletics ? false : movement_smooth_default);
 }
 
 void R_InitInterpolation(void)
