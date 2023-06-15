@@ -167,13 +167,6 @@ GLfloat cm2RGB[CR_LIMIT + 1][4] =
 
 void SetFrameTextureMode(void)
 {
-#ifdef USE_FBO_TECHNIQUE
-  if (SceneInTexture)
-  {
-    glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-  }
-  else
-#endif
   if (invul_method & INVUL_BW)
   {
     glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE);
@@ -439,12 +432,6 @@ void gld_Init(int width, int height)
 #ifdef HAVE_LIBSDL2_IMAGE
   gld_InitMapPics();
   gld_InitHiRes();
-#endif
-
-  // Create FBO object and associated render targets
-#ifdef USE_FBO_TECHNIQUE
-  gld_InitFBO();
-  I_AtExit(gld_FreeScreenSizeFBO, true);
 #endif
 
   if(!gld_LoadGLDefs("GLBDEFS"))
@@ -1248,21 +1235,6 @@ void gld_StartDrawScene(void)
     }
   }
 
-#ifdef USE_FBO_TECHNIQUE
-  motion_blur.enabled = gl_use_motionblur &&
-    ((motion_blur.curr_speed_pow2 > motion_blur.minspeed_pow2) ||
-    (abs(players[displayplayer].cmd.angleturn) > motion_blur.minangle));
-
-  SceneInTexture = (gl_ext_framebuffer_object) &&
-    ((invul_method & INVUL_BW) || (motion_blur.enabled));
-
-  // Vortex: Set FBO object
-  if (SceneInTexture)
-  {
-    GLEXT_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, glSceneImageFBOTexID);
-  }
-#endif
-
   SetFrameTextureMode();
 
   gld_Clear();
@@ -1337,75 +1309,13 @@ void gld_EndDrawScene(void)
   // See nuts.wad
   // http://www.doomworld.com/idgames/index.php?id=11402
 
-#ifdef USE_FBO_TECHNIQUE
-  // Vortex: Black and white effect
-  if (SceneInTexture)
+  if (invul_method & INVUL_INV)
   {
-    // Vortex: Restore original RT
-    GLEXT_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-    glBindTexture(GL_TEXTURE_2D, glSceneImageTextureFBOTexID);
-
-    // Setup blender
-    if (invul_method & INVUL_BW)
-    {
-      glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE);
-      glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB,GL_DOT3_RGB);
-      glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB,GL_PRIMARY_COLOR);
-      glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_RGB,GL_SRC_COLOR);
-      glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB,GL_TEXTURE);
-      glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_RGB,GL_SRC_COLOR);
-
-      glColor3f(0.3f, 0.3f, 0.4f);
-    }
-    else
-    {
-      glColor3f(1.0f, 1.0f, 1.0f);
-    }
-
-    //e6y: motion bloor effect for strafe50
-    if (motion_blur.enabled)
-    {
-      extern int renderer_fps;
-      static float motionblur_alpha = 1.0f;
-
-      if (realframe)
-      {
-        motionblur_alpha = (float)((atan(-renderer_fps / motion_blur.att_a)) / motion_blur.att_b) + motion_blur.att_c;
-      }
-
-      glBlendFunc(GL_CONSTANT_ALPHA_EXT, GL_ONE_MINUS_CONSTANT_ALPHA_EXT);
-      GLEXT_glBlendColorEXT(1.0f, 1.0f, 1.0f, motionblur_alpha);
-    }
-  
-    glBegin(GL_TRIANGLE_STRIP);
-    {
-      glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, 0.0f);
-      glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, (float)SCREENHEIGHT);
-      glTexCoord2f(1.0f, 1.0f); glVertex2f((float)SCREENWIDTH, 0.0f);
-      glTexCoord2f(1.0f, 0.0f); glVertex2f((float)SCREENWIDTH, (float)SCREENHEIGHT);
-    }
-    glEnd();
-
-    
-    if (motion_blur.enabled)
-    {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+    gld_InvertScene();
   }
-  else
-#endif
+  if (invul_method & INVUL_BW)
   {
-    if (invul_method & INVUL_INV)
-    {
-      gld_InvertScene();
-    }
-    if (invul_method & INVUL_BW)
-    {
-      glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-    }
+    glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
   }
 
   glColor3f(1.0f,1.0f,1.0f);

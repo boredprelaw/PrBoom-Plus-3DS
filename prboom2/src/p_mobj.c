@@ -411,23 +411,12 @@ static void P_XYMovement (mobj_t* mo)
        */
 
       if (player && player->mo == mo)     /* Not voodoo dolls */
-  {
-    player->momx = FixedMul(player->momx, ORIG_FRICTION);
-    player->momy = FixedMul(player->momy, ORIG_FRICTION);
-  }
-
+      {
+        player->momx = FixedMul(player->momx, ORIG_FRICTION);
+        player->momy = FixedMul(player->momy, ORIG_FRICTION);
       }
-
     }
-
-#ifdef GL_DOOM
-  if (gl_use_motionblur && player == &players[displayplayer])
-  {
-    float dx = (float)(oldx - player->mo->x) / 65536.0f;
-    float dy = (float)(oldy - player->mo->y) / 65536.0f;
-    motion_blur.curr_speed_pow2 = dx * dx + dy * dy;
   }
-#endif
 }
 
 

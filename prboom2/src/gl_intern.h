@@ -433,9 +433,6 @@ extern int SceneInTexture;
 void gld_InitFBO(void);
 void gld_FreeScreenSizeFBO(void);
 
-//motion bloor
-extern int gl_motionblur;
-
 extern int imageformats[];
 
 //missing flats (fake floors and ceilings)

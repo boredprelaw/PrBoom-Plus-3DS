@@ -1568,10 +1568,6 @@ void gld_Precache(void)
 
   gld_ProgressEnd();
 
-#ifdef USE_FBO_TECHNIQUE
-  gld_InitFBO();
-#endif
-
   // e6y: some statistics.  make sense for hires
   {
     char map[8];

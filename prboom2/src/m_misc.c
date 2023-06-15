@@ -190,9 +190,6 @@ extern int gl_use_stencil_default;
 extern int gl_ext_arb_vertex_buffer_object_default;
 extern int gl_arb_pixel_buffer_object_default;
 
-//e6y: motion bloor
-extern int gl_motionblur;
-
 //e6y: fog
 extern int gl_fog;
 extern int gl_fog_color;
@@ -224,7 +221,6 @@ static int gl_ext_blend_color_default;
 static int gl_use_stencil_default;
 static int gl_ext_arb_vertex_buffer_object_default;
 static int gl_arb_pixel_buffer_object_default;
-static int gl_motionblur;
 static int gl_fog;
 static int gl_fog_color;
 static int gl_finish;
@@ -252,7 +248,6 @@ int gl_texture_hqresize;
 int gl_texture_hqresize_textures;
 int gl_texture_hqresize_sprites;
 int gl_texture_hqresize_patches;
-motion_blur_params_t motion_blur;
 gl_lightmode_t gl_lightmode_default;
 int gl_light_ambient;
 int useglgamma;
@@ -1084,18 +1079,6 @@ default_t defaults[] =
    {hq_scale_none},hq_scale_none,hq_scale_max-1, def_int,ss_stat},
   {"gl_texture_hqresize_patches", {&gl_texture_hqresize_patches},
    {hq_scale_2x},hq_scale_none,hq_scale_max-1,def_int,ss_stat},
-  {"gl_motionblur", {&gl_motionblur},  {0},0,1,
-   def_bool,ss_stat},
-  {"gl_motionblur_min_speed", {NULL,&motion_blur.str_min_speed}, {0,"21.36"},UL,UL,
-   def_str,ss_none},
-  {"gl_motionblur_min_angle", {NULL,&motion_blur.str_min_angle}, {0,"20.0"},UL,UL,
-   def_str,ss_none},
-  {"gl_motionblur_att_a", {NULL,&motion_blur.str_att_a}, {0,"55.0"},UL,UL,
-   def_str,ss_none},
-  {"gl_motionblur_att_b", {NULL,&motion_blur.str_att_b}, {0,"1.8"},UL,UL,
-   def_str,ss_none},
-  {"gl_motionblur_att_c", {NULL,&motion_blur.str_att_c}, {0,"0.9"},UL,UL,
-   def_str,ss_none},
   {"gl_lightmode",{(int*)&gl_lightmode_default},{gl_lightmode_glboom},
    gl_lightmode_glboom, gl_lightmode_last-1, def_int,ss_none},
   {"gl_light_ambient", {&gl_light_ambient},  {20},1,255,
