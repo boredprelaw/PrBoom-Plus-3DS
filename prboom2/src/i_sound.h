@@ -44,7 +44,6 @@
 #include "l_soundgen.h"
 #endif
 
-extern int snd_pcspeaker;
 extern int lowpass_filter;
 
 // Init at program start...

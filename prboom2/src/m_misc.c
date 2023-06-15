@@ -423,7 +423,6 @@ default_t defaults[] =
   {"comp_skytransfers",{&comp_skytransfers},{0},0,1,def_bool,ss_comp},
 
   {"Sound settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"snd_pcspeaker",{&snd_pcspeaker},{0}, 0, 1, def_bool,ss_none},
   {"sound_card",{&snd_card},{-1},-1,7,       // jff 1/18/98 allow Allegro drivers
    def_int,ss_none}, // select sounds driver (DOS), -1 is autodetect, 0 is none; in Linux, non-zero enables sound
   {"music_card",{&mus_card},{-1},-1,9,       //  to be set,  -1 = autodetect

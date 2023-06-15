@@ -62,7 +62,6 @@
 #include "p_checksum.h"
 
 #include "protocol.h"
-#include "i_network.h"
 #include "i_system.h"
 #include "i_main.h"
 #include "i_video.h"

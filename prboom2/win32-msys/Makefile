@@ -11,11 +11,9 @@
 TARGET		:=	dist/PrBoom-Plus
 BUILD		:=	build
 
-SOURCES		:=	../src \
-				../src/SDL \
-				../src/PCSOUND
+SOURCES		:=	../src
 
-INCLUDES	:=	../src
+INCLUDES	:=	
 
 #---------------------------------------------------------------------------------
 # options for code generation

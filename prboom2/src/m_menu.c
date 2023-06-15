@@ -3272,8 +3272,7 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
   {"Sound & Music",                  S_SKIP|S_TITLE,     m_null, G_X, G_Y+10*8},
   {"Number of Sound Channels",       S_NUM|S_PRGWARN,    m_null, G_X, G_Y+11*8, {"snd_channels"}},
   {"Enable v1.1 Pitch Effects",      S_YESNO,            m_null, G_X, G_Y+12*8, {"pitched_sounds"}},
-  {"PC Speaker emulation",           S_YESNO|S_PRGWARN,  m_null, G_X, G_Y+13*8, {"snd_pcspeaker"}},
-  {"disable sound cutoffs",          S_YESNO,            m_null, G_X, G_Y+14*8, {"full_sounds"}},
+  {"disable sound cutoffs",          S_YESNO,            m_null, G_X, G_Y+13*8, {"full_sounds"}},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},

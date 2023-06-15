@@ -70,10 +70,8 @@
 #include "i_system.h"
 
 //e6y
-#include "i_pcsound.h"
 #include "e6y.h"
 
-int snd_pcspeaker;
 int lowpass_filter;
 
 // The number of internal mixing channels,
@@ -257,9 +255,6 @@ static void updateSoundParams(int handle, int volume, int seperation, int pitch)
     I_Error("I_UpdateSoundParams: handle out of range");
 #endif
 
-  if (snd_pcspeaker)
-    return;
-
   // Set stepping
   // MWM 2000-12-24: Calculates proportion of channel samplerate
   // to global samplerate for mixing purposes.
@@ -354,10 +349,7 @@ void I_SetChannels(void)
 int I_GetSfxLumpNum(sfxinfo_t *sfx)
 {
   char namebuf[9];
-  const char *prefix;
-
-  // Different prefix for PC speaker sound effects.
-  prefix = (snd_pcspeaker ? "dp" : "ds");
+  const char *prefix = "ds";
 
   sprintf(namebuf, "%s%s", prefix, sfx->name);
   return W_CheckNumForName(namebuf); //e6y: make missing sounds non-fatal
@@ -387,9 +379,6 @@ int I_StartSound(int id, int channel, int vol, int sep, int pitch, int priority)
 #else
     return -1;
 #endif
-
-  if (snd_pcspeaker)
-    return I_PCS_StartSound(id, channel, vol, sep, pitch, priority);
 
   lump = S_sfx[id].lumpnum;
 
@@ -430,12 +419,6 @@ void I_StopSound (int handle)
     I_Error("I_StopSound: handle out of range");
 #endif
 
-  if (snd_pcspeaker)
-  {
-    I_PCS_StopSound(handle);
-    return;
-  }
-
   SDL_LockMutex (sfxmutex);
   stopchan(handle);
   SDL_UnlockMutex (sfxmutex);
@@ -449,9 +432,6 @@ dboolean I_SoundIsPlaying(int handle)
     I_Error("I_SoundIsPlaying: handle out of range");
 #endif
 
-  if (snd_pcspeaker)
-    return I_PCS_SoundIsPlaying(handle);
-
   return channelinfo[handle].data != NULL;
 }
 
@@ -461,18 +441,11 @@ dboolean I_AnySoundStillPlaying(void)
   dboolean result = false;
   int i;
 
-  if (snd_pcspeaker)
-    return false;
-
   for (i = 0; i < MAX_CHANNELS; i++)
     result |= channelinfo[i].data != NULL;
 
   return result;
 }
-
-
-// from pcsound_sdl.c
-void PCSound_Mix_Callback(void *udata, Uint8 *stream, int len);
 
 static void I_UpdateSound(void *unused, Uint8 *stream, int len)
 {
@@ -496,13 +469,6 @@ static void I_UpdateSound(void *unused, Uint8 *stream, int len)
   // service dumping calls
   if (dumping_sound && unused != (void *) 0xdeadbeef)
     return;
-
-  if (snd_pcspeaker)
-  {
-    PCSound_Mix_Callback (NULL, stream, len);
-    // no sfx mixing
-    return;
-  }
 
   SDL_LockMutex (sfxmutex);
   // Left and right channel
@@ -689,10 +655,6 @@ void I_InitSound(void)
   }
 
   sfxmutex = SDL_CreateMutex ();
-
-  // If we are using the PC speaker, we now need to initialise it.
-  if (snd_pcspeaker)
-    I_PCS_InitSound();
 
   if (!nomusicparm)
     I_InitMusic();
