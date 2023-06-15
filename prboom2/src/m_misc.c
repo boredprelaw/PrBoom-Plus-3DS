@@ -244,10 +244,6 @@ int gl_texture_internal_hires;
 int gl_texture_external_hires;
 int gl_hires_override_pwads;
 const char *gl_texture_hires_dir;
-int gl_texture_hqresize;
-int gl_texture_hqresize_textures;
-int gl_texture_hqresize_sprites;
-int gl_texture_hqresize_patches;
 gl_lightmode_t gl_lightmode_default;
 int gl_light_ambient;
 int useglgamma;
@@ -1071,14 +1067,6 @@ default_t defaults[] =
    def_bool,ss_stat},
   {"gl_texture_hires_dir", {NULL,&gl_texture_hires_dir}, {0,""},UL,UL,
    def_str,ss_none},
-  {"gl_texture_hqresize", {&gl_texture_hqresize},  {0},0,1,
-   def_bool,ss_stat},
-  {"gl_texture_hqresize_textures", {&gl_texture_hqresize_textures},
-   {hq_scale_2x},hq_scale_none,hq_scale_max-1, def_int,ss_stat},
-  {"gl_texture_hqresize_sprites", {&gl_texture_hqresize_sprites},
-   {hq_scale_none},hq_scale_none,hq_scale_max-1, def_int,ss_stat},
-  {"gl_texture_hqresize_patches", {&gl_texture_hqresize_patches},
-   {hq_scale_2x},hq_scale_none,hq_scale_max-1,def_int,ss_stat},
   {"gl_lightmode",{(int*)&gl_lightmode_default},{gl_lightmode_glboom},
    gl_lightmode_glboom, gl_lightmode_last-1, def_int,ss_none},
   {"gl_light_ambient", {&gl_light_ambient},  {20},1,255,

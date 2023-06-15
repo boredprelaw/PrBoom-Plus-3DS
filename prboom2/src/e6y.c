@@ -716,10 +716,6 @@ void M_ChangeTextureUseHires(void)
   gld_Precache();
 }
 
-void M_ChangeTextureHQResize(void)
-{
-  gld_FlushTextures();
-}
 #endif //GL_DOOM
 
 void M_Mouse(int choice, int *sens);
