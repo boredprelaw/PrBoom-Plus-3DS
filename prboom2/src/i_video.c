@@ -884,30 +884,6 @@ void I_SetWindowCaption(void)
   SDL_SetWindowTitle(NULL, PACKAGE_NAME " " PACKAGE_VERSION);
 }
 
-// 
-// Set the application icon
-// 
-
-#include "icon.c"
-
-void I_SetWindowIcon(void)
-{
-  static SDL_Surface *surface = NULL;
-
-  // do it only once, because of crash in SDL_InitVideoMode in SDL 1.3
-  if (!surface)
-  {
-    surface = SDL_CreateRGBSurfaceFrom(icon_data,
-      icon_w, icon_h, 32, icon_w * 4,
-      0xff << 0, 0xff << 8, 0xff << 16, 0xff << 24);
-  }
-
-  if (surface)
-  {
-    SDL_SetWindowIcon(NULL, surface);
-  }
-}
-
 void I_InitGraphics(void)
 {
   static int    firsttime=1;
@@ -924,9 +900,6 @@ void I_InitGraphics(void)
 
     //e6y: setup the window title
     I_SetWindowCaption();
-
-    //e6y: set the application icon
-    I_SetWindowIcon();
 
     /* Initialize the input system */
     I_InitInputs();
