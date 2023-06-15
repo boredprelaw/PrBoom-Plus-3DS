@@ -193,7 +193,6 @@ extern int gl_ext_blend_color_default;
 extern int gl_use_stencil_default;
 extern int gl_ext_arb_vertex_buffer_object_default;
 extern int gl_arb_pixel_buffer_object_default;
-extern int gl_arb_shader_objects_default;
 
 //e6y: motion bloor
 extern int gl_motionblur;
@@ -229,7 +228,6 @@ static int gl_ext_blend_color_default;
 static int gl_use_stencil_default;
 static int gl_ext_arb_vertex_buffer_object_default;
 static int gl_arb_pixel_buffer_object_default;
-static int gl_arb_shader_objects_default;
 static int gl_motionblur;
 static int gl_fog;
 static int gl_fog_color;
@@ -483,8 +481,6 @@ default_t defaults[] =
   {"gl_ext_arb_vertex_buffer_object", {&gl_ext_arb_vertex_buffer_object_default}, {1},0,1,
    def_bool,ss_stat},
   {"gl_arb_pixel_buffer_object", {&gl_arb_pixel_buffer_object_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_arb_shader_objects", {&gl_arb_shader_objects_default}, {1},0,1,
    def_bool,ss_stat},
   {"gl_ext_blend_color", {&gl_ext_blend_color_default}, {1},0,1,
    def_bool,ss_stat},
