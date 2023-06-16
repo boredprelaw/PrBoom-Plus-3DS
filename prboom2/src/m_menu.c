@@ -2231,11 +2231,6 @@ static void M_DrawScreenItems(const setup_menu_t* src)
   strcpy(menu_buffer, "Extension GL_ARB_multitexture not found");
   M_DrawMenuString(30,176,CR_RED);
   } else
-    if (warning_about_changes & S_CANT_GL_ARB_MULTISAMPLEFACTOR) {
-  strcpy(menu_buffer, "Mast be even number like 0-none, 2, 4, 6");
-  M_DrawMenuString(30,176,CR_RED);
-  } else
-
     if (warning_about_changes & S_BADVAL) {
   strcpy(menu_buffer, "Value out of Range");
   M_DrawMenuString(100,176,CR_RED);
@@ -3388,18 +3383,17 @@ setup_menu_t gen_settings4[] = { // General Settings screen3
 setup_menu_t gen_settings5[] = { // General Settings screen3
 #ifdef GL_DOOM
   {"OpenGL Options",             S_SKIP|S_TITLE,m_null,G_X,G_Y+1*8},
-  {"Multisampling (0-None)",    S_NUM|S_PRGWARN|S_CANT_GL_ARB_MULTISAMPLEFACTOR,m_null,G_X,G_Y+2*8, {"render_multisampling"}, 0, 0, M_ChangeMultiSample},
-  {"Field Of View",             S_NUM,    m_null, G_X, G_Y+ 3*8, {"render_fov"}, 0, 0, M_ChangeFOV},
-  {"Sector Light Mode",         S_CHOICE, m_null, G_X, G_Y+ 4*8, {"gl_lightmode"}, 0, 0, M_ChangeLightMode, gl_lightmodes},
-  {"Allow Fog",                 S_YESNO,  m_null, G_X, G_Y+ 5*8, {"gl_fog"}, 0, 0, M_ChangeAllowFog},
-  {"Simple Shadows",            S_YESNO,  m_null, G_X, G_Y+ 6*8, {"gl_shadows"}},
-  {"Thing Sprite Fuzz",         S_CHOICE, m_null, G_X, G_Y+ 7*8, {"gl_thingspritefuzzmode"}, 0, 0, 0, gl_spritefuzzmodes},
-  {"Weapon Sprite Fuzz",        S_CHOICE, m_null, G_X, G_Y+ 8*8, {"gl_weaponspritefuzzmode"}, 0, 0, 0, gl_spritefuzzmodes},
-  {"Paper Items",               S_YESNO,  m_null, G_X, G_Y+ 9*8, {"render_paperitems"}},
-  {"Smooth sprite edges",       S_YESNO,  m_null, G_X, G_Y+10*8, {"gl_sprite_blend"}},
-  {"Adjust Sprite Clipping",    S_CHOICE, m_null, G_X, G_Y+11*8, {"gl_spriteclip"}, 0, 0, M_ChangeSpriteClip, gl_spriteclipmodes},
-  {"Item out of Floor offset",  S_NUM,    m_null, G_X, G_Y+12*8, {"gl_sprite_offset"}, 0, 0, M_ChangeSpriteClip},
-  {"Health Bar Above Monsters", S_YESNO,  m_null, G_X, G_Y+13*8, {"health_bar"}},
+  {"Field Of View",             S_NUM,    m_null, G_X, G_Y+ 2*8, {"render_fov"}, 0, 0, M_ChangeFOV},
+  {"Sector Light Mode",         S_CHOICE, m_null, G_X, G_Y+ 3*8, {"gl_lightmode"}, 0, 0, M_ChangeLightMode, gl_lightmodes},
+  {"Allow Fog",                 S_YESNO,  m_null, G_X, G_Y+ 4*8, {"gl_fog"}, 0, 0, M_ChangeAllowFog},
+  {"Simple Shadows",            S_YESNO,  m_null, G_X, G_Y+ 5*8, {"gl_shadows"}},
+  {"Thing Sprite Fuzz",         S_CHOICE, m_null, G_X, G_Y+ 6*8, {"gl_thingspritefuzzmode"}, 0, 0, 0, gl_spritefuzzmodes},
+  {"Weapon Sprite Fuzz",        S_CHOICE, m_null, G_X, G_Y+ 7*8, {"gl_weaponspritefuzzmode"}, 0, 0, 0, gl_spritefuzzmodes},
+  {"Paper Items",               S_YESNO,  m_null, G_X, G_Y+ 8*8, {"render_paperitems"}},
+  {"Smooth sprite edges",       S_YESNO,  m_null, G_X, G_Y+ 9*8, {"gl_sprite_blend"}},
+  {"Adjust Sprite Clipping",    S_CHOICE, m_null, G_X, G_Y+10*8, {"gl_spriteclip"}, 0, 0, M_ChangeSpriteClip, gl_spriteclipmodes},
+  {"Item out of Floor offset",  S_NUM,    m_null, G_X, G_Y+11*8, {"gl_sprite_offset"}, 0, 0, M_ChangeSpriteClip},
+  {"Health Bar Above Monsters", S_YESNO,  m_null, G_X, G_Y+12*8, {"health_bar"}},
 #endif
 
   {"<- PREV",S_SKIP|S_PREV, m_null,KB_PREV, KB_Y+20*8, {gen_settings4}},
@@ -5145,11 +5139,6 @@ dboolean M_Responder (event_t* ev) {
 
       gather_buffer[gather_count] = 0;
       value = atoi(gather_buffer);  // Integer value
-
-      //e6y
-      if ((ptr1->m_flags&S_CANT_GL_ARB_MULTISAMPLEFACTOR) && value%2!=0)
-        warn_about_changes(ptr1->m_flags & S_CANT_GL_ARB_MULTISAMPLEFACTOR);
-      else
 
       if ((ptr1->var.def->minvalue != UL &&
            value < ptr1->var.def->minvalue) ||

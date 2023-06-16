@@ -2331,14 +2331,6 @@ void AM_Drawer (void)
 
   AM_setFrameVariables();
 
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-  {
-    // do not use multisampling in automap mode if map_use_multisamling 0
-    gld_MultisamplingSet();
-  }
-#endif
-
   if (!(automapmode & am_overlay)) // cph - If not overlay mode, clear background for the automap
     V_FillRect(FB, f_x, f_y, f_w, f_h, (byte)mapcolor_back); //jff 1/5/98 background default color
 

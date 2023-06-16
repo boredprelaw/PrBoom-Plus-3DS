@@ -50,7 +50,6 @@
 #define STSTR_SECRETFOUND   "A secret is revealed!"
 
 #define S_CANT_GL_ARB_MULTITEXTURE 0x10000000
-#define S_CANT_GL_ARB_MULTISAMPLEFACTOR  0x20000000
 
 #define GL_COMBINE_ARB                    0x8570
 #define GL_RGB_SCALE_ARB                  0x8573
@@ -124,7 +123,6 @@ extern int movement_mousestrafedivisor;
 extern int mouse_handler;
 extern int mouse_doubleclick_as_use;
 extern int mouse_carrytics;
-extern int render_multisampling;
 extern int render_paperitems;
 extern int render_wipescreen;
 extern int mouse_acceleration;
@@ -193,7 +191,6 @@ void M_ChangeFOV(void);
 
 #ifdef GL_DOOM
 void M_ChangeUseDetail(void);
-void M_ChangeMultiSample(void);
 void M_ChangeSpriteClip(void);
 void M_ChangeAllowBoomColormaps(void);
 void M_ChangeTextureUseHires(void);

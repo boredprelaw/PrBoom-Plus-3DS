@@ -356,10 +356,6 @@ void gld_InitOpenGL(dboolean compatibility_mode)
     gl_version = OPENGL_VERSION_1_1;
   }
 
-  //init states manager
-  gld_EnableMultisample(true);
-  gld_EnableMultisample(false);
-
   for (texture = GL_TEXTURE0_ARB; texture <= GL_TEXTURE31_ARB; texture++)
   {
     gld_EnableTexture2D(texture, true);
@@ -474,29 +470,6 @@ void gld_EnableClientCoordArray(GLenum texture, int enable)
     }
   }
 #endif
-}
-
-void gld_EnableMultisample(int enable)
-{
-  static int multisample_is_enabled = 0;
-  if (enable)
-  {
-    if (!multisample_is_enabled)
-    {
-      glEnable(GL_MULTISAMPLE_ARB);
-
-      multisample_is_enabled = enable;
-    }
-  }
-  else
-  {
-    if (multisample_is_enabled)
-    {
-      glDisable(GL_MULTISAMPLE_ARB);
-
-      multisample_is_enabled = enable;
-    }
-  }
 }
 
 void SetTextureMode(tex_mode_e type)

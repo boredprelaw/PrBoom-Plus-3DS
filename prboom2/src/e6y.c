@@ -40,9 +40,6 @@
 #include <direct.h>
 #include <winreg.h>
 #endif
-#ifdef GL_DOOM
-#include <SDL_opengl.h>
-#endif
 #include <string.h>
 #include <math.h>
 
@@ -51,9 +48,6 @@
 #include <stdlib.h>
 
 #include "SDL.h"
-#ifdef _WIN32
-#include <SDL_syswm.h>
-#endif
 
 #include "hu_lib.h"
 
@@ -141,7 +135,6 @@ int mouse_handler;
 int mouse_doubleclick_as_use;
 int mouse_carrytics;
 int render_fov = 90;
-int render_multisampling;
 int render_paperitems;
 int render_wipescreen;
 int mouse_acceleration;
@@ -651,10 +644,6 @@ void M_ChangeFOV(void)
 }
 
 #ifdef GL_DOOM
-void M_ChangeMultiSample(void)
-{
-}
-
 void M_ChangeSpriteClip(void)
 {
   gl_sprite_offset = (gl_spriteclip != spriteclip_const ? 0 : (.01f * (float)gl_sprite_offset_default));

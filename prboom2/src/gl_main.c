@@ -249,53 +249,6 @@ void gld_InitTextureParams(void)
   }
 }
 
-void gld_MultisamplingInit(void)
-{
-  if (render_multisampling)
-  {
-    extern int gl_colorbuffer_bits;
-    extern int gl_depthbuffer_bits;
-    
-    gl_colorbuffer_bits = 32;
-    SDL_GL_SetAttribute( SDL_GL_BUFFER_SIZE, gl_colorbuffer_bits );
-  
-    if (gl_depthbuffer_bits!=8 && gl_depthbuffer_bits!=16 && gl_depthbuffer_bits!=24)
-      gl_depthbuffer_bits = 16;
-    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits );
-
-    SDL_GL_SetAttribute ( SDL_GL_MULTISAMPLESAMPLES, render_multisampling );
-    SDL_GL_SetAttribute ( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-  }
-}
-
-void gld_MultisamplingCheck(void)
-{
-  if (render_multisampling)
-  {
-    int test = -1;
-    SDL_GL_GetAttribute (SDL_GL_MULTISAMPLESAMPLES, &test);
-    if (test!=render_multisampling)
-    {
-      void M_SaveDefaults (void);
-      int i=render_multisampling;
-      render_multisampling = 0;
-      M_SaveDefaults ();
-      I_Error("Couldn't set %dX multisamples for %dx%d video mode", i, SCREENWIDTH, SCREENHEIGHT);
-    }
-  }
-}
-
-void gld_MultisamplingSet(void)
-{
-  if (render_multisampling)
-  {
-    int use_multisampling = map_use_multisamling ||
-      (!(automapmode & am_active) || (automapmode & am_overlay));
-
-    gld_EnableMultisample(use_multisampling);
-  }
-}
-
 int gld_LoadGLDefs(const char * defsLump)
 {
   typedef enum
@@ -1161,8 +1114,6 @@ void gld_Clear(void)
 void gld_StartDrawScene(void)
 {
   extern int screenblocks;
-
-  gld_MultisamplingSet();
 
   if (gl_shared_texture_palette)
     glEnable(GL_SHARED_TEXTURE_PALETTE_EXT);

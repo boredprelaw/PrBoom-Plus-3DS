@@ -987,9 +987,6 @@ void I_UpdateVideoMode(void)
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits );
     SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
 
-    //e6y: anti-aliasing
-    gld_MultisamplingInit();
-
     sdl_window = SDL_CreateWindow(
       PACKAGE_NAME " " PACKAGE_VERSION,
       SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -1058,11 +1055,6 @@ void I_UpdateVideoMode(void)
   }
 #endif
 
-#ifdef GL_DOOM
-  /*if (V_GetMode() == VID_MODEGL)
-    gld_MultisamplingCheck();*/
-#endif
-
   if (V_GetMode() != VID_MODEGL)
   {
     lprintf(LO_INFO, "I_UpdateVideoMode: 0x%x, %s, %s\n", init_flags, screen && screen->pixels ? "SDL buffer" : "own buffer", screen && SDL_MUSTLOCK(screen) ? "lock-and-copy": "direct access");
@@ -1123,10 +1115,6 @@ void I_UpdateVideoMode(void)
     lprintf(LO_INFO,"    SDL_GL_BUFFER_SIZE: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &temp );
     lprintf(LO_INFO,"    SDL_GL_DEPTH_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_MULTISAMPLESAMPLES, &temp );
-    lprintf(LO_INFO,"    SDL_GL_MULTISAMPLESAMPLES: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_MULTISAMPLEBUFFERS, &temp );
-    lprintf(LO_INFO,"    SDL_GL_MULTISAMPLEBUFFERS: %i\n",temp);
     SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &temp );
     lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
 
