@@ -172,8 +172,6 @@ extern int gl_patch_filter;
 extern int gl_texture_filter_anisotropic;
 extern const char *gl_tex_format_string;
 extern int gl_sky_detail;
-extern int gl_use_paletted_texture;
-extern int gl_use_shared_texture_palette;
 
 //e6y: all OpenGL extentions will be disabled with TRUE
 extern int gl_compatibility;
@@ -208,8 +206,6 @@ static int gl_patch_filter;
 static int gl_texture_filter_anisotropic;
 static const char *gl_tex_format_string;
 static int gl_sky_detail;
-static int gl_use_paletted_texture;
-static int gl_use_shared_texture_palette;
 static int gl_compatibility;
 static int gl_ext_texture_filter_anisotropic_default;
 static int gl_arb_texture_non_power_of_two_default;
@@ -514,10 +510,6 @@ default_t defaults[] =
   {skytype_auto}, skytype_auto, skytype_count - 1, def_int,ss_none},
   {"gl_sky_detail",{&gl_sky_detail},{16},1,32,
    def_int,ss_none},
-  {"gl_use_paletted_texture",{&gl_use_paletted_texture},{0},0,1,
-   def_bool,ss_none},
-  {"gl_use_shared_texture_palette",{&gl_use_shared_texture_palette},{0},0,1,
-   def_bool,ss_none},
 
   {"Mouse settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"use_mouse",{&usemouse},{1},0,1,
