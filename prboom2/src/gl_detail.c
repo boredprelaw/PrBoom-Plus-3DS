@@ -168,142 +168,13 @@ void gld_ShutdownDetail(void)
   }
 }
 
-void gld_DrawTriangleStripARB(GLWall *wall, gl_strip_coords_t *c1, gl_strip_coords_t *c2)
-{
-  glBegin(GL_TRIANGLE_STRIP);
-
-  // lower left corner
-  GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE0_ARB,(const GLfloat*)&c1->t[0]); 
-  GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE1_ARB,(const GLfloat*)&c2->t[0]);
-  glVertex3fv((const GLfloat*)&c1->v[0]);
-
-  // split left edge of wall
-  //if (!wall->glseg->fracleft)
-  //  gld_SplitLeftEdge(wall, true);
-
-  // upper left corner
-  GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE0_ARB,(const GLfloat*)&c1->t[1]);
-  GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE1_ARB,(const GLfloat*)&c2->t[1]);
-  glVertex3fv((const GLfloat*)&c1->v[1]);
-
-  // upper right corner
-  GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE0_ARB,(const GLfloat*)&c1->t[2]); 
-  GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE1_ARB,(const GLfloat*)&c2->t[2]);
-  glVertex3fv((const GLfloat*)&c1->v[2]);
-
-  // split right edge of wall
-  //if (!wall->glseg->fracright)
-  //  gld_SplitRightEdge(wall, true);
-
-  // lower right corner
-  GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE0_ARB,(const GLfloat*)&c1->t[3]); 
-  GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE1_ARB,(const GLfloat*)&c2->t[3]);
-  glVertex3fv((const GLfloat*)&c1->v[3]);
-
-  glEnd();
-}
-
 void gld_PreprocessDetail(void)
 {
-  if (gl_arb_multitexture)
-  {
-    GLEXT_glClientActiveTextureARB(GL_TEXTURE0_ARB);
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-    glTexCoordPointer(2, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_u);
-#endif
-
-    GLEXT_glClientActiveTextureARB(GL_TEXTURE1_ARB);
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-    glTexCoordPointer(2, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_u);
-#endif
-    GLEXT_glClientActiveTextureARB(GL_TEXTURE0_ARB);
-
-    GLEXT_glActiveTextureARB(GL_TEXTURE1_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-    glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
-    GLEXT_glActiveTextureARB(GL_TEXTURE0_ARB);
-  }
 }
 
 
 void gld_EnableDetail(int enable)
 {
-  if (!gl_arb_multitexture || !render_usedetail)
-    return;
-
-  gld_EnableTexture2D(GL_TEXTURE1_ARB, enable);
-  gld_EnableClientCoordArray(GL_TEXTURE1_ARB, enable);
-}
-
-void gld_DrawWallWithDetail(GLWall *wall)
-{
-  float w, h, dx, dy;
-  dboolean fake = (wall->flag == GLDWF_TOPFLUD) || (wall->flag == GLDWF_BOTFLUD);
-  detail_t *detail = wall->gltexture->detail;
-  
-  w = wall->gltexture->detail_width;
-  h = wall->gltexture->detail_height;
-  dx = detail->offsetx;
-  dy = detail->offsety;
-
-  if (fake)
-  {
-    int i;
-    gl_strip_coords_t c1;
-    gl_strip_coords_t c2;
-
-    gld_BindFlat(wall->gltexture, 0);
-
-    gld_SetupFloodStencil(wall);
-    gld_SetupFloodedPlaneLight(wall);
-    gld_SetupFloodedPlaneCoords(wall, &c1);
-    for (i = 0; i < 4; i++)
-    {
-      c2.t[i][0] = c1.t[i][0] * w + dx;
-      c2.t[i][1] = c1.t[i][1] * h + dy;
-    }
-
-    gld_EnableTexture2D(GL_TEXTURE1_ARB, true);
-    gld_DrawTriangleStripARB(wall, &c1, &c2);
-    gld_EnableTexture2D(GL_TEXTURE1_ARB, false);
-
-    gld_ClearFloodStencil(wall);
-  }
-  else
-  {
-    gld_StaticLightAlpha(wall->light, wall->alpha);
-    glBegin(GL_TRIANGLE_FAN);
-
-    // lower left corner
-    GLEXT_glMultiTexCoord2fARB(GL_TEXTURE0_ARB,wall->ul,wall->vb); 
-    GLEXT_glMultiTexCoord2fARB(GL_TEXTURE1_ARB,wall->ul*w+dx,wall->vb*h+dy);
-    glVertex3f(wall->glseg->x1,wall->ybottom,wall->glseg->z1);
-
-    // split left edge of wall
-    if (!wall->glseg->fracleft)
-      gld_SplitLeftEdge(wall, true);
-
-    // upper left corner
-    GLEXT_glMultiTexCoord2fARB(GL_TEXTURE0_ARB,wall->ul,wall->vt);
-    GLEXT_glMultiTexCoord2fARB(GL_TEXTURE1_ARB,wall->ul*w+dx,wall->vt*h+dy);
-    glVertex3f(wall->glseg->x1,wall->ytop,wall->glseg->z1);
-
-    // upper right corner
-    GLEXT_glMultiTexCoord2fARB(GL_TEXTURE0_ARB,wall->ur,wall->vt); 
-    GLEXT_glMultiTexCoord2fARB(GL_TEXTURE1_ARB,wall->ur*w+dx,wall->vt*h+dy);
-    glVertex3f(wall->glseg->x2,wall->ytop,wall->glseg->z2);
-
-    // split right edge of wall
-    if (!wall->glseg->fracright)
-      gld_SplitRightEdge(wall, true);
-
-    // lower right corner
-    GLEXT_glMultiTexCoord2fARB(GL_TEXTURE0_ARB,wall->ur,wall->vb); 
-    GLEXT_glMultiTexCoord2fARB(GL_TEXTURE1_ARB,wall->ur*w+dx,wall->vb*h+dy);
-    glVertex3f(wall->glseg->x2,wall->ybottom,wall->glseg->z2);
-
-    glEnd();
-  }
 }
 
 void gld_DrawWallDetail_NoARB(GLWall *wall)
@@ -452,15 +323,7 @@ void gld_DrawFlatDetail_NoARB(GLFlat *flat)
       for (vertexnum=currentloop->vertexindex; vertexnum<(currentloop->vertexindex+currentloop->vertexcount); vertexnum++)
       {
         // set texture coordinate of this vertex
-        if (true)
-        {
-          GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE0_ARB, (GLfloat*)&flats_vbo[vertexnum].u);
-          GLEXT_glMultiTexCoord2fvARB(GL_TEXTURE1_ARB, (GLfloat*)&flats_vbo[vertexnum].u);
-        }
-        else
-        {
-          glTexCoord2fv((GLfloat*)&flats_vbo[vertexnum].u);
-        }
+        glTexCoord2fv((GLfloat*)&flats_vbo[vertexnum].u);
         // set vertex coordinate
         glVertex3fv((GLfloat*)&flats_vbo[vertexnum].x);
       }
@@ -557,27 +420,13 @@ void gld_DrawDetail_NoARB(void)
       gld_DrawWallDetail_NoARB(gld_drawinfo.items[GLDIT_WALL][i].item.wall);
     }
 
-    if (!gl_use_stencil)
-    {
-      gld_DrawItemsSortByDetail(GLDIT_MWALL);
-    }
+    gld_DrawItemsSortByDetail(GLDIT_MWALL);
 
     for (i = gld_drawinfo.num_items[GLDIT_MWALL] - 1; i >= 0; i--)
     {
       GLWall *wall = gld_drawinfo.items[GLDIT_MWALL][i].item.wall;
-      if (gl_use_stencil)
-      {
-        if (!(wall->gltexture->flags & GLTEXTURE_HASHOLES))
-        {
-          gld_SetFog(wall->fogdensity);
-          gld_DrawWallDetail_NoARB(wall);
-        }
-      }
-      else
-      {
-        gld_SetFog(wall->fogdensity);
-        gld_DrawWallDetail_NoARB(wall);
-      }
+      gld_SetFog(wall->fogdensity);
+      gld_DrawWallDetail_NoARB(wall);
     }
 
     if (gld_drawinfo.num_items[GLDIT_FWALL] > 0)
@@ -617,26 +466,6 @@ void gld_InitFrameDetails(void)
   scene_has_details =
     (render_usedetail) &&
     (scene_has_wall_details || scene_has_flat_details);
-}
-
-void gld_BindDetailARB(GLTexture *gltexture, int enable)
-{
-  if (scene_has_details)
-  {
-    gld_EnableTexture2D(GL_TEXTURE1_ARB, enable);
-    gld_EnableClientCoordArray(GL_TEXTURE1_ARB, enable);
-
-    if (enable &&
-      gltexture->detail &&
-      gltexture->detail->texid != last_detail_texid)
-    {
-      last_detail_texid = gltexture->detail->texid;
-
-      GLEXT_glActiveTextureARB(GL_TEXTURE1_ARB);
-      glBindTexture(GL_TEXTURE_2D, gltexture->detail->texid);
-      GLEXT_glActiveTextureARB(GL_TEXTURE0_ARB);
-    }
-  }
 }
 
 void gld_BindDetail(GLTexture *gltexture, int enable)
@@ -724,8 +553,6 @@ GLuint gld_LoadDetailName(const char *name)
       SDL_FreeSurface(surf_raw);
       if (surf)
       {
-        if (gl_arb_multitexture)
-          GLEXT_glActiveTextureARB(GL_TEXTURE1_ARB);
         glGenTextures(1, &texid);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glBindTexture(GL_TEXTURE_2D, texid);
@@ -740,11 +567,6 @@ GLuint gld_LoadDetailName(const char *name)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);	
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        if (gl_ext_texture_filter_anisotropic)
-          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, (GLfloat)(1<<gl_texture_filter_anisotropic));
-
-        if (gl_arb_multitexture)
-          GLEXT_glActiveTextureARB(GL_TEXTURE0_ARB);
 
         SDL_FreeSurface(surf);
       }

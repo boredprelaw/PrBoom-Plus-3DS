@@ -151,15 +151,6 @@ int M_ReadFile(char const *name, byte **buffer)
 int usemouse;
 dboolean    precache = true; /* if true, load all graphics at start */
 
-// The available anisotropic
-typedef enum {
-  gl_anisotropic_off = 0,
-  gl_anisotropic_2x  = 1,
-  gl_anisotropic_4x  = 2,
-  gl_anisotropic_8x  = 3,
-  gl_anisotropic_16x = 4,
-} gl_anisotropic_mode_t;
-
 extern int viewwidth;
 extern int viewheight;
 #ifdef GL_DOOM
@@ -169,7 +160,6 @@ extern int gl_depthbuffer_bits;
 extern int gl_texture_filter;
 extern int gl_sprite_filter;
 extern int gl_patch_filter;
-extern int gl_texture_filter_anisotropic;
 extern const char *gl_tex_format_string;
 extern int gl_sky_detail;
 
@@ -177,16 +167,7 @@ extern int gl_sky_detail;
 extern int gl_compatibility;
 
 //cfg values
-extern int gl_ext_texture_filter_anisotropic_default;
-extern int gl_arb_texture_non_power_of_two_default;
-extern int gl_arb_multitexture_default;
-extern int gl_arb_texture_compression_default;
-extern int gl_ext_framebuffer_object_default;
-extern int gl_ext_packed_depth_stencil_default;
-extern int gl_ext_blend_color_default;
-extern int gl_use_stencil_default;
 extern int gl_ext_arb_vertex_buffer_object_default;
-extern int gl_arb_pixel_buffer_object_default;
 
 //e6y: fog
 extern int gl_fog;
@@ -203,20 +184,10 @@ extern int gl_depthbuffer_bits;
 static int gl_texture_filter;
 static int gl_sprite_filter;
 static int gl_patch_filter;
-static int gl_texture_filter_anisotropic;
 static const char *gl_tex_format_string;
 static int gl_sky_detail;
 static int gl_compatibility;
-static int gl_ext_texture_filter_anisotropic_default;
-static int gl_arb_texture_non_power_of_two_default;
-static int gl_arb_multitexture_default;
-static int gl_arb_texture_compression_default;
-static int gl_ext_framebuffer_object_default;
-static int gl_ext_packed_depth_stencil_default;
-static int gl_ext_blend_color_default;
-static int gl_use_stencil_default;
 static int gl_ext_arb_vertex_buffer_object_default;
-static int gl_arb_pixel_buffer_object_default;
 static int gl_fog;
 static int gl_fog_color;
 static int gl_finish;
@@ -455,25 +426,7 @@ default_t defaults[] =
   {"gl_compatibility", {&gl_compatibility},  {0},0,1,
    def_bool,ss_stat},
 
-  {"gl_arb_multitexture", {&gl_arb_multitexture_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_arb_texture_compression", {&gl_arb_texture_compression_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_arb_texture_non_power_of_two", {&gl_arb_texture_non_power_of_two_default}, {1},0,1,
-   def_bool,ss_stat},
   {"gl_ext_arb_vertex_buffer_object", {&gl_ext_arb_vertex_buffer_object_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_arb_pixel_buffer_object", {&gl_arb_pixel_buffer_object_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_ext_blend_color", {&gl_ext_blend_color_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_ext_framebuffer_object", {&gl_ext_framebuffer_object_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_ext_packed_depth_stencil", {&gl_ext_packed_depth_stencil_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_ext_texture_filter_anisotropic", {&gl_ext_texture_filter_anisotropic_default}, {1},0,1,
-   def_bool,ss_stat},
-  {"gl_use_stencil", {&gl_use_stencil_default}, {1},0,1,
    def_bool,ss_stat},
   {"gl_use_display_lists",{&gl_use_display_lists},{0},0,1,
    def_bool,ss_none},
@@ -496,8 +449,6 @@ default_t defaults[] =
    {filter_nearest}, filter_nearest, filter_linear_mipmap_nearest, def_int,ss_none},
   {"gl_patch_filter",{(int*)&gl_patch_filter},
    {filter_nearest}, filter_nearest, filter_linear, def_int,ss_none},
-  {"gl_texture_filter_anisotropic",{(int*)&gl_texture_filter_anisotropic},
-   {gl_anisotropic_8x}, gl_anisotropic_off, gl_anisotropic_16x, def_int,ss_none},
   {"gl_tex_format_string", {NULL,&gl_tex_format_string}, {0,"GL_RGBA"},UL,UL,
    def_str,ss_none},
   {"gl_sprite_offset",{&gl_sprite_offset_default},{0}, 0, 5,

@@ -618,44 +618,39 @@ static void R_Subsector(int num)
   sub = &subsectors[num];
   currentsubsectornum = num;
 
-#ifdef GL_DOOM
-  if (V_GetMode() != VID_MODEGL || !gl_use_stencil || sub->sector->validcount != validcount)
-#endif
-  {
-    frontsector = sub->sector;
+  frontsector = sub->sector;
 
-    // killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
-    frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
-      &ceilinglightlevel, false);   // killough 4/11/98
+  // killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
+  frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
+    &ceilinglightlevel, false);   // killough 4/11/98
 
-    // killough 3/7/98: Add (x,y) offsets to flats, add deep water check
-    // killough 3/16/98: add floorlightlevel
-    // killough 10/98: add support for skies transferred from sidedefs
-    floorplane = frontsector->floorheight < viewz || // killough 3/7/98
-      (frontsector->heightsec != -1 &&
-       sectors[frontsector->heightsec].ceilingpic == skyflatnum) ?
-      R_FindPlane(frontsector->floorheight,
-                  frontsector->floorpic == skyflatnum &&  // kilough 10/98
-                  frontsector->sky & PL_SKYFLAT ? frontsector->sky :
-                  frontsector->floorpic,
-                  floorlightlevel,                // killough 3/16/98
-                  frontsector->floor_xoffs,       // killough 3/7/98
-                  frontsector->floor_yoffs
-                  ) : NULL;
+  // killough 3/7/98: Add (x,y) offsets to flats, add deep water check
+  // killough 3/16/98: add floorlightlevel
+  // killough 10/98: add support for skies transferred from sidedefs
+  floorplane = frontsector->floorheight < viewz || // killough 3/7/98
+    (frontsector->heightsec != -1 &&
+      sectors[frontsector->heightsec].ceilingpic == skyflatnum) ?
+    R_FindPlane(frontsector->floorheight,
+                frontsector->floorpic == skyflatnum &&  // kilough 10/98
+                frontsector->sky & PL_SKYFLAT ? frontsector->sky :
+                frontsector->floorpic,
+                floorlightlevel,                // killough 3/16/98
+                frontsector->floor_xoffs,       // killough 3/7/98
+                frontsector->floor_yoffs
+                ) : NULL;
 
-    ceilingplane = frontsector->ceilingheight > viewz ||
-      frontsector->ceilingpic == skyflatnum ||
-      (frontsector->heightsec != -1 &&
-       sectors[frontsector->heightsec].floorpic == skyflatnum) ?
-      R_FindPlane(frontsector->ceilingheight,     // killough 3/8/98
-                  frontsector->ceilingpic == skyflatnum &&  // kilough 10/98
-                  frontsector->sky & PL_SKYFLAT ? frontsector->sky :
-                  frontsector->ceilingpic,
-                  ceilinglightlevel,              // killough 4/11/98
-                  frontsector->ceiling_xoffs,     // killough 3/7/98
-                  frontsector->ceiling_yoffs
-                  ) : NULL;
-  }
+  ceilingplane = frontsector->ceilingheight > viewz ||
+    frontsector->ceilingpic == skyflatnum ||
+    (frontsector->heightsec != -1 &&
+      sectors[frontsector->heightsec].floorpic == skyflatnum) ?
+    R_FindPlane(frontsector->ceilingheight,     // killough 3/8/98
+                frontsector->ceilingpic == skyflatnum &&  // kilough 10/98
+                frontsector->sky & PL_SKYFLAT ? frontsector->sky :
+                frontsector->ceilingpic,
+                ceilinglightlevel,              // killough 4/11/98
+                frontsector->ceiling_xoffs,     // killough 3/7/98
+                frontsector->ceiling_yoffs
+                ) : NULL;
 
   // e6y
   // New algo can handle fake flats and ceilings
@@ -668,36 +663,32 @@ static void R_Subsector(int num)
 
         if(frontsector == sub->sector)
         {
-            if (!gl_use_stencil)
+            // if the sector has bottomtextures, then the floorheight will be set to the
+            // highest surounding floorheight
+            if ((frontsector->flags & NO_BOTTOMTEXTURES) || (!floorplane))
             {
+                tmpsec = GetBestFake(frontsector, 0, validcount);
 
-                // if the sector has bottomtextures, then the floorheight will be set to the
-                // highest surounding floorheight
-                if ((frontsector->flags & NO_BOTTOMTEXTURES) || (!floorplane))
+                if (tmpsec && frontsector->floorheight != tmpsec->floorheight)
                 {
-                    tmpsec = GetBestFake(frontsector, 0, validcount);
-
-                    if (tmpsec && frontsector->floorheight != tmpsec->floorheight)
-                    {
-                        dummyfloorplane.height = tmpsec->floorheight;
-                        dummyfloorplane.lightlevel = tmpsec->lightlevel;
-                        dummyfloorplane.picnum = tmpsec->floorpic;
-                        floorplane = &dummyfloorplane;
-                    }
+                    dummyfloorplane.height = tmpsec->floorheight;
+                    dummyfloorplane.lightlevel = tmpsec->lightlevel;
+                    dummyfloorplane.picnum = tmpsec->floorpic;
+                    floorplane = &dummyfloorplane;
                 }
+            }
 
-                // the same for ceilings. they will be set to the lowest ceilingheight
-                if ((frontsector->flags & NO_TOPTEXTURES) || (!ceilingplane))
+            // the same for ceilings. they will be set to the lowest ceilingheight
+            if ((frontsector->flags & NO_TOPTEXTURES) || (!ceilingplane))
+            {
+                tmpsec = GetBestFake(frontsector, 1, validcount);
+
+                if (tmpsec && frontsector->ceilingheight != tmpsec->ceilingheight)
                 {
-                    tmpsec = GetBestFake(frontsector, 1, validcount);
-
-                    if (tmpsec && frontsector->ceilingheight != tmpsec->ceilingheight)
-                    {
-                        dummyceilingplane.height = tmpsec->ceilingheight;
-                        dummyceilingplane.lightlevel = tmpsec->lightlevel;
-                        dummyceilingplane.picnum = tmpsec->ceilingpic;
-                        ceilingplane = &dummyceilingplane;
-                    }
+                    dummyceilingplane.height = tmpsec->ceilingheight;
+                    dummyceilingplane.lightlevel = tmpsec->lightlevel;
+                    dummyceilingplane.picnum = tmpsec->ceilingpic;
+                    ceilingplane = &dummyceilingplane;
                 }
             }
 

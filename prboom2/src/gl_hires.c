@@ -99,7 +99,7 @@ int gld_ProgressRestoreScreen(void)
     fU2 = (float)SCREENWIDTH / (float)total_w;
     fV2 = 0.0f;
     
-    gld_EnableTexture2D(GL_TEXTURE0_ARB, true);
+    gld_EnableTexture2D(true);
     
     glBindTexture(GL_TEXTURE_2D, progress_texid);
     glColor3f(1.0f, 1.0f, 1.0f);

@@ -177,7 +177,6 @@ void gld_FrustrumSetup(void);
 dboolean gld_SphereInFrustum(float x, float y, float z, float radius);
 
 //missing flats (fake floors and ceilings)
-extern dboolean gl_use_stencil;
 sector_t* GetBestFake(sector_t *sector, int ceiling, int validcount);
 sector_t* GetBestBleedSector(sector_t* source, int ceiling);
 

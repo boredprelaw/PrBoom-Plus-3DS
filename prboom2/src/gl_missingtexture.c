@@ -269,13 +269,6 @@ void gld_PreprocessFakeSectors(void)
   int i, j, k, ceiling;
   int groupid;
 
-  if (gl_use_stencil)
-  {
-    // precalculate NO_TOPTEXTURES and NO_BOTTOMTEXTURES flags
-    gld_PrepareSectorSpecialEffects();
-    return;
-  }
-
   // free memory
   if (fakeplanes)
   {
@@ -422,7 +415,7 @@ void gld_SetupFloodStencil(GLWall *wall)
   glStencilFunc(GL_EQUAL, recursion, ~0); // create stencil
   glStencilOp(GL_KEEP, GL_KEEP, GL_INCR); // increment stencil of valid pixels
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // don't write to the graphics buffer
-  gld_EnableTexture2D(GL_TEXTURE0_ARB, false);
+  gld_EnableTexture2D(false);
   glColor3f(1, 1, 1);
   glEnable(GL_DEPTH_TEST);
   glDepthMask(true);
@@ -438,7 +431,7 @@ void gld_SetupFloodStencil(GLWall *wall)
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);   // this stage doesn't modify the stencil
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // don't write to the graphics buffer
-  gld_EnableTexture2D(GL_TEXTURE0_ARB, true);
+  gld_EnableTexture2D(true);
   glDisable(GL_DEPTH_TEST);
   glDepthMask(false);
 }
@@ -448,7 +441,7 @@ void gld_ClearFloodStencil(GLWall *wall)
   int recursion = 0;
 
   glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-  gld_EnableTexture2D(GL_TEXTURE0_ARB, false);
+  gld_EnableTexture2D(false);
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // don't write to the graphics buffer
   glColor3f(1, 1, 1);
 
@@ -462,7 +455,7 @@ void gld_ClearFloodStencil(GLWall *wall)
   // restore old stencil op.
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
   glStencilFunc(GL_EQUAL, recursion, ~0);
-  gld_EnableTexture2D(GL_TEXTURE0_ARB, true);
+  gld_EnableTexture2D(true);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glEnable(GL_DEPTH_TEST);
   glDepthMask(true);

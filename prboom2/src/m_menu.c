@@ -2227,10 +2227,6 @@ static void M_DrawScreenItems(const setup_menu_t* src)
 {
   if (print_warning_about_changes > 0) { /* killough 8/15/98: print warning */
   //e6y
-    if (warning_about_changes & S_CANT_GL_ARB_MULTITEXTURE) {
-  strcpy(menu_buffer, "Extension GL_ARB_multitexture not found");
-  M_DrawMenuString(30,176,CR_RED);
-  } else
     if (warning_about_changes & S_BADVAL) {
   strcpy(menu_buffer, "Value out of Range");
   M_DrawMenuString(100,176,CR_RED);
@@ -3445,25 +3441,21 @@ setup_menu_t gen_settings7[] =
 static const char *gltexfilters[] = {
   "None", "Linear", "Nearest Mipmap", "Linear Mipmap", "Bilinear", "Trilinear", NULL};
 
-static const char *gltexfilters_anisotropics[] = 
-  {"Off", "2x", "4x", "8x", "16x", NULL};
-
 setup_menu_t gen_settings8[] = { // General Settings screen4
 #ifdef GL_DOOM
   {"Texture Options",  S_SKIP|S_TITLE,m_null,G_X,G_Y+ 1*8},
   {"Texture Filter Mode",        S_CHOICE, m_null, G_X, G_Y+2 *8, {"gl_texture_filter"}, 0, 0, M_ChangeTextureParams, gltexfilters},
   {"Sprite Filter Mode",        S_CHOICE, m_null, G_X, G_Y+3 *8, {"gl_sprite_filter"}, 0, 0, M_ChangeTextureParams, gltexfilters},
   {"Patch Filter Mode",          S_CHOICE, m_null, G_X, G_Y+4 *8, {"gl_patch_filter"}, 0, 0, M_ChangeTextureParams, gltexfilters},
-  {"Anisotropic filter",         S_CHOICE, m_null, G_X, G_Y+5 *8, {"gl_texture_filter_anisotropic"}, 0, 0, M_ChangeTextureParams, gltexfilters_anisotropics},
-  {"Texture format",             S_CHOICE, m_null, G_X, G_Y+6 *8, {"gl_tex_format_string"}, 0, 0, M_ChangeTextureParams, gltexformats},
+  {"Texture format",             S_CHOICE, m_null, G_X, G_Y+5 *8, {"gl_tex_format_string"}, 0, 0, M_ChangeTextureParams, gltexformats},
 
-  {"Enable Colormaps",           S_YESNO, m_null, G_X,G_Y+ 8*8, {"gl_boom_colormaps"}, 0, 0, M_ChangeAllowBoomColormaps},
-  {"Enable Internal Hi-Res",     S_YESNO, m_null, G_X,G_Y+ 9*8, {"gl_texture_internal_hires"}, 0, 0, M_ChangeTextureUseHires},
-  {"Enable External Hi-Res",     S_YESNO, m_null, G_X,G_Y+10*8, {"gl_texture_external_hires"}, 0, 0, M_ChangeTextureUseHires},
-  {"Override PWAD's graphics with Hi-Res" ,S_YESNO|S_PRGWARN,m_null,G_X,G_Y+11*8, {"gl_hires_override_pwads"}, 0, 0, M_ChangeTextureUseHires},
+  {"Enable Colormaps",           S_YESNO, m_null, G_X,G_Y+ 7*8, {"gl_boom_colormaps"}, 0, 0, M_ChangeAllowBoomColormaps},
+  {"Enable Internal Hi-Res",     S_YESNO, m_null, G_X,G_Y+ 8*8, {"gl_texture_internal_hires"}, 0, 0, M_ChangeTextureUseHires},
+  {"Enable External Hi-Res",     S_YESNO, m_null, G_X,G_Y+ 9*8, {"gl_texture_external_hires"}, 0, 0, M_ChangeTextureUseHires},
+  {"Override PWAD's graphics with Hi-Res" ,S_YESNO|S_PRGWARN,m_null,G_X,G_Y+10*8, {"gl_hires_override_pwads"}, 0, 0, M_ChangeTextureUseHires},
 
-  {"Allow Detail Textures",      S_YESNO,  m_null, G_X, G_Y+13*8, {"gl_allow_detail_textures"}, 0, 0, M_ChangeUseDetail},
-  {"Blend Animations",           S_YESNO,  m_null, G_X, G_Y+14*8, {"gl_blend_animations"}},
+  {"Allow Detail Textures",      S_YESNO,  m_null, G_X, G_Y+12*8, {"gl_allow_detail_textures"}, 0, 0, M_ChangeUseDetail},
+  {"Blend Animations",           S_YESNO,  m_null, G_X, G_Y+13*8, {"gl_blend_animations"}},
 #endif //GL_DOOM
 
   {"<- PREV",S_SKIP|S_PREV,m_null,KB_PREV,KB_Y+20*8, {gen_settings7}},
@@ -5096,15 +5088,6 @@ dboolean M_Responder (event_t* ev) {
 
       if (ptr1->action)      // killough 10/98
         ptr1->action();
-      
-      //e6y
-#ifdef GL_DOOM
-      {
-        extern dboolean gl_arb_multitexture;
-        if ((ptr1->m_flags&S_CANT_GL_ARB_MULTITEXTURE) && !gl_arb_multitexture)
-          warn_about_changes(ptr1->m_flags & S_CANT_GL_ARB_MULTITEXTURE);
-      }
-#endif
     }
     M_SelectDone(ptr1);                           // phares 4/17/98
     return true;

@@ -135,9 +135,6 @@ int gld_GetTexDimension(int value)
   if (value > gl_max_texture_size)
     value = gl_max_texture_size;
   
-  if (gl_arb_texture_non_power_of_two)
-    return value;
-  
   i = 1;
   while (i < value)
     i += i;
@@ -268,26 +265,6 @@ static GLTexture *gld_AddNewGLPatchTexture(int lump)
     return gld_AddNewGLTexItem(lump, numlumps, &gld_GLStaticPatchTextures);
   else
     return gld_AddNewGLTexItem(lump, numlumps, &gld_GLPatchTextures);
-}
-
-void gld_SetTexturePalette(GLenum target)
-{
-  const unsigned char *playpal;
-  unsigned char pal[1024];
-  int i;
-
-  playpal = V_GetPlaypal();
-  for (i=0; i<256; i++) {
-    pal[i*4+0] = playpal[i*3+0];
-    pal[i*4+1] = playpal[i*3+1];
-    pal[i*4+2] = playpal[i*3+2];
-    pal[i*4+3] = 255;
-  }
-  pal[transparent_pal_index*4+0]=0;
-  pal[transparent_pal_index*4+1]=0;
-  pal[transparent_pal_index*4+2]=0;
-  pal[transparent_pal_index*4+3]=0;
-  GLEXT_glColorTableEXT(target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, pal);
 }
 
 static void gld_AddPatchToTexture_UnTranslated(GLTexture *gltexture, unsigned char *buffer, const rpatch_t *patch, int originx, int originy, int paletted)
@@ -752,8 +729,6 @@ void gld_SetTexFilters(GLTexture *gltexture)
   if ((gltexture->flags & GLTEXTURE_MIPMAP) && tex_filter[mip].mipmap)
   {
     min_filter = tex_filter[mip].min_filter;
-    if (gl_ext_texture_filter_anisotropic)
-      aniso_filter = (GLfloat)(1<<gl_texture_filter_anisotropic);
   }
   else
   {
@@ -823,24 +798,6 @@ int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int wi
   tex_width  = gld_GetTexDimension(width);
   tex_height = gld_GetTexDimension(height);
   tex_buffer_size = tex_width * tex_height * 4;
-
-  //your video is modern
-  if (gl_arb_texture_non_power_of_two)
-  {
-    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP,
-      ((gltexture->flags & GLTEXTURE_MIPMAP) ? GL_TRUE : GL_FALSE));
-
-    glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_format,
-      tex_width, tex_height,
-      0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    gld_RecolorMipLevels(data);
-
-    gld_SetTexFilters(gltexture);
-
-    result = true;
-    goto l_exit;
-  }
 
 #ifdef USE_GLU_MIPMAP
   if (gltexture->flags & GLTEXTURE_MIPMAP)

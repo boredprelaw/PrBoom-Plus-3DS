@@ -125,7 +125,7 @@ void gld_DrawFakeSkyStrips(void)
   {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // no graphics
   }
-  gld_EnableTexture2D(GL_TEXTURE0_ARB, false);
+  gld_EnableTexture2D(false);
 
   for (i = gld_drawinfo.num_items[GLDIT_SWALL] - 1; i >= 0; i--)
   {
@@ -139,7 +139,7 @@ void gld_DrawFakeSkyStrips(void)
     glEnd();
   }
 
-  gld_EnableTexture2D(GL_TEXTURE0_ARB, true);
+  gld_EnableTexture2D(true);
   if (!gl_compatibility)
   {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -467,7 +467,7 @@ void gld_DrawScreenSkybox(void)
     {
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // no graphics
     }
-    gld_EnableTexture2D(GL_TEXTURE0_ARB, false);
+    gld_EnableTexture2D(false);
 
     for (i = gld_drawinfo.num_items[GLDIT_SWALL] - 1; i >= 0; i--)
     {
@@ -481,7 +481,7 @@ void gld_DrawScreenSkybox(void)
       glEnd();
     }
 
-    gld_EnableTexture2D(GL_TEXTURE0_ARB, true);
+    gld_EnableTexture2D(true);
     if (!gl_compatibility)
     {
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -864,7 +864,7 @@ static void RenderDome(SkyBoxParams_t *sky)
 
   for(j = (HaveMouseLook() || !gl_stretchsky ? 0 : 1); j < 2; j++)
   {
-    gld_EnableTexture2D(GL_TEXTURE0_ARB, j != 0);
+    gld_EnableTexture2D(j != 0);
 
     for(i = 0; i < vbo->loopcount; i++)
     {

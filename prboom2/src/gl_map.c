@@ -125,7 +125,7 @@ void gld_DrawNiceThings(int fx, int fy, int fw, int fh)
 
   glDisable(GL_ALPHA_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  gld_EnableTexture2D(GL_TEXTURE0_ARB, true);
+  gld_EnableTexture2D(true);
 
 #if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
   // activate vertex array, texture coord array and color arrays
@@ -205,7 +205,7 @@ void gld_DrawMapLines(void)
   {
     map_point_t *point = (map_point_t*)map_lines.data;
 
-    gld_EnableTexture2D(GL_TEXTURE0_ARB, false);
+    gld_EnableTexture2D(false);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
@@ -214,7 +214,7 @@ void gld_DrawMapLines(void)
 
     glDrawArrays(GL_LINES, 0, map_lines.count * 2);
 
-    gld_EnableTexture2D(GL_TEXTURE0_ARB, true);
+    gld_EnableTexture2D(true);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
   }

@@ -138,19 +138,9 @@ void gld_SplitLeftEdge(const GLWall *wall, dboolean detail)
 
       if (detail)
       {
-        if (gl_arb_multitexture)
-        {
-          GLEXT_glMultiTexCoord2fARB(GL_TEXTURE0_ARB, s, t); 
-          GLEXT_glMultiTexCoord2fARB(GL_TEXTURE1_ARB,
-            s * tex->detail_width + tex->detail->offsetx,
-            t * tex->detail_height + tex->detail->offsety);
-        }
-        else
-        {
-          glTexCoord2f(
-            s * tex->detail_width + tex->detail->offsetx,
-            t * tex->detail_height + tex->detail->offsety);
-        }
+        glTexCoord2f(
+          s * tex->detail_width + tex->detail->offsetx,
+          t * tex->detail_height + tex->detail->offsety);
       }
       else
       {
@@ -200,19 +190,9 @@ void gld_SplitRightEdge(const GLWall *wall, dboolean detail)
 
       if (detail)
       {
-        if (gl_arb_multitexture)
-        {
-          GLEXT_glMultiTexCoord2fARB(GL_TEXTURE0_ARB, s, t); 
-          GLEXT_glMultiTexCoord2fARB(GL_TEXTURE1_ARB,
-            s * tex->detail_width + tex->detail->offsetx,
-            t * tex->detail_height + tex->detail->offsety);
-        }
-        else
-        {
-          glTexCoord2f(
-            s * tex->detail_width + tex->detail->offsetx,
-            t * tex->detail_height + tex->detail->offsety);
-        }
+        glTexCoord2f(
+          s * tex->detail_width + tex->detail->offsetx,
+          t * tex->detail_height + tex->detail->offsety);
       }
       else
       {

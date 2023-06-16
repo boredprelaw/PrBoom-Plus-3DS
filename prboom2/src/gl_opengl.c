@@ -52,69 +52,16 @@ static dboolean gl_compatibility_mode;
 int GLEXT_CLAMP_TO_EDGE = GL_CLAMP;
 int gl_max_texture_size = 0;
 
-dboolean gl_ext_texture_filter_anisotropic = false;
-dboolean gl_arb_texture_non_power_of_two = false;
-dboolean gl_arb_multitexture = false;
-dboolean gl_arb_texture_compression = false;
-dboolean gl_ext_framebuffer_object = false;
-dboolean gl_ext_packed_depth_stencil = false;
-dboolean gl_ext_blend_color = false;
-dboolean gl_use_stencil = false;
 dboolean gl_ext_arb_vertex_buffer_object = false;
-dboolean gl_arb_pixel_buffer_object = false;
 
 // cfg values
-int gl_ext_texture_filter_anisotropic_default;
-int gl_arb_texture_non_power_of_two_default;
-int gl_arb_multitexture_default;
-int gl_arb_texture_compression_default;
-int gl_ext_framebuffer_object_default;
-int gl_ext_packed_depth_stencil_default;
-int gl_ext_blend_color_default;
-int gl_use_stencil_default;
 int gl_ext_arb_vertex_buffer_object_default;
-int gl_arb_pixel_buffer_object_default;
-
-int active_texture_enabled[32];
-int clieant_active_texture_enabled[32];
-
-// obsolete?
-PFNGLCOLORTABLEEXTPROC              GLEXT_glColorTableEXT              = NULL;
-
-/* EXT_framebuffer_object */
-PFNGLBINDFRAMEBUFFEREXTPROC         GLEXT_glBindFramebufferEXT         = NULL;
-PFNGLGENFRAMEBUFFERSEXTPROC         GLEXT_glGenFramebuffersEXT         = NULL;
-PFNGLGENRENDERBUFFERSEXTPROC        GLEXT_glGenRenderbuffersEXT        = NULL;
-PFNGLBINDRENDERBUFFEREXTPROC        GLEXT_glBindRenderbufferEXT        = NULL;
-PFNGLRENDERBUFFERSTORAGEEXTPROC     GLEXT_glRenderbufferStorageEXT     = NULL;
-PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC GLEXT_glFramebufferRenderbufferEXT = NULL;
-PFNGLFRAMEBUFFERTEXTURE2DEXTPROC    GLEXT_glFramebufferTexture2DEXT    = NULL;
-PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC  GLEXT_glCheckFramebufferStatusEXT  = NULL;
-PFNGLDELETEFRAMEBUFFERSEXTPROC      GLEXT_glDeleteFramebuffersEXT      = NULL;
-PFNGLDELETERENDERBUFFERSEXTPROC     GLEXT_glDeleteRenderbuffersEXT     = NULL;
-
-/* ARB_multitexture command function pointers */
-PFNGLACTIVETEXTUREARBPROC        GLEXT_glActiveTextureARB              = NULL;
-PFNGLCLIENTACTIVETEXTUREARBPROC  GLEXT_glClientActiveTextureARB        = NULL;
-PFNGLMULTITEXCOORD2FARBPROC      GLEXT_glMultiTexCoord2fARB            = NULL;
-PFNGLMULTITEXCOORD2FVARBPROC     GLEXT_glMultiTexCoord2fvARB           = NULL;
-
-/* ARB_texture_compression */
-PFNGLCOMPRESSEDTEXIMAGE2DARBPROC GLEXT_glCompressedTexImage2DARB       = NULL;
-
-PFNGLBLENDCOLOREXTPROC              GLEXT_glBlendColorEXT              = NULL;
 
 /* VBO */
 PFNGLGENBUFFERSARBPROC              GLEXT_glGenBuffersARB              = NULL;
 PFNGLDELETEBUFFERSARBPROC           GLEXT_glDeleteBuffersARB           = NULL;
 PFNGLBINDBUFFERARBPROC              GLEXT_glBindBufferARB              = NULL;
 PFNGLBUFFERDATAARBPROC              GLEXT_glBufferDataARB              = NULL;
-
-/* PBO */
-PFNGLBUFFERSUBDATAARBPROC           GLEXT_glBufferSubDataARB           = NULL;
-PFNGLGETBUFFERPARAMETERIVARBPROC    GLEXT_glGetBufferParameterivARB    = NULL;
-PFNGLMAPBUFFERARBPROC               GLEXT_glMapBufferARB               = NULL;
-PFNGLUNMAPBUFFERARBPROC             GLEXT_glUnmapBufferARB             = NULL;
 
 void gld_InitOpenGLVersion(void)
 {
@@ -148,102 +95,6 @@ void gld_InitOpenGL(dboolean compatibility_mode)
 
   gld_InitOpenGLVersion();
 
-  gl_ext_texture_filter_anisotropic = gl_ext_texture_filter_anisotropic_default &&
-    isExtensionSupported("GL_EXT_texture_filter_anisotropic") != NULL;
-  if (gl_ext_texture_filter_anisotropic)
-    lprintf(LO_INFO, "using GL_EXT_texture_filter_anisotropic\n");
-
-  // Any textures sizes are allowed
-  gl_arb_texture_non_power_of_two = gl_arb_texture_non_power_of_two_default &&
-    isExtensionSupported("GL_ARB_texture_non_power_of_two") != NULL;
-  if (gl_arb_texture_non_power_of_two)
-    lprintf(LO_INFO, "using GL_ARB_texture_non_power_of_two\n");
-
-  //
-  // ARB_multitexture command function pointers
-  //
-
-  gl_arb_multitexture = gl_arb_multitexture_default &&
-    isExtensionSupported("GL_ARB_multitexture") != NULL;
-  if (gl_arb_multitexture)
-  {
-    GLEXT_glActiveTextureARB        = SDL_GL_GetProcAddress("glActiveTextureARB");
-    GLEXT_glClientActiveTextureARB  = SDL_GL_GetProcAddress("glClientActiveTextureARB");
-    GLEXT_glMultiTexCoord2fARB      = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
-    GLEXT_glMultiTexCoord2fvARB     = SDL_GL_GetProcAddress("glMultiTexCoord2fvARB");
-
-    if (!GLEXT_glActiveTextureARB   || !GLEXT_glClientActiveTextureARB ||
-        !GLEXT_glMultiTexCoord2fARB || !GLEXT_glMultiTexCoord2fvARB)
-      gl_arb_multitexture = false;
-  }
-  if (gl_arb_multitexture)
-    lprintf(LO_INFO,"using GL_ARB_multitexture\n");
-
-  //
-  // ARB_texture_compression
-  //
-
-  gl_arb_texture_compression = gl_arb_texture_compression_default &&
-    isExtensionSupported("GL_ARB_texture_compression") != NULL;
-  if (gl_arb_texture_compression)
-  {
-    GLEXT_glCompressedTexImage2DARB = SDL_GL_GetProcAddress("glCompressedTexImage2DARB");
-
-    if (!GLEXT_glCompressedTexImage2DARB)
-      gl_arb_texture_compression = false;
-  }
-  if (gl_arb_texture_compression)
-    lprintf(LO_INFO,"using GL_ARB_texture_compression\n");
-
-  //
-  // EXT_framebuffer_object
-  //
-  gl_ext_framebuffer_object = gl_ext_framebuffer_object_default &&
-    isExtensionSupported("GL_EXT_framebuffer_object") != NULL;
-  if (gl_ext_framebuffer_object)
-  {
-    GLEXT_glGenFramebuffersEXT         = SDL_GL_GetProcAddress("glGenFramebuffersEXT");
-    GLEXT_glBindFramebufferEXT         = SDL_GL_GetProcAddress("glBindFramebufferEXT");
-    GLEXT_glGenRenderbuffersEXT        = SDL_GL_GetProcAddress("glGenRenderbuffersEXT");
-    GLEXT_glBindRenderbufferEXT        = SDL_GL_GetProcAddress("glBindRenderbufferEXT");
-    GLEXT_glRenderbufferStorageEXT     = SDL_GL_GetProcAddress("glRenderbufferStorageEXT");
-    GLEXT_glFramebufferRenderbufferEXT = SDL_GL_GetProcAddress("glFramebufferRenderbufferEXT");
-    GLEXT_glFramebufferTexture2DEXT    = SDL_GL_GetProcAddress("glFramebufferTexture2DEXT");
-    GLEXT_glCheckFramebufferStatusEXT  = SDL_GL_GetProcAddress("glCheckFramebufferStatusEXT");
-    GLEXT_glDeleteFramebuffersEXT      = SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
-    GLEXT_glDeleteRenderbuffersEXT     = SDL_GL_GetProcAddress("glDeleteRenderbuffersEXT");
-
-    if (!GLEXT_glGenFramebuffersEXT || !GLEXT_glBindFramebufferEXT ||
-        !GLEXT_glGenRenderbuffersEXT || !GLEXT_glBindRenderbufferEXT ||
-        !GLEXT_glRenderbufferStorageEXT || !GLEXT_glFramebufferRenderbufferEXT ||
-        !GLEXT_glFramebufferTexture2DEXT || !GLEXT_glCheckFramebufferStatusEXT ||
-        !GLEXT_glDeleteFramebuffersEXT || !GLEXT_glDeleteRenderbuffersEXT)
-      gl_ext_framebuffer_object = false;
-  }
-  if (gl_ext_framebuffer_object)
-    lprintf(LO_INFO,"using GL_EXT_framebuffer_object\n");
-
-  gl_ext_packed_depth_stencil = gl_ext_packed_depth_stencil_default &&
-    isExtensionSupported("GL_EXT_packed_depth_stencil") != NULL;
-  if (gl_ext_packed_depth_stencil)
-    lprintf(LO_INFO,"using GL_EXT_packed_depth_stencil\n");
-
-  //
-  // Blending
-  //
-
-  gl_ext_blend_color = gl_ext_blend_color_default &&
-    isExtensionSupported("GL_EXT_blend_color") != NULL;
-  if (gl_ext_blend_color)
-  {
-    GLEXT_glBlendColorEXT = SDL_GL_GetProcAddress("glBlendColorEXT");
-
-    if (!GLEXT_glBlendColorEXT)
-      gl_ext_blend_color = false;
-  }
-  if (gl_ext_blend_color)
-    lprintf(LO_INFO,"using GL_EXT_blend_color\n");
-
   // VBO
 #ifdef USE_VBO
   gl_ext_arb_vertex_buffer_object = gl_ext_arb_vertex_buffer_object_default &&
@@ -265,161 +116,32 @@ void gld_InitOpenGL(dboolean compatibility_mode)
   gl_ext_arb_vertex_buffer_object = false;
 #endif
 
-  gl_arb_pixel_buffer_object = gl_arb_pixel_buffer_object_default &&
-    isExtensionSupported("GL_ARB_pixel_buffer_object") != NULL;
-  if (gl_arb_pixel_buffer_object)
-  {
-    GLEXT_glGenBuffersARB = SDL_GL_GetProcAddress("glGenBuffersARB");
-    GLEXT_glBindBufferARB = SDL_GL_GetProcAddress("glBindBufferARB");
-    GLEXT_glBufferDataARB = SDL_GL_GetProcAddress("glBufferDataARB");
-    GLEXT_glBufferSubDataARB = SDL_GL_GetProcAddress("glBufferSubDataARB");
-    GLEXT_glDeleteBuffersARB = SDL_GL_GetProcAddress("glDeleteBuffersARB");
-    GLEXT_glGetBufferParameterivARB = SDL_GL_GetProcAddress("glGetBufferParameterivARB");
-    GLEXT_glMapBufferARB = SDL_GL_GetProcAddress("glMapBufferARB");
-    GLEXT_glUnmapBufferARB = SDL_GL_GetProcAddress("glUnmapBufferARB");
-
-    if (!GLEXT_glGenBuffersARB || !GLEXT_glBindBufferARB ||
-        !GLEXT_glBufferDataARB || !GLEXT_glBufferSubDataARB ||
-        !GLEXT_glDeleteBuffersARB || !GLEXT_glGetBufferParameterivARB ||
-        !GLEXT_glMapBufferARB || !GLEXT_glUnmapBufferARB)
-      gl_arb_pixel_buffer_object = false;
-  }
-  if (gl_arb_pixel_buffer_object)
-    lprintf(LO_INFO,"using GL_ARB_pixel_buffer_object\n");
-
-  //
-  // Stencil support
-  //
-
-  gl_use_stencil = gl_use_stencil_default;
-
   // GL_CLAMP_TO_EDGE
   GLEXT_CLAMP_TO_EDGE = (gl_version >= OPENGL_VERSION_1_2 ? GL_CLAMP_TO_EDGE : GL_CLAMP);
 
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max_texture_size);
   lprintf(LO_INFO,"GL_MAX_TEXTURE_SIZE=%i\n", gl_max_texture_size);
 
-  // Additional checks
-  if (gl_version < OPENGL_VERSION_1_3)
-  {
-    gl_ext_framebuffer_object = false;
-    gl_ext_blend_color = false;
-  }
-
   if ((compatibility_mode) || (gl_version <= OPENGL_VERSION_1_1))
   {
     lprintf(LO_INFO, "gld_InitOpenGL: Compatibility mode is used.\n");
-    gl_arb_texture_non_power_of_two = false;
-    gl_arb_multitexture = false;
-    gl_arb_texture_compression = false;
-    gl_ext_framebuffer_object = false;
-    gl_ext_packed_depth_stencil = false;
-    gl_ext_blend_color = false;
-    gl_use_stencil = false;
     gl_ext_arb_vertex_buffer_object = false;
-    gl_arb_pixel_buffer_object = false;
     GLEXT_CLAMP_TO_EDGE = GL_CLAMP;
     gl_version = OPENGL_VERSION_1_1;
   }
 
-  for (texture = GL_TEXTURE0_ARB; texture <= GL_TEXTURE31_ARB; texture++)
-  {
-    gld_EnableTexture2D(texture, true);
-    gld_EnableTexture2D(texture, false);
-
-    gld_EnableClientCoordArray(texture, true);
-    gld_EnableClientCoordArray(texture, false);
-  }
+  gld_EnableTexture2D(true);
+  gld_EnableTexture2D(false);
 }
 
-void gld_EnableTexture2D(GLenum texture, int enable)
+// TODO: On 3DS, we'll have to use a blank white
+// texture when we need to disable texture usage
+void gld_EnableTexture2D(int enable)
 {
-  int arb;
-
-  if (!gl_arb_multitexture && texture != GL_TEXTURE0_ARB)
-    return;
-
-  arb = texture - GL_TEXTURE0_ARB;
-
-#ifdef RANGECHECK
-  if (arb < 0 || arb > 31)
-    I_Error("gld_EnableTexture2D: wronge ARB texture unit %d", arb);
-#endif
-
   if (enable)
-  {
-    if (!active_texture_enabled[arb])
-    {
-      if (arb != 0)
-      {
-        GLEXT_glActiveTextureARB(texture);
-        glEnable(GL_TEXTURE_2D);
-        GLEXT_glActiveTextureARB(GL_TEXTURE0_ARB);
-      }
-      else
-      {
-        glEnable(GL_TEXTURE_2D);
-      }
-      active_texture_enabled[arb] = enable;
-    }
-  }
+    glEnable(GL_TEXTURE_2D);
   else
-  {
-    if (active_texture_enabled[arb])
-    {
-      if (arb != 0)
-      {
-        GLEXT_glActiveTextureARB(texture);
-        glDisable(GL_TEXTURE_2D);
-        GLEXT_glActiveTextureARB(GL_TEXTURE0_ARB);
-      }
-      else
-      {
-        glDisable(GL_TEXTURE_2D);
-      }
-      active_texture_enabled[arb] = enable;
-    }
-  }
-}
-
-void gld_EnableClientCoordArray(GLenum texture, int enable)
-{
-#ifdef USE_VERTEX_ARRAYS
-  int arb;
-
-  if (!gl_arb_multitexture)
-    return;
-
-  arb = texture - GL_TEXTURE0_ARB;
-
-#ifdef RANGECHECK
-  if (arb < 0 || arb > 31)
-    I_Error("gld_EnableTexture2D: wronge ARB texture unit %d", arb);
-#endif
-
-  if (enable)
-  {
-    if (!clieant_active_texture_enabled[arb])
-    {
-      GLEXT_glClientActiveTextureARB(texture);
-      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-      GLEXT_glClientActiveTextureARB(GL_TEXTURE0_ARB);
-
-      clieant_active_texture_enabled[arb] = enable;
-    }
-  }
-  else
-  {
-    if (clieant_active_texture_enabled[arb])
-    {
-      GLEXT_glClientActiveTextureARB(texture);
-      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-      GLEXT_glClientActiveTextureARB(GL_TEXTURE0_ARB);
-
-      clieant_active_texture_enabled[arb] = enable;
-    }
-  }
-#endif
+    glDisable(GL_TEXTURE_2D);
 }
 
 void SetTextureMode(tex_mode_e type)
