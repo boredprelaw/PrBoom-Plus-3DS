@@ -1123,16 +1123,6 @@ void gld_PreprocessLevel(void)
   gld_PreprocessDetail();
   gld_InitVertexData();
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (!gl_preprocessed)
-  {
-    if (gl_use_display_lists)
-    {
-      gld_InitDisplayLists();
-    }
-  }
-#endif
-
   gl_preprocessed = true;
 }
 

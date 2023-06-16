@@ -84,7 +84,6 @@ int scene_has_overlapped_sprites;
 
 int gl_blend_animations;
 
-int gl_use_display_lists;
 int flats_display_list;
 int flats_display_list_size = 0;
 int flats_detail_display_list;
@@ -1814,18 +1813,11 @@ static void gld_DrawFlat(GLFlat *flat)
   {
     // go through all loops of this sector
 #if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-    if (gl_use_display_lists)
+    for (loopnum=0; loopnum<sectorloops[flat->sectornum].loopcount; loopnum++)
     {
-      glCallList(flats_display_list + flat->sectornum);
-    }
-    else
-    {
-      for (loopnum=0; loopnum<sectorloops[flat->sectornum].loopcount; loopnum++)
-      {
-        // set the current loop
-        currentloop=&sectorloops[flat->sectornum].loops[loopnum];
-        glDrawArrays(currentloop->mode,currentloop->vertexindex,currentloop->vertexcount);
-      }
+      // set the current loop
+      currentloop=&sectorloops[flat->sectornum].loops[loopnum];
+      glDrawArrays(currentloop->mode,currentloop->vertexindex,currentloop->vertexcount);
     }
 #else
     for (loopnum=0; loopnum<sectorloops[flat->sectornum].loopcount; loopnum++)
@@ -2573,73 +2565,6 @@ void gld_DrawProjectedWalls(GLDrawItemType itemtype)
 {
 }
 
-void gld_InitDisplayLists(void)
-{
-  int i;
-  int loopnum; // current loop number
-  GLLoopDef *currentloop;
-
-  if (gl_use_display_lists)
-  {
-    flats_display_list_size = numsectors;
-    flats_display_list = glGenLists(flats_display_list_size);
-
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-
-    if (gl_ext_arb_vertex_buffer_object)
-    {
-      GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, flats_vbo_id);
-    }
-    glVertexPointer(3, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_x);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_u);
-
-    for (i = 0; i < flats_display_list_size; i++)
-    {
-      glNewList(flats_display_list + i, GL_COMPILE);
-
-      for (loopnum = 0; loopnum < sectorloops[i].loopcount; loopnum++)
-      {
-        // set the current loop
-        currentloop = &sectorloops[i].loops[loopnum];
-        glDrawArrays(currentloop->mode, currentloop->vertexindex, currentloop->vertexcount);
-      }
-
-      glEndList();
-    }
-
-    if (gl_ext_arb_vertex_buffer_object)
-    {
-      // bind with 0, so, switch back to normal pointer operation
-      GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-    }
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-  }
-}
-
-void gld_CleanDisplayLists(void)
-{
-  if (gl_use_display_lists)
-  {
-    if (flats_display_list_size > 0)
-    {
-      glDeleteLists(flats_display_list, flats_display_list_size);
-      flats_display_list = 0;
-      flats_display_list_size = 0;
-    }
-
-    if (flats_detail_display_list_size > 0)
-    {
-      glDeleteLists(flats_detail_display_list, flats_detail_display_list_size);
-      flats_detail_display_list = 0;
-      flats_detail_display_list_size = 0;
-    }
-  }
-}
-
 void gld_DrawScene(player_t *player)
 {
   int i;
@@ -2656,12 +2581,9 @@ void gld_DrawScene(player_t *player)
   gld_InitFrameDetails();
 
 #if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (!gl_use_display_lists)
-  {
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-  }
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
 #endif
 
   //e6y: skybox
@@ -2685,15 +2607,12 @@ void gld_DrawScene(player_t *player)
   }
 
 #if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (!gl_use_display_lists)
+  if (gl_ext_arb_vertex_buffer_object)
   {
-    if (gl_ext_arb_vertex_buffer_object)
-    {
-      GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, flats_vbo_id);
-    }
-    glVertexPointer(3, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_x);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_u);
+    GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, flats_vbo_id);
   }
+  glVertexPointer(3, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_x);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_u);
 #endif
 
   //
@@ -2933,16 +2852,13 @@ void gld_DrawScene(player_t *player)
   gld_EnableDetail(false);
 
 #if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (!gl_use_display_lists)
+  if (gl_ext_arb_vertex_buffer_object)
   {
-    if (gl_ext_arb_vertex_buffer_object)
-    {
-      // bind with 0, so, switch back to normal pointer operation
-      GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-    }
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
+    // bind with 0, so, switch back to normal pointer operation
+    GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, 0);
   }
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
 #endif
 }

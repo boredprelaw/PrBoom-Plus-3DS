@@ -195,7 +195,6 @@ static int gl_clear;
 static int gl_ztrick;
 
 // dummy variables for !GL_DOOM declared in gl_struct.h
-int gl_use_display_lists;
 int gl_sprite_offset_default;
 int gl_sprite_blend;
 int gl_mask_sprite_threshold;
@@ -428,8 +427,6 @@ default_t defaults[] =
 
   {"gl_ext_arb_vertex_buffer_object", {&gl_ext_arb_vertex_buffer_object_default}, {1},0,1,
    def_bool,ss_stat},
-  {"gl_use_display_lists",{&gl_use_display_lists},{0},0,1,
-   def_bool,ss_none},
 
   {"gl_finish",{&gl_finish},{1},0,1,
    def_bool,ss_none},
