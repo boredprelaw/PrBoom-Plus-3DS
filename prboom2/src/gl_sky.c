@@ -121,10 +121,6 @@ void gld_DrawFakeSkyStrips(void)
   // I need to render fake strips of sky before dome with using
   // full clearing of color buffer (only in compatibility mode)
 
-  if (!gl_compatibility)
-  {
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // no graphics
-  }
   gld_EnableTexture2D(false);
 
   for (i = gld_drawinfo.num_items[GLDIT_SWALL] - 1; i >= 0; i--)
@@ -140,14 +136,8 @@ void gld_DrawFakeSkyStrips(void)
   }
 
   gld_EnableTexture2D(true);
-  if (!gl_compatibility)
-  {
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  }
-  else
-  {
-    glClear(GL_COLOR_BUFFER_BIT);
-  }
+
+  glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void gld_GetScreenSkyScale(GLWall *wall, float *scale_x, float *scale_y)
@@ -463,10 +453,6 @@ void gld_DrawScreenSkybox(void)
     int i, k;
     float w;
 
-    if (!gl_compatibility)
-    {
-      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // no graphics
-    }
     gld_EnableTexture2D(false);
 
     for (i = gld_drawinfo.num_items[GLDIT_SWALL] - 1; i >= 0; i--)
@@ -482,14 +468,8 @@ void gld_DrawScreenSkybox(void)
     }
 
     gld_EnableTexture2D(true);
-    if (!gl_compatibility)
-    {
-      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    }
-    else
-    {
-      glClear(GL_COLOR_BUFFER_BIT);
-    }
+
+    glClear(GL_COLOR_BUFFER_BIT);
 
     if (!mlook_or_fov)
     {

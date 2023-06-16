@@ -117,17 +117,6 @@ gld_CalcFogDensity_f gld_CalcFogDensity = gld_CalcFogDensity_glboom;
 
 void M_ChangeLightMode(void)
 {
-  if (gl_compatibility)
-  {
-    if (gl_lightmode_default == gl_lightmode_fogbased)
-    {
-      lprintf(LO_INFO,
-        "M_ChangeLightMode: '%s' sector light mode is not allowed in gl_compatibility mode\n",
-        gl_lightmodes[gl_lightmode_default]);
-      gl_lightmode_default = gl_lightmode_glboom;
-    }
-  }
-
   gl_lightmode = gl_lightmode_default;
 
   gl_hardware_gamma = gld_light[gl_lightmode].use_hwgamma;

@@ -72,9 +72,6 @@
 #include "hu_stuff.h"
 #include "e6y.h"//e6y
 
-// All OpenGL extentions will be disabled in gl_compatibility mode
-int gl_compatibility = 0;
-
 int gl_clear;
 
 int gl_preprocessed = false;
@@ -327,7 +324,7 @@ void gld_Init(int width, int height)
     }
   }
 
-  gld_InitOpenGL(gl_compatibility);
+  gld_InitOpenGL();
   gld_InitPalettedTextures();
   gld_InitTextureParams();
 
@@ -1096,8 +1093,7 @@ void gld_StartDrawScene(void)
   gl_spriteindex = 0;
 
   //e6y: fog in frame
-  gl_use_fog = !gl_compatibility &&
-    (gl_fog || gl_lightmode == gl_lightmode_fogbased) &&
+  gl_use_fog = (gl_fog || gl_lightmode == gl_lightmode_fogbased) &&
     !frame_fixedcolormap && !boom_cm;
 
 //e6y

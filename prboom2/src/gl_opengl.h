@@ -80,7 +80,7 @@ extern PFNGLDELETEBUFFERSARBPROC           GLEXT_glDeleteBuffersARB;
 extern PFNGLBINDBUFFERARBPROC              GLEXT_glBindBufferARB;
 extern PFNGLBUFFERDATAARBPROC              GLEXT_glBufferDataARB;
   
-void gld_InitOpenGL(dboolean compatibility_mode);
+void gld_InitOpenGL();
 
 //states
 void gld_EnableTexture2D(int enable);

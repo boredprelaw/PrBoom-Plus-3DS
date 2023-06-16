@@ -163,9 +163,6 @@ extern int gl_patch_filter;
 extern const char *gl_tex_format_string;
 extern int gl_sky_detail;
 
-//e6y: all OpenGL extentions will be disabled with TRUE
-extern int gl_compatibility;
-
 //cfg values
 extern int gl_ext_arb_vertex_buffer_object_default;
 
@@ -186,7 +183,6 @@ static int gl_sprite_filter;
 static int gl_patch_filter;
 static const char *gl_tex_format_string;
 static int gl_sky_detail;
-static int gl_compatibility;
 static int gl_ext_arb_vertex_buffer_object_default;
 static int gl_fog;
 static int gl_fog_color;
@@ -422,12 +418,8 @@ default_t defaults[] =
    RDRAW_MASKEDCOLUMNEDGE_SQUARE, RDRAW_MASKEDCOLUMNEDGE_SLOPED, def_int,ss_none},
 
   {"OpenGL settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"gl_compatibility", {&gl_compatibility},  {0},0,1,
-   def_bool,ss_stat},
-
   {"gl_ext_arb_vertex_buffer_object", {&gl_ext_arb_vertex_buffer_object_default}, {1},0,1,
    def_bool,ss_stat},
-
   {"gl_finish",{&gl_finish},{1},0,1,
    def_bool,ss_none},
   {"gl_clear",{&gl_clear},{0},0,1,
