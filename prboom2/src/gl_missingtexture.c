@@ -399,68 +399,6 @@ sector_t* GetBestFake(sector_t *sector, int ceiling, int validcount)
   return fakeplanes[groupid].sector;
 }
 
-//==========================================================================
-//
-// Flood gaps with the back side's ceiling/floor texture
-// This requires a stencil because the projected plane interferes with
-// the depth buffer
-//
-//==========================================================================
-
-void gld_SetupFloodStencil(GLWall *wall)
-{
-  int recursion = 0;
-
-  // Create stencil 
-  glStencilFunc(GL_EQUAL, recursion, ~0); // create stencil
-  glStencilOp(GL_KEEP, GL_KEEP, GL_INCR); // increment stencil of valid pixels
-  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // don't write to the graphics buffer
-  gld_EnableTexture2D(false);
-  glColor3f(1, 1, 1);
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(true);
-
-  glBegin(GL_TRIANGLE_FAN);
-  glVertex3f(wall->glseg->x1, wall->ytop, wall->glseg->z1);
-  glVertex3f(wall->glseg->x1, wall->ybottom, wall->glseg->z1);
-  glVertex3f(wall->glseg->x2, wall->ybottom, wall->glseg->z2);
-  glVertex3f(wall->glseg->x2, wall->ytop, wall->glseg->z2);
-  glEnd();
-
-  glStencilFunc(GL_EQUAL, recursion+1, ~0); // draw sky into stencil
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);   // this stage doesn't modify the stencil
-
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); // don't write to the graphics buffer
-  gld_EnableTexture2D(true);
-  glDisable(GL_DEPTH_TEST);
-  glDepthMask(false);
-}
-
-void gld_ClearFloodStencil(GLWall *wall)
-{
-  int recursion = 0;
-
-  glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-  gld_EnableTexture2D(false);
-  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); // don't write to the graphics buffer
-  glColor3f(1, 1, 1);
-
-  glBegin(GL_TRIANGLE_FAN);
-  glVertex3f(wall->glseg->x1, wall->ytop, wall->glseg->z1);
-  glVertex3f(wall->glseg->x1, wall->ybottom, wall->glseg->z1);
-  glVertex3f(wall->glseg->x2, wall->ybottom, wall->glseg->z2);
-  glVertex3f(wall->glseg->x2, wall->ytop, wall->glseg->z2);
-  glEnd();
-
-  // restore old stencil op.
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-  glStencilFunc(GL_EQUAL, recursion, ~0);
-  gld_EnableTexture2D(true);
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(true);
-}
-
 //
 // Calculation of the coordinates of the gap
 //
@@ -470,18 +408,9 @@ void gld_SetupFloodedPlaneCoords(GLWall *wall, gl_strip_coords_t *c)
   float k = 0.5f;
   float ytop, ybottom, planez;
 
-  if (wall->flag == GLDWF_TOPFLUD)
-  {
-    ytop = wall->ybottom;
-    ybottom = wall->ytop;
-    planez = wall->ybottom;
-  }
-  else
-  {
-    ytop = wall->ytop;
-    ybottom = wall->ybottom;
-    planez = wall->ytop;
-  }
+  ytop = wall->ytop;
+  ybottom = wall->ybottom;
+  planez = wall->ytop;
 
   prj_fac1 = (ytop - zCamera) / (ytop - zCamera);
   prj_fac2 = (ytop - zCamera) / (ybottom - zCamera);

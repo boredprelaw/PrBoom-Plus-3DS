@@ -431,9 +431,6 @@ extern int imageformats[];
 
 void gld_PreprocessFakeSectors(void);
 
-void gld_SetupFloodStencil(GLWall *wall);
-void gld_ClearFloodStencil(GLWall *wall);
-
 void gld_SetupFloodedPlaneCoords(GLWall *wall, gl_strip_coords_t *c);
 void gld_SetupFloodedPlaneLight(GLWall *wall);
 

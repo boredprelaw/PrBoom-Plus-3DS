@@ -1238,51 +1238,35 @@ static void gld_DrawWall(GLWall *wall)
     glColor4f(1.0f,0.0f,0.0f,1.0f);
   }
 
-  if ((wall->flag == GLDWF_TOPFLUD) || (wall->flag == GLDWF_BOTFLUD))
-  {
-    gl_strip_coords_t c;
+  gld_StaticLightAlpha(wall->light, wall->alpha);
 
-    gld_BindFlat(wall->gltexture, 0);
+  glBegin(GL_TRIANGLE_FAN);
 
-    gld_SetupFloodStencil(wall);
-    gld_SetupFloodedPlaneCoords(wall, &c);
-    gld_SetupFloodedPlaneLight(wall);
-    gld_DrawTriangleStrip(wall, &c);
+  // lower left corner
+  glTexCoord2f(wall->ul,wall->vb);
+  glVertex3f(wall->glseg->x1,wall->ybottom,wall->glseg->z1);
 
-    gld_ClearFloodStencil(wall);
-  }
-  else
-  {
-    gld_StaticLightAlpha(wall->light, wall->alpha);
+  // split left edge of wall
+  if (!wall->glseg->fracleft)
+    gld_SplitLeftEdge(wall, false);
 
-    glBegin(GL_TRIANGLE_FAN);
+  // upper left corner
+  glTexCoord2f(wall->ul,wall->vt);
+  glVertex3f(wall->glseg->x1,wall->ytop,wall->glseg->z1);
 
-    // lower left corner
-    glTexCoord2f(wall->ul,wall->vb);
-    glVertex3f(wall->glseg->x1,wall->ybottom,wall->glseg->z1);
+  // upper right corner
+  glTexCoord2f(wall->ur,wall->vt);
+  glVertex3f(wall->glseg->x2,wall->ytop,wall->glseg->z2);
 
-    // split left edge of wall
-    if (!wall->glseg->fracleft)
-      gld_SplitLeftEdge(wall, false);
+  // split right edge of wall
+  if (!wall->glseg->fracright)
+    gld_SplitRightEdge(wall, false);
 
-    // upper left corner
-    glTexCoord2f(wall->ul,wall->vt);
-    glVertex3f(wall->glseg->x1,wall->ytop,wall->glseg->z1);
+  // lower right corner
+  glTexCoord2f(wall->ur,wall->vb);
+  glVertex3f(wall->glseg->x2,wall->ybottom,wall->glseg->z2);
 
-    // upper right corner
-    glTexCoord2f(wall->ur,wall->vt);
-    glVertex3f(wall->glseg->x2,wall->ytop,wall->glseg->z2);
-
-    // split right edge of wall
-    if (!wall->glseg->fracright)
-      gld_SplitRightEdge(wall, false);
-
-    // lower right corner
-    glTexCoord2f(wall->ur,wall->vb);
-    glVertex3f(wall->glseg->x2,wall->ybottom,wall->glseg->z2);
-
-    glEnd();
-  }
+  glEnd();
 }
 
 #define LINE seg->linedef

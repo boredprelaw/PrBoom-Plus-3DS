@@ -186,7 +186,6 @@ void gld_DrawWallDetail_NoARB(GLWall *wall)
       wall->glseg->x2, wall->glseg->z2))
   {
     float w, h, dx, dy;
-    dboolean fake = (wall->flag == GLDWF_TOPFLUD) || (wall->flag == GLDWF_BOTFLUD);
     detail_t *detail = wall->gltexture->detail;
 
     w = wall->gltexture->detail_width;
@@ -196,64 +195,34 @@ void gld_DrawWallDetail_NoARB(GLWall *wall)
 
     gld_BindDetail(wall->gltexture, detail->texid);
 
-    if (fake)
-    {
-      int i;
-      gl_strip_coords_t c;
+    gld_StaticLightAlpha(wall->light, wall->alpha);
+    glBegin(GL_TRIANGLE_FAN);
 
-      if (gl_use_fog)
-      {
-        // calculation of fog density for flooded walls
-        if (wall->seg->backsector)
-        {
-          wall->fogdensity = gld_CalcFogDensity(wall->seg->frontsector,
-            wall->seg->backsector->lightlevel, GLDIT_FWALL);
-        }
-        gld_SetFog(wall->fogdensity);
-      }
+    // lower left corner
+    glTexCoord2f(wall->ul*w+dx,wall->vb*h+dy);
+    glVertex3f(wall->glseg->x1,wall->ybottom,wall->glseg->z1);
 
-      gld_SetupFloodStencil(wall);
-      gld_SetupFloodedPlaneLight(wall);
-      gld_SetupFloodedPlaneCoords(wall, &c);
-      for (i = 0; i < 4; i++)
-      {
-        c.t[i][0] = c.t[i][0] * w + dx;
-        c.t[i][1] = c.t[i][1] * h + dy;
-      }
-      gld_DrawTriangleStrip(wall, &c);
-      gld_ClearFloodStencil(wall);
-    }
-    else
-    {
-      gld_StaticLightAlpha(wall->light, wall->alpha);
-      glBegin(GL_TRIANGLE_FAN);
+    // split left edge of wall
+    if (!wall->glseg->fracleft)
+      gld_SplitLeftEdge(wall, true);
 
-      // lower left corner
-      glTexCoord2f(wall->ul*w+dx,wall->vb*h+dy);
-      glVertex3f(wall->glseg->x1,wall->ybottom,wall->glseg->z1);
+    // upper left corner
+    glTexCoord2f(wall->ul*w+dx,wall->vt*h+dy);
+    glVertex3f(wall->glseg->x1,wall->ytop,wall->glseg->z1);
 
-      // split left edge of wall
-      if (!wall->glseg->fracleft)
-        gld_SplitLeftEdge(wall, true);
+    // upper right corner
+    glTexCoord2f(wall->ur*w+dx,wall->vt*h+dy);
+    glVertex3f(wall->glseg->x2,wall->ytop,wall->glseg->z2);
 
-      // upper left corner
-      glTexCoord2f(wall->ul*w+dx,wall->vt*h+dy);
-      glVertex3f(wall->glseg->x1,wall->ytop,wall->glseg->z1);
+    // split right edge of wall
+    if (!wall->glseg->fracright)
+      gld_SplitRightEdge(wall, true);
 
-      // upper right corner
-      glTexCoord2f(wall->ur*w+dx,wall->vt*h+dy);
-      glVertex3f(wall->glseg->x2,wall->ytop,wall->glseg->z2);
+    // lower right corner
+    glTexCoord2f(wall->ur*w+dx,wall->vb*h+dy);
+    glVertex3f(wall->glseg->x2,wall->ybottom,wall->glseg->z2);
 
-      // split right edge of wall
-      if (!wall->glseg->fracright)
-        gld_SplitRightEdge(wall, true);
-
-      // lower right corner
-      glTexCoord2f(wall->ur*w+dx,wall->vb*h+dy);
-      glVertex3f(wall->glseg->x2,wall->ybottom,wall->glseg->z2);
-
-      glEnd();
-    }
+    glEnd();
   }
 }
 
@@ -422,7 +391,6 @@ void gld_DrawDetail_NoARB(void)
     {
       glPolygonOffset(1.0f, 128.0f);
       glEnable(GL_POLYGON_OFFSET_FILL);
-      glEnable(GL_STENCIL_TEST);
 
       gld_DrawItemsSortByDetail(GLDIT_FWALL);
       for (i = gld_drawinfo.num_items[GLDIT_FWALL] - 1; i >= 0; i--)
@@ -430,7 +398,6 @@ void gld_DrawDetail_NoARB(void)
         gld_DrawWallDetail_NoARB(gld_drawinfo.items[GLDIT_FWALL][i].item.wall);
       }
 
-      glDisable(GL_STENCIL_TEST);
       glPolygonOffset(0.0f, 0.0f);
       glDisable(GL_POLYGON_OFFSET_FILL);
     }
