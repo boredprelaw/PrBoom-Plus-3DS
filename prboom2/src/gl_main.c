@@ -1132,14 +1132,7 @@ void gld_StartDrawScene(void)
     }
     else
     {
-      if (gl_version >= OPENGL_VERSION_1_3)
-      {
-        invul_method = INVUL_BW;
-      }
-      else
-      {
-        invul_method = INVUL_INV;
-      }
+      invul_method = INVUL_BW;
     }
   }
 

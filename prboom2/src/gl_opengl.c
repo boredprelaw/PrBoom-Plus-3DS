@@ -45,11 +45,6 @@
 
 #define isExtensionSupported(ext) strstr(extensions, ext)
 
-int gl_version;
-
-int GLEXT_CLAMP_TO_EDGE = GL_CLAMP;
-int gl_max_texture_size = 0;
-
 dboolean gl_ext_arb_vertex_buffer_object = false;
 
 // cfg values
@@ -61,36 +56,8 @@ PFNGLDELETEBUFFERSARBPROC           GLEXT_glDeleteBuffersARB           = NULL;
 PFNGLBINDBUFFERARBPROC              GLEXT_glBindBufferARB              = NULL;
 PFNGLBUFFERDATAARBPROC              GLEXT_glBufferDataARB              = NULL;
 
-void gld_InitOpenGLVersion(void)
-{
-  int MajorVersion, MinorVersion;
-  gl_version = OPENGL_VERSION_1_0;
-  if (sscanf((const char*)glGetString(GL_VERSION), "%d.%d", &MajorVersion, &MinorVersion) == 2)
-  {
-    if (MajorVersion > 1)
-    {
-      gl_version = OPENGL_VERSION_2_0;
-      if (MinorVersion > 0) gl_version = OPENGL_VERSION_2_1;
-    }
-    else
-    {
-      gl_version = OPENGL_VERSION_1_0;
-      if (MinorVersion > 0) gl_version = OPENGL_VERSION_1_1;
-      if (MinorVersion > 1) gl_version = OPENGL_VERSION_1_2;
-      if (MinorVersion > 2) gl_version = OPENGL_VERSION_1_3;
-      if (MinorVersion > 3) gl_version = OPENGL_VERSION_1_4;
-      if (MinorVersion > 4) gl_version = OPENGL_VERSION_1_5;
-    }
-  }
-}
-
 void gld_InitOpenGL()
 {
-  GLenum texture;
-  const char *extensions = (const char*)glGetString(GL_EXTENSIONS);
-
-  gld_InitOpenGLVersion();
-
   // VBO
 #ifdef USE_VBO
   gl_ext_arb_vertex_buffer_object = gl_ext_arb_vertex_buffer_object_default &&
@@ -111,20 +78,6 @@ void gld_InitOpenGL()
 #else
   gl_ext_arb_vertex_buffer_object = false;
 #endif
-
-  // GL_CLAMP_TO_EDGE
-  GLEXT_CLAMP_TO_EDGE = (gl_version >= OPENGL_VERSION_1_2 ? GL_CLAMP_TO_EDGE : GL_CLAMP);
-
-  glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max_texture_size);
-  lprintf(LO_INFO,"GL_MAX_TEXTURE_SIZE=%i\n", gl_max_texture_size);
-
-  if (gl_version <= OPENGL_VERSION_1_1)
-  {
-    lprintf(LO_INFO, "gld_InitOpenGL: Compatibility mode is used.\n");
-    gl_ext_arb_vertex_buffer_object = false;
-    GLEXT_CLAMP_TO_EDGE = GL_CLAMP;
-    gl_version = OPENGL_VERSION_1_1;
-  }
 
   gld_EnableTexture2D(true);
   gld_EnableTexture2D(false);

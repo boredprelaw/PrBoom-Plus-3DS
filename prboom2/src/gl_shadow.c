@@ -41,6 +41,7 @@
 #include "r_sky.h"
 #include "r_main.h"
 #include "lprintf.h"
+#include <SDL.h>
 
 int gl_shadows_maxdist;
 int gl_shadows_factor;

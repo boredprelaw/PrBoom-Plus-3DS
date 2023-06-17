@@ -128,12 +128,14 @@ void gld_InitPalettedTextures(void)
   }
 }
 
+#define C3D_MAX_TEXTURE_SIZE 1024
+
 int gld_GetTexDimension(int value)
 {
   int i;
 
-  if (value > gl_max_texture_size)
-    value = gl_max_texture_size;
+  if (value > C3D_MAX_TEXTURE_SIZE)
+    value = C3D_MAX_TEXTURE_SIZE;
   
   i = 1;
   while (i < value)
@@ -757,7 +759,7 @@ void gld_SetTexClamp(GLTexture *gltexture, unsigned int flags)
       if (!has_clamp_x)
       {
         *gltexture->texflags_p |= GLTEXTURE_CLAMPX;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GLEXT_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
       }
     }
     else
@@ -774,7 +776,7 @@ void gld_SetTexClamp(GLTexture *gltexture, unsigned int flags)
       if (!has_clamp_y)
       {
         *gltexture->texflags_p |= GLTEXTURE_CLAMPY;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GLEXT_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
       }
     }
     else
@@ -977,7 +979,7 @@ GLTexture *gld_RegisterPatch(int lump, int cm, dboolean is_sprite)
       if (tex_filter[MIP_PATCH].mipmap)
         gltexture->flags |= GLTEXTURE_MIPMAP;
     }
-    //gltexture->wrap_mode = (patch->flags & PATCH_REPEAT ? GL_REPEAT : GLEXT_CLAMP_TO_EDGE);
+    //gltexture->wrap_mode = (patch->flags & PATCH_REPEAT ? GL_REPEAT : GL_CLAMP);
 
     gltexture->realtexwidth=patch->width;
     gltexture->realtexheight=patch->height;

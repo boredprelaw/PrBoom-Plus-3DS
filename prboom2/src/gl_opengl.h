@@ -41,36 +41,10 @@
 #define USE_VERTEX_ARRAYS
 //#define USE_VBO
 
-#include <SDL.h>
-#include <SDL_opengl.h>
-
-#include <GL/gl.h>	/* Header File For The OpenGL Library */
-#include <GL/glu.h>	/* Header File For The GLU Library */
+#include <GL/gl.h>
+#include <GL/glext.h>
 
 #include "doomtype.h"
-
-#if !defined(GL_DEPTH_STENCIL_EXT)
-#define GL_DEPTH_STENCIL_EXT              0x84F9
-#endif
-
-#define isExtensionSupported(ext) strstr(extensions, ext)
-
-//e6y: OpenGL version
-typedef enum {
-  OPENGL_VERSION_1_0,
-  OPENGL_VERSION_1_1,
-  OPENGL_VERSION_1_2,
-  OPENGL_VERSION_1_3,
-  OPENGL_VERSION_1_4,
-  OPENGL_VERSION_1_5,
-  OPENGL_VERSION_2_0,
-  OPENGL_VERSION_2_1,
-} glversion_t;
-
-extern int gl_version;
-
-extern int GLEXT_CLAMP_TO_EDGE;
-extern int gl_max_texture_size;
 
 extern dboolean gl_ext_arb_vertex_buffer_object;
 
