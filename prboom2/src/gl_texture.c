@@ -573,12 +573,6 @@ GLTexture *gld_RegisterTexture(int texture_num, dboolean mipmap, dboolean force)
     gltexture->height=MIN(gltexture->realtexheight, gltexture->tex_height);
     gltexture->buffer_width=gltexture->tex_width;
     gltexture->buffer_height=gltexture->tex_height;
-#ifdef USE_GLU_IMAGESCALE
-    gltexture->width=gltexture->tex_width;
-    gltexture->height=gltexture->tex_height;
-    gltexture->buffer_width=gltexture->realtexwidth;
-    gltexture->buffer_height=gltexture->realtexheight;
-#endif
     if (gltexture->flags & GLTEXTURE_MIPMAP)
     {
       gltexture->width=gltexture->tex_width;
@@ -801,75 +795,36 @@ int gld_BuildTexture(GLTexture *gltexture, void *data, dboolean readonly, int wi
   tex_height = gld_GetTexDimension(height);
   tex_buffer_size = tex_width * tex_height * 4;
 
-#ifdef USE_GLU_MIPMAP
-  if (gltexture->flags & GLTEXTURE_MIPMAP)
+  if ((width != tex_width) || (height != tex_height))
   {
-    gluBuild2DMipmaps(GL_TEXTURE_2D, gl_tex_format,
-      width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    gld_RecolorMipLevels(data);
-
-    gld_SetTexFilters(gltexture);
-
-    result = true;
-    goto l_exit;
-  }
-  else
-#endif // USE_GLU_MIPMAP
-  {
-#ifdef USE_GLU_IMAGESCALE
-    if ((width != tex_width) || (height != tex_height))
+    if (width == tex_width)
     {
       tex_buffer = malloc(tex_buffer_size);
-      if (!tex_buffer)
-      {
-        goto l_exit;
-      }
-
-      gluScaleImage(GL_RGBA, width, height,
-        GL_UNSIGNED_BYTE, data,
-        tex_width, tex_height,
-        GL_UNSIGNED_BYTE, tex_buffer);
-
-      glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_format,
-        tex_width, tex_height,
-        0, GL_RGBA, GL_UNSIGNED_BYTE, tex_buffer);
+      memcpy(tex_buffer, data, width * height * 4);
     }
     else
-#endif // USE_GLU_IMAGESCALE
     {
-      if ((width != tex_width) || (height != tex_height))
+      int y;
+      tex_buffer = calloc(1, tex_buffer_size);
+      for (y = 0; y < height; y++)          
       {
-        if (width == tex_width)
-        {
-          tex_buffer = malloc(tex_buffer_size);
-          memcpy(tex_buffer, data, width * height * 4);
-        }
-        else
-        {
-          int y;
-          tex_buffer = calloc(1, tex_buffer_size);
-          for (y = 0; y < height; y++)          
-          {
-            memcpy(tex_buffer + y * tex_width * 4,
-              ((unsigned char*)data) + y * width * 4, width * 4);
-          }
-        }
+        memcpy(tex_buffer + y * tex_width * 4,
+          ((unsigned char*)data) + y * width * 4, width * 4);
       }
-      else
-      {
-        tex_buffer = data;
-      }
-
-      glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_format,
-        tex_width, tex_height,
-        0, GL_RGBA, GL_UNSIGNED_BYTE, tex_buffer);
     }
-
-    gltexture->flags &= ~GLTEXTURE_MIPMAP;
-    gld_SetTexFilters(gltexture);
-    result = true;
   }
+  else
+  {
+    tex_buffer = data;
+  }
+
+  glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_format,
+    tex_width, tex_height,
+    0, GL_RGBA, GL_UNSIGNED_BYTE, tex_buffer);
+
+  gltexture->flags &= ~GLTEXTURE_MIPMAP;
+  gld_SetTexFilters(gltexture);
+  result = true;
 
 l_exit:
   if (result)
@@ -982,12 +937,6 @@ GLTexture *gld_RegisterPatch(int lump, int cm, dboolean is_sprite)
     gltexture->height=MIN(gltexture->realtexheight, gltexture->tex_height);
     gltexture->buffer_width=gltexture->tex_width;
     gltexture->buffer_height=gltexture->tex_height;
-#ifdef USE_GLU_IMAGESCALE
-    gltexture->width=MIN(gltexture->realtexwidth, gltexture->tex_width);
-    gltexture->height=MIN(gltexture->realtexheight, gltexture->tex_height);
-    gltexture->buffer_width=MAX(gltexture->realtexwidth, gltexture->tex_width);
-    gltexture->buffer_height=MAX(gltexture->realtexheight, gltexture->tex_height);
-#endif
     if (gltexture->flags & GLTEXTURE_MIPMAP)
     {
       gltexture->width=gltexture->tex_width;
@@ -1101,12 +1050,6 @@ GLTexture *gld_RegisterFlat(int lump, dboolean mipmap)
     gltexture->height=MIN(gltexture->realtexheight, gltexture->tex_height);
     gltexture->buffer_width=gltexture->tex_width;
     gltexture->buffer_height=gltexture->tex_height;
-#ifdef USE_GLU_IMAGESCALE
-    gltexture->width=gltexture->tex_width;
-    gltexture->height=gltexture->tex_height;
-    gltexture->buffer_width=gltexture->realtexwidth;
-    gltexture->buffer_height=gltexture->realtexheight;
-#endif
     if (gltexture->flags & GLTEXTURE_MIPMAP)
     {
       gltexture->width=gltexture->tex_width;
