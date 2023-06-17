@@ -839,7 +839,7 @@ void I_InitScreenResolution(void)
 #ifndef GL_DOOM
   if (mode == VID_MODEGL)
   {
-    mode = (video_mode_t)I_GetModeFromString(default_videomode = "8bit");
+    mode = (video_mode_t)I_GetModeFromString(default_videomode = "32bit");
   }
 #endif
   
@@ -917,16 +917,12 @@ video_mode_t I_GetModeFromString(const char *modestr)
     mode = VID_MODE16;
   } else if (!stricmp(modestr,"16bit")) {
     mode = VID_MODE16;
-  } else if (!stricmp(modestr,"32")) {
-    mode = VID_MODE32;
-  } else if (!stricmp(modestr,"32bit")) {
-    mode = VID_MODE32;
   } else if (!stricmp(modestr,"gl")) {
     mode = VID_MODEGL;
   } else if (!stricmp(modestr,"OpenGL")) {
     mode = VID_MODEGL;
   } else {
-    mode = VID_MODE8;
+    mode = VID_MODE32;
   }
 
   return mode;

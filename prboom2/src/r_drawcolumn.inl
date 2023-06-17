@@ -29,10 +29,7 @@
  *-----------------------------------------------------------------------------*/
 
 
-#if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
-#define SCREENTYPE byte
-#define TEMPBUF byte_tempbuf
-#elif (R_DRAWCOLUMN_PIPELINE_BITS == 15)
+#if (R_DRAWCOLUMN_PIPELINE_BITS == 15)
 #define SCREENTYPE unsigned short
 #define TEMPBUF short_tempbuf
 #elif (R_DRAWCOLUMN_PIPELINE_BITS == 16)
@@ -43,7 +40,6 @@
 #define TEMPBUF int_tempbuf
 #endif
 
-#define GETDESTCOLOR8(col) (col)
 #define GETDESTCOLOR15(col) (col)
 #define GETDESTCOLOR16(col) (col)
 #define GETDESTCOLOR32(col) (col)
@@ -65,17 +61,14 @@
 #endif
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_BILINEAR)
- #define GETCOL8(frac, nextfrac) GETCOL8_DEPTH(filter_getDitheredForColumn(x,y,frac,nextfrac))
  #define GETCOL15(frac, nextfrac) filter_getFilteredForColumn15(GETCOL8_DEPTH,frac,nextfrac)
  #define GETCOL16(frac, nextfrac) filter_getFilteredForColumn16(GETCOL8_DEPTH,frac,nextfrac)
  #define GETCOL32(frac, nextfrac) filter_getFilteredForColumn32(GETCOL8_DEPTH,frac,nextfrac)
 #elif (R_DRAWCOLUMN_PIPELINE & RDC_ROUNDED)
- #define GETCOL8(frac, nextfrac) GETCOL8_DEPTH(filter_getRoundedForColumn(frac,nextfrac))
  #define GETCOL15(frac, nextfrac) VID_PAL15(GETCOL8_DEPTH(filter_getRoundedForColumn(frac,nextfrac)), VID_COLORWEIGHTMASK)
  #define GETCOL16(frac, nextfrac) VID_PAL16(GETCOL8_DEPTH(filter_getRoundedForColumn(frac,nextfrac)), VID_COLORWEIGHTMASK)
  #define GETCOL32(frac, nextfrac) VID_PAL32(GETCOL8_DEPTH(filter_getRoundedForColumn(frac,nextfrac)), VID_COLORWEIGHTMASK)
 #else
- #define GETCOL8(frac, nextfrac) GETCOL8_DEPTH(source[(frac)>>FRACBITS])
  #define GETCOL15(frac, nextfrac) VID_PAL15(GETCOL8_DEPTH(source[(frac)>>FRACBITS]), VID_COLORWEIGHTMASK)
  #define GETCOL16(frac, nextfrac) VID_PAL16(GETCOL8_DEPTH(source[(frac)>>FRACBITS]), VID_COLORWEIGHTMASK)
  #define GETCOL32(frac, nextfrac) VID_PAL32(GETCOL8_DEPTH(source[(frac)>>FRACBITS]), VID_COLORWEIGHTMASK)
@@ -95,10 +88,7 @@
 #define COLTYPE (COL_OPAQUE)
 #endif
 
-#if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
-  #define GETCOL(frac, nextfrac) GETCOL8(frac, nextfrac)
-  #define GETDESTCOLOR(col) GETDESTCOLOR8(col)
-#elif (R_DRAWCOLUMN_PIPELINE_BITS == 15)
+#if (R_DRAWCOLUMN_PIPELINE_BITS == 15)
   #define GETCOL(frac, nextfrac) GETCOL15(frac, nextfrac)
   #define GETDESTCOLOR(col) GETDESTCOLOR15(col)
 #elif (R_DRAWCOLUMN_PIPELINE_BITS == 16)
@@ -263,14 +253,8 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
     const byte *dither_colormaps[2] = { dcvars->colormap, dcvars->nextcolormap };
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & RDC_BILINEAR)
-  #if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
-    const int yl = dcvars->yl;
-    const byte *dither_sources[2] = { dcvars->source, dcvars->nextsource };
-    const unsigned int filter_fracu = (dcvars->source == dcvars->nextsource) ? 0 : (dcvars->texu>>8) & 0xff;
-  #else
     const byte          *nextsource = dcvars->nextsource;
     const unsigned int filter_fracu = (dcvars->source == dcvars->nextsource) ? 0 : dcvars->texu & 0xffff;
-  #endif
 #endif
 #if (R_DRAWCOLUMN_PIPELINE & RDC_ROUNDED)
     const byte          *prevsource = dcvars->prevsource;
@@ -369,7 +353,6 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 #undef GETCOL32
 #undef GETCOL16
 #undef GETCOL15
-#undef GETCOL8
 #undef GETCOL
 #undef INCY
 #undef INCFRAC

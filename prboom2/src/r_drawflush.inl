@@ -28,12 +28,7 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
-#define SCREENTYPE byte
-#define TOPLEFT byte_topleft
-#define PITCH byte_pitch
-#define TEMPBUF byte_tempbuf
-#elif (R_DRAWCOLUMN_PIPELINE_BITS == 15)
+#if (R_DRAWCOLUMN_PIPELINE_BITS == 15)
 #define SCREENTYPE unsigned short
 #define TOPLEFT short_topleft
 #define PITCH short_pitch
@@ -51,26 +46,21 @@
 #endif
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
-#define GETDESTCOLOR8(col1, col2) (temptranmap[((col1)<<8)+(col2)])
 #define GETDESTCOLOR15(col1, col2) (GETBLENDED15_3268((col1), (col2)))
 #define GETDESTCOLOR16(col1, col2) (GETBLENDED16_3268((col1), (col2)))
 #define GETDESTCOLOR32(col1, col2) (GETBLENDED32_3268((col1), (col2)))
 #elif (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
-#define GETDESTCOLOR8(col) (tempfuzzmap[6*256+(col)])
 #define GETDESTCOLOR15(col) GETBLENDED15_9406(col, 0)
 #define GETDESTCOLOR16(col) GETBLENDED16_9406(col, 0)
 #define GETDESTCOLOR32(col) GETBLENDED32_9406(col, 0)
 #else
-#define GETDESTCOLOR8(col) (col)
 #define GETDESTCOLOR15(col) (col)
 #define GETDESTCOLOR16(col) (col)
 #define GETDESTCOLOR32(col) (col)
 #endif
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
-  #if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
-    #define GETDESTCOLOR(col1, col2) GETDESTCOLOR8(col1, col2)
-  #elif (R_DRAWCOLUMN_PIPELINE_BITS == 15)
+  #if (R_DRAWCOLUMN_PIPELINE_BITS == 15)
     #define GETDESTCOLOR(col1, col2) GETDESTCOLOR15(col1, col2)
   #elif (R_DRAWCOLUMN_PIPELINE_BITS == 16)
     #define GETDESTCOLOR(col1, col2) GETDESTCOLOR16(col1, col2)
@@ -78,9 +68,7 @@
     #define GETDESTCOLOR(col1, col2) GETDESTCOLOR32(col1, col2)
   #endif
 #else
-  #if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
-    #define GETDESTCOLOR(col) GETDESTCOLOR8(col)
-  #elif (R_DRAWCOLUMN_PIPELINE_BITS == 15)
+  #if (R_DRAWCOLUMN_PIPELINE_BITS == 15)
     #define GETDESTCOLOR(col) GETDESTCOLOR15(col)
   #elif (R_DRAWCOLUMN_PIPELINE_BITS == 16)
     #define GETDESTCOLOR(col) GETDESTCOLOR16(col)
@@ -249,26 +237,6 @@ static void R_FLUSHQUAD_FUNCNAME(void)
       dest += drawvars.PITCH * sizeof(byte);
    }
 #else
-  #if (R_DRAWCOLUMN_PIPELINE_BITS == 8)
-   if ((sizeof(int) == 4) && (((intptr_t)source % 4) == 0) && (((intptr_t)dest % 4) == 0)) {
-      while(--count >= 0)
-      {
-         *(int *)dest = *(int *)source;
-         source += 4 * sizeof(byte);
-         dest += drawvars.PITCH * sizeof(byte);
-      }
-   } else {
-      while(--count >= 0)
-      {
-         dest[0] = source[0];
-         dest[1] = source[1];
-         dest[2] = source[2];
-         dest[3] = source[3];
-         source += 4 * sizeof(byte);
-         dest += drawvars.PITCH * sizeof(byte);
-      }
-   }
-  #else
    while(--count >= 0)
    {
       dest[0] = source[0];
@@ -278,14 +246,12 @@ static void R_FLUSHQUAD_FUNCNAME(void)
       source += 4;
       dest += drawvars.PITCH;
    }
-  #endif
 #endif
 }
 
 #undef GETDESTCOLOR32
 #undef GETDESTCOLOR16
 #undef GETDESTCOLOR15
-#undef GETDESTCOLOR8
 #undef GETDESTCOLOR
 
 #undef TEMPBUF

@@ -173,7 +173,6 @@ extern unsigned int *V_Palette32;
 
 // The available bit-depth modes
 typedef enum {
-  VID_MODE8,
   VID_MODE15,
   VID_MODE16,
   VID_MODE32,

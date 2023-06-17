@@ -343,31 +343,7 @@ static void FUNC_V_FillFlat(int lump, int scrn, int x, int y, int width, int hei
   // killough 4/17/98:
   data = W_CacheLumpNum(lump);
 
-  if (V_GetMode() == VID_MODE8) {
-    const byte *src, *src_p;
-    byte *dest, *dest_p;
-    pitch = screens[scrn].byte_pitch;
-
-    for (sy = y ; sy < y + height; sy += 64)
-    {
-      h = (y + height - sy < 64 ? y + height - sy : 64);
-      dest = screens[scrn].data + pitch * sy + x;
-      src = data + 64 * ((sy - y) % 64);
-      for (sx = x; sx < x + width; sx += 64)
-      {
-        src_p = src;
-        dest_p = dest;
-        w = (x + width - sx < 64 ? x + width - sx : 64);
-        for (j = 0; j < h; j++)
-        {
-          memcpy (dest_p, src_p, w);
-          dest_p += pitch;
-          src_p += 64;
-        }
-        dest += 64;
-      }
-    }
-  } else if (V_GetMode() == VID_MODE15) {
+  if (V_GetMode() == VID_MODE15) {
     pitch = screens[scrn].short_pitch;
     FILL_FLAT(unsigned short, pitch, VID_PAL15);
   } else if (V_GetMode() == VID_MODE16) {
@@ -476,262 +452,176 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
   if (patch->width > 320 && patch->leftoffset == 0)
     x -= (patch->width - 320) / 2;
 
-  if (V_GetMode() == VID_MODE8 && !(flags & VPT_STRETCH_MASK)) {
-    int             col;
-    byte           *desttop = screens[scrn].data+y*screens[scrn].byte_pitch+x*V_GetPixelDepth();
-    int    w = patch->width;
+  // CPhipps - move stretched patch drawing code here
+  //         - reformat initialisers, move variables into inner blocks
 
-    if (y<0 || y+patch->height > ((flags & VPT_STRETCH) ? 200 :  SCREENHEIGHT)) {
-      // killough 1/19/98: improved error message:
-      lprintf(LO_WARN, "V_DrawMemPatch8: Patch (%d,%d)-(%d,%d) exceeds LFB in vertical direction (horizontal is clipped)\n"
-              "Bad V_DrawMemPatch8 (flags=%u)", x, y, x+patch->width, y+patch->height, flags);
-      return;
-    }
+  int   col;
+  int   w = (patch->width << 16) - 1; // CPhipps - -1 for faster flipping
+  int   left, right, top, bottom;
+  int   DXI, DYI;
+  R_DrawColumn_f colfunc;
+  draw_column_vars_t dcvars;
+  draw_vars_t olddrawvars = drawvars;
 
-    w--; // CPhipps - note: w = width-1 now, speeds up flipping
+  R_SetDefaultDrawColumnVars(&dcvars);
 
-    for (col=0 ; col<=w ; desttop++, col++, x++) {
-      int i;
-      const int colindex = (flags & VPT_FLIP) ? (w - col) : (col);
-      const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
+  drawvars.byte_topleft = screens[scrn].data;
+  drawvars.short_topleft = (unsigned short *)screens[scrn].data;
+  drawvars.int_topleft = (unsigned int *)screens[scrn].data;
+  drawvars.byte_pitch = screens[scrn].byte_pitch;
+  drawvars.short_pitch = screens[scrn].short_pitch;
+  drawvars.int_pitch = screens[scrn].int_pitch;
 
-      if (x < 0)
-        continue;
-      if (x >= SCREENWIDTH)
-        break;
+  if (flags & VPT_TRANS) {
+    colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_TRANSLATED, drawvars.filterpatch, RDRAW_FILTER_NONE);
+    dcvars.translation = trans;
+  } else {
+    colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, drawvars.filterpatch, RDRAW_FILTER_NONE);
+  }
 
-      // step through the posts in a column
-      for (i=0; i<column->numPosts; i++) {
-        const rpost_t *post = &column->posts[i];
-        // killough 2/21/98: Unrolled and performance-tuned
+  //e6y: predefined arrays are used
+  if (!(flags & VPT_STRETCH_MASK))
+  {
+    DXI = 1 << 16;
+    DYI = 1 << 16;
 
-        const byte *source = column->pixels + post->topdelta;
-        byte *dest = desttop + post->topdelta*screens[scrn].byte_pitch;
-        int count = post->length;
+    left = x;
+    top = y;
+    right = x + patch->width - 1;
+    bottom = y + patch->height;
+  }
+  else
+  {
+    DXI = params->video->xstep;
+    DYI = params->video->ystep;
 
-        if (!(flags & VPT_TRANS)) {
-          if ((count-=4)>=0)
-            do {
-              register byte s0,s1;
-              s0 = source[0];
-              s1 = source[1];
-              dest[0] = s0;
-              dest[screens[scrn].byte_pitch] = s1;
-              dest += screens[scrn].byte_pitch*2;
-              s0 = source[2];
-              s1 = source[3];
-              source += 4;
-              dest[0] = s0;
-              dest[screens[scrn].byte_pitch] = s1;
-              dest += screens[scrn].byte_pitch*2;
-            } while ((count-=4)>=0);
-          if (count+=4)
-            do {
-              *dest = *source++;
-              dest += screens[scrn].byte_pitch;
-            } while (--count);
-        } else {
-          // CPhipps - merged translation code here
-          if ((count-=4)>=0)
-            do {
-              register byte s0,s1;
-              s0 = source[0];
-              s1 = source[1];
-              s0 = trans[s0];
-              s1 = trans[s1];
-              dest[0] = s0;
-              dest[screens[scrn].byte_pitch] = s1;
-              dest += screens[scrn].byte_pitch*2;
-              s0 = source[2];
-              s1 = source[3];
-              s0 = trans[s0];
-              s1 = trans[s1];
-              source += 4;
-              dest[0] = s0;
-              dest[screens[scrn].byte_pitch] = s1;
-              dest += screens[scrn].byte_pitch*2;
-            } while ((count-=4)>=0);
-          if (count+=4)
-            do {
-              *dest = trans[*source++];
-              dest += screens[scrn].byte_pitch;
-            } while (--count);
-        }
-      }
-    }
+    //FIXME: Is it needed only for F_BunnyScroll?
+
+    left = (x < 0 || x > 320 ? (x * params->video->width) / 320 : params->video->x1lookup[x]);
+    top =  (y < 0 || y > 200 ? (y * params->video->height) / 200 : params->video->y1lookup[y]);
+
+    if (x + patch->width < 0 || x + patch->width > 320)
+      right = ( ((x + patch->width) * params->video->width - 1) / 320 );
+    else
+      right = params->video->x2lookup[x + patch->width - 1];
+
+    if (y + patch->height < 0 || y + patch->height > 200)
+      bottom = ( ((y + patch->height - 0) * params->video->height) / 200 );
+    else
+      bottom = params->video->y2lookup[y + patch->height - 1];
+
+    left   += params->deltax1;
+    right  += params->deltax2;
+    top    += params->deltay1;
+    bottom += params->deltay1;
+  }
+
+  dcvars.texheight = patch->height;
+  dcvars.iscale = DYI;
+  dcvars.drawingmasked = MAX(patch->width, patch->height) > 8;
+  dcvars.edgetype = drawvars.patch_edges;
+
+  if (drawvars.filterpatch == RDRAW_FILTER_LINEAR) {
+    // bias the texture u coordinate
+    if (patch->flags&PATCH_ISNOTTILEABLE)
+      col = -(FRACUNIT>>1);
+    else
+      col = (patch->width<<FRACBITS)-(FRACUNIT>>1);
   }
   else {
-    // CPhipps - move stretched patch drawing code here
-    //         - reformat initialisers, move variables into inner blocks
-
-    int   col;
-    int   w = (patch->width << 16) - 1; // CPhipps - -1 for faster flipping
-    int   left, right, top, bottom;
-    int   DXI, DYI;
-    R_DrawColumn_f colfunc;
-    draw_column_vars_t dcvars;
-    draw_vars_t olddrawvars = drawvars;
-
-    R_SetDefaultDrawColumnVars(&dcvars);
-
-    drawvars.byte_topleft = screens[scrn].data;
-    drawvars.short_topleft = (unsigned short *)screens[scrn].data;
-    drawvars.int_topleft = (unsigned int *)screens[scrn].data;
-    drawvars.byte_pitch = screens[scrn].byte_pitch;
-    drawvars.short_pitch = screens[scrn].short_pitch;
-    drawvars.int_pitch = screens[scrn].int_pitch;
-
-    if (flags & VPT_TRANS) {
-      colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_TRANSLATED, drawvars.filterpatch, RDRAW_FILTER_NONE);
-      dcvars.translation = trans;
-    } else {
-      colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, drawvars.filterpatch, RDRAW_FILTER_NONE);
-    }
-
-    //e6y: predefined arrays are used
-    if (!(flags & VPT_STRETCH_MASK))
-    {
-      DXI = 1 << 16;
-      DYI = 1 << 16;
-
-      left = x;
-      top = y;
-      right = x + patch->width - 1;
-      bottom = y + patch->height;
-    }
-    else
-    {
-      DXI = params->video->xstep;
-      DYI = params->video->ystep;
-
-      //FIXME: Is it needed only for F_BunnyScroll?
-
-      left = (x < 0 || x > 320 ? (x * params->video->width) / 320 : params->video->x1lookup[x]);
-      top =  (y < 0 || y > 200 ? (y * params->video->height) / 200 : params->video->y1lookup[y]);
-
-      if (x + patch->width < 0 || x + patch->width > 320)
-        right = ( ((x + patch->width) * params->video->width - 1) / 320 );
-      else
-        right = params->video->x2lookup[x + patch->width - 1];
-
-      if (y + patch->height < 0 || y + patch->height > 200)
-        bottom = ( ((y + patch->height - 0) * params->video->height) / 200 );
-      else
-        bottom = params->video->y2lookup[y + patch->height - 1];
-
-      left   += params->deltax1;
-      right  += params->deltax2;
-      top    += params->deltay1;
-      bottom += params->deltay1;
-    }
-
-    dcvars.texheight = patch->height;
-    dcvars.iscale = DYI;
-    dcvars.drawingmasked = MAX(patch->width, patch->height) > 8;
-    dcvars.edgetype = drawvars.patch_edges;
-
-    if (drawvars.filterpatch == RDRAW_FILTER_LINEAR) {
-      // bias the texture u coordinate
-      if (patch->flags&PATCH_ISNOTTILEABLE)
-        col = -(FRACUNIT>>1);
-      else
-        col = (patch->width<<FRACBITS)-(FRACUNIT>>1);
-    }
-    else {
-      col = 0;
-    }
-
-    for (dcvars.x=left; dcvars.x<=right; dcvars.x++, col+=DXI) {
-      int i;
-      const int colindex = (flags & VPT_FLIP) ? ((w - col)>>16): (col>>16);
-      const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
-      const rcolumn_t *prevcolumn = R_GetPatchColumn(patch, colindex-1);
-      const rcolumn_t *nextcolumn = R_GetPatchColumn(patch, colindex+1);
-
-      // ignore this column if it's to the left of our clampRect
-      if (dcvars.x < 0)
-        continue;
-      if (dcvars.x >= SCREENWIDTH)
-        break;
-
-      dcvars.texu = ((flags & VPT_FLIP) ? ((patch->width<<FRACBITS)-col) : col) % (patch->width<<FRACBITS);
-
-      // step through the posts in a column
-      for (i=0; i<column->numPosts; i++) {
-        const rpost_t *post = &column->posts[i];
-        int yoffset = 0;
-
-        //e6y
-        if (!(flags & VPT_STRETCH_MASK))
-        {
-          dcvars.yl = y + post->topdelta;
-          dcvars.yh = ((((y + post->topdelta + post->length) << 16) - (FRACUNIT>>1))>>FRACBITS);
-        }
-        else
-        {
-          // e6y
-          // More accurate patch drawing from Eternity.
-          // Predefined arrays are used instead of dynamic calculation 
-          // of the top and bottom screen coordinates of a column.
-
-          int tmpy;
-          
-          tmpy = y + post->topdelta;
-          if (tmpy < 0 || tmpy > 200)
-            dcvars.yl = (tmpy * params->video->height) / 200 + params->deltay1;
-          else
-            dcvars.yl = params->video->y1lookup[tmpy] + params->deltay1;
-
-          tmpy = y + post->topdelta + post->length - 1;
-          if (tmpy < 0 || tmpy > 200)
-            dcvars.yh = (tmpy * params->video->height) / 200 + params->deltay1;
-          else
-            dcvars.yh = params->video->y2lookup[tmpy] + params->deltay1;
-        }
-        dcvars.edgeslope = post->slope;
-
-        if ((dcvars.yh < 0) || (dcvars.yh < top))
-          continue;
-        if ((dcvars.yl >= SCREENHEIGHT) || (dcvars.yl >= bottom))
-          continue;
-
-        if (dcvars.yh >= bottom) {
-          //dcvars.yh = bottom-1;
-          dcvars.edgeslope &= ~RDRAW_EDGESLOPE_BOT_MASK;
-        }
-        if (dcvars.yh >= SCREENHEIGHT) {
-          dcvars.yh = SCREENHEIGHT-1;
-          dcvars.edgeslope &= ~RDRAW_EDGESLOPE_BOT_MASK;
-        }
-
-        if (dcvars.yl < 0) {
-          yoffset = 0-dcvars.yl;
-          dcvars.yl = 0;
-          dcvars.edgeslope &= ~RDRAW_EDGESLOPE_TOP_MASK;
-        }
-        if (dcvars.yl < top) {
-          yoffset = top-dcvars.yl;
-          dcvars.yl = top;
-          dcvars.edgeslope &= ~RDRAW_EDGESLOPE_TOP_MASK;
-        }
-
-        dcvars.source = column->pixels + post->topdelta + yoffset;
-        dcvars.prevsource = prevcolumn ? prevcolumn->pixels + post->topdelta + yoffset: dcvars.source;
-        dcvars.nextsource = nextcolumn ? nextcolumn->pixels + post->topdelta + yoffset: dcvars.source;
-
-        dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
-
-        //e6y
-        dcvars.dy = params->deltay1;
-        dcvars.flags |= DRAW_COLUMN_ISPATCH; 
-
-        colfunc(&dcvars);
-      }
-    }
-
-    R_ResetColumnBuffer();
-    drawvars = olddrawvars;
+    col = 0;
   }
+
+  for (dcvars.x=left; dcvars.x<=right; dcvars.x++, col+=DXI) {
+    int i;
+    const int colindex = (flags & VPT_FLIP) ? ((w - col)>>16): (col>>16);
+    const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
+    const rcolumn_t *prevcolumn = R_GetPatchColumn(patch, colindex-1);
+    const rcolumn_t *nextcolumn = R_GetPatchColumn(patch, colindex+1);
+
+    // ignore this column if it's to the left of our clampRect
+    if (dcvars.x < 0)
+      continue;
+    if (dcvars.x >= SCREENWIDTH)
+      break;
+
+    dcvars.texu = ((flags & VPT_FLIP) ? ((patch->width<<FRACBITS)-col) : col) % (patch->width<<FRACBITS);
+
+    // step through the posts in a column
+    for (i=0; i<column->numPosts; i++) {
+      const rpost_t *post = &column->posts[i];
+      int yoffset = 0;
+
+      //e6y
+      if (!(flags & VPT_STRETCH_MASK))
+      {
+        dcvars.yl = y + post->topdelta;
+        dcvars.yh = ((((y + post->topdelta + post->length) << 16) - (FRACUNIT>>1))>>FRACBITS);
+      }
+      else
+      {
+        // e6y
+        // More accurate patch drawing from Eternity.
+        // Predefined arrays are used instead of dynamic calculation 
+        // of the top and bottom screen coordinates of a column.
+
+        int tmpy;
+        
+        tmpy = y + post->topdelta;
+        if (tmpy < 0 || tmpy > 200)
+          dcvars.yl = (tmpy * params->video->height) / 200 + params->deltay1;
+        else
+          dcvars.yl = params->video->y1lookup[tmpy] + params->deltay1;
+
+        tmpy = y + post->topdelta + post->length - 1;
+        if (tmpy < 0 || tmpy > 200)
+          dcvars.yh = (tmpy * params->video->height) / 200 + params->deltay1;
+        else
+          dcvars.yh = params->video->y2lookup[tmpy] + params->deltay1;
+      }
+      dcvars.edgeslope = post->slope;
+
+      if ((dcvars.yh < 0) || (dcvars.yh < top))
+        continue;
+      if ((dcvars.yl >= SCREENHEIGHT) || (dcvars.yl >= bottom))
+        continue;
+
+      if (dcvars.yh >= bottom) {
+        //dcvars.yh = bottom-1;
+        dcvars.edgeslope &= ~RDRAW_EDGESLOPE_BOT_MASK;
+      }
+      if (dcvars.yh >= SCREENHEIGHT) {
+        dcvars.yh = SCREENHEIGHT-1;
+        dcvars.edgeslope &= ~RDRAW_EDGESLOPE_BOT_MASK;
+      }
+
+      if (dcvars.yl < 0) {
+        yoffset = 0-dcvars.yl;
+        dcvars.yl = 0;
+        dcvars.edgeslope &= ~RDRAW_EDGESLOPE_TOP_MASK;
+      }
+      if (dcvars.yl < top) {
+        yoffset = top-dcvars.yl;
+        dcvars.yl = top;
+        dcvars.edgeslope &= ~RDRAW_EDGESLOPE_TOP_MASK;
+      }
+
+      dcvars.source = column->pixels + post->topdelta + yoffset;
+      dcvars.prevsource = prevcolumn ? prevcolumn->pixels + post->topdelta + yoffset: dcvars.source;
+      dcvars.nextsource = nextcolumn ? nextcolumn->pixels + post->topdelta + yoffset: dcvars.source;
+
+      dcvars.texturemid = -((dcvars.yl-centery)*dcvars.iscale);
+
+      //e6y
+      dcvars.dy = params->deltay1;
+      dcvars.flags |= DRAW_COLUMN_ISPATCH; 
+
+      colfunc(&dcvars);
+    }
+  }
+
+  R_ResetColumnBuffer();
+  drawvars = olddrawvars;
 }
 
 // CPhipps - some simple, useful wrappers for that function, for drawing patches from wads
@@ -949,15 +839,6 @@ void V_SetPalette(int pal)
 // V_FillRect
 //
 // CPhipps - New function to fill a rectangle with a given colour
-static void V_FillRect8(int scrn, int x, int y, int width, int height, byte colour)
-{
-  byte* dest = screens[scrn].data + x + y*screens[scrn].byte_pitch;
-  while (height--) {
-    memset(dest, colour, width);
-    dest += screens[scrn].byte_pitch;
-  }
-}
-
 static void V_FillRect15(int scrn, int x, int y, int width, int height, byte colour)
 {
   unsigned short* dest = (unsigned short *)screens[scrn].data + x + y*screens[scrn].short_pitch;
@@ -998,13 +879,11 @@ static void V_FillRect32(int scrn, int x, int y, int width, int height, byte col
 }
 
 static void WRAP_V_DrawLine(fline_t* fl, int color);
-static void V_PlotPixel8(int scrn, int x, int y, byte color);
 static void V_PlotPixel15(int scrn, int x, int y, byte color);
 static void V_PlotPixel16(int scrn, int x, int y, byte color);
 static void V_PlotPixel32(int scrn, int x, int y, byte color);
 
 static void WRAP_V_DrawLineWu(fline_t* fl, int color);
-static void V_PlotPixelWu8(int scrn, int x, int y, byte color, int weight);
 static void V_PlotPixelWu15(int scrn, int x, int y, byte color, int weight);
 static void V_PlotPixelWu16(int scrn, int x, int y, byte color, int weight);
 static void V_PlotPixelWu32(int scrn, int x, int y, byte color, int weight);
@@ -1067,7 +946,7 @@ static void NULL_DrawLine(fline_t* fl, int color) {}
 static void NULL_DrawLineWu(fline_t* fl, int color) {}
 
 const char *default_videomode;
-static video_mode_t current_videomode = VID_MODE8;
+static video_mode_t current_videomode = VID_MODE32;
 
 V_CopyRect_f V_CopyRect = NULL_CopyRect;
 V_FillRect_f V_FillRect = NULL_FillRect;
@@ -1086,21 +965,6 @@ V_DrawLineWu_f V_DrawLineWu = NULL_DrawLineWu;
 //
 void V_InitMode(video_mode_t mode) {
   switch (mode) {
-    case VID_MODE8:
-      lprintf(LO_INFO, "V_InitMode: using 8 bit video mode\n");
-      V_CopyRect = FUNC_V_CopyRect;
-      V_FillRect = V_FillRect8;
-      V_DrawNumPatch = FUNC_V_DrawNumPatch;
-      V_DrawNumPatchPrecise = FUNC_V_DrawNumPatchPrecise;
-      V_FillFlat = FUNC_V_FillFlat;
-      V_FillPatch = FUNC_V_FillPatch;
-      V_DrawBackground = FUNC_V_DrawBackground;
-      V_PlotPixel = V_PlotPixel8;
-      V_PlotPixelWu = V_PlotPixelWu8;
-      V_DrawLine = WRAP_V_DrawLine;
-      V_DrawLineWu = WRAP_V_DrawLineWu;
-      current_videomode = VID_MODE8;
-      break;
     case VID_MODE15:
       lprintf(LO_INFO, "V_InitMode: using 15 bit video mode\n");
       V_CopyRect = FUNC_V_CopyRect;
@@ -1179,7 +1043,6 @@ video_mode_t V_GetMode(void) {
 //
 int V_GetModePixelDepth(video_mode_t mode) {
   switch (mode) {
-    case VID_MODE8: return 1;
     case VID_MODE15: return 2;
     case VID_MODE16: return 2;
     case VID_MODE32: return 4;
@@ -1192,7 +1055,6 @@ int V_GetModePixelDepth(video_mode_t mode) {
 //
 int V_GetNumPixelBits(void) {
   switch (current_videomode) {
-    case VID_MODE8: return 8;
     case VID_MODE15: return 15;
     case VID_MODE16: return 16;
     case VID_MODE32: return 32;
@@ -1245,10 +1107,6 @@ void V_FreeScreens(void) {
 
   for (i=0; i<NUM_SCREENS; i++)
     V_FreeScreen(&screens[i]);
-}
-
-static void V_PlotPixel8(int scrn, int x, int y, byte color) {
-  screens[scrn].data[x+screens[scrn].byte_pitch*y] = color;
 }
 
 static void V_PlotPixel15(int scrn, int x, int y, byte color) {
@@ -1370,17 +1228,6 @@ extern SDL_Surface *screen;
 //
 // haleyjd 06/13/09: Pixel plotter for Wu line drawing.
 //
-static void V_PlotPixelWu8(int scrn, int x, int y, byte color, int weight)
-{
-  unsigned int bg_color = screens[scrn].data[x+screens[scrn].byte_pitch*y];
-  unsigned int *fg2rgb = Col2RGB8[weight];
-  unsigned int *bg2rgb = Col2RGB8[64 - weight];
-  unsigned int fg = fg2rgb[color];
-  unsigned int bg = bg2rgb[bg_color];
-
-  fg = (fg + bg) | 0x1f07c1f;
-  V_PlotPixel(scrn, x, y, RGB32k[0][0][fg & (fg >> 15)]);
-}
 static void V_PlotPixelWu15(int scrn, int x, int y, byte color, int weight)
 {
   const unsigned char *rgb = V_GetPlaypal() + color * 3;

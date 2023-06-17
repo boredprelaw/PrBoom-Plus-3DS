@@ -388,7 +388,7 @@ default_t defaults[] =
   {"full_sounds",{&full_sounds},{0},0,1,def_bool,ss_none}, // disable sound cutoffs
 
   {"Video settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"videomode",{NULL, &default_videomode},{0,"8bit"},UL,UL,def_str,ss_none},
+  {"videomode",{NULL, &default_videomode},{0,"32bit"},UL,UL,def_str,ss_none},
   {"translucency",{&default_translucency},{1},0,1,   // phares
    def_bool,ss_none}, // enables translucency
   {"tran_filter_pct",{&tran_filter_pct},{66},0,100,         // killough 2/21/98
