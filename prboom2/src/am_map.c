@@ -109,9 +109,6 @@ const char *map_things_appearance_list[map_things_appearance_max] =
 {
   "classic",
   "scaled",
-#if defined(HAVE_LIBSDL2_IMAGE) && defined(GL_DOOM)
-  "icons"
-#endif
 };
 
 // drawing stuff
@@ -1639,14 +1636,6 @@ static void AM_drawPlayers(void)
   mpoint_t pt;
   fixed_t scale;
 
-#if defined(HAVE_LIBSDL2_IMAGE) && defined(GL_DOOM)
-  if (V_GetMode() == VID_MODEGL)
-  {
-    if (map_things_appearance == map_things_appearance_icon)
-      return;
-  }
-#endif
-
   if (map_things_appearance == map_things_appearance_scaled)
     scale = (BETWEEN(4<<FRACBITS, 256<<FRACBITS, plr->mo->radius)>>FRACTOMAPBITS);
   else
@@ -1975,17 +1964,6 @@ static void AM_drawThings(void)
   int   i;
   mobj_t* t;
 
-#if defined(HAVE_LIBSDL2_IMAGE) && defined(GL_DOOM)
-  if (V_GetMode() == VID_MODEGL)
-  {
-    if (map_things_appearance == map_things_appearance_icon)
-    {
-      AM_DrawNiceThings();
-      return;
-    }
-  }
-#endif
-
   if (ddt_cheating != 2)
     return;
 
@@ -2093,14 +2071,6 @@ static void AM_drawMarks(void)
 {
   int i;
   char namebuf[16] = "AMMNUM0";
-
-#if defined(HAVE_LIBSDL2_IMAGE) && defined(GL_DOOM)
-  if (V_GetMode() == VID_MODEGL)
-  {
-    if (map_things_appearance == map_things_appearance_icon)
-      return;
-  }
-#endif
 
   for (i = 0; i < markpointnum; i++) // killough 2/22/98: remove automap mark limit
   {
@@ -2351,13 +2321,6 @@ void AM_Drawer (void)
   {
     gld_DrawMapLines();
     M_ArrayClear(&map_lines);
-
-#if defined(HAVE_LIBSDL2_IMAGE)
-    if (map_things_appearance == map_things_appearance_icon)
-    {
-      gld_DrawNiceThings(f_x, f_y, f_w, f_h);
-    }
-#endif
   }
 #endif
 

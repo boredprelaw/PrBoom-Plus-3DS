@@ -41,7 +41,7 @@
 
 #include "z_zone.h"
 #include <math.h>
-#include <SDL.h>
+#include <SDL_opengl.h>
 #include "doomtype.h"
 #include "w_wad.h"
 #include "m_argv.h"
@@ -371,11 +371,6 @@ void gld_Init(int width, int height)
 
   gld_InitDetail();
   gld_InitShadows();
-
-#ifdef HAVE_LIBSDL2_IMAGE
-  gld_InitMapPics();
-  gld_InitHiRes();
-#endif
 
   if(!gld_LoadGLDefs("GLBDEFS"))
   {
@@ -2692,7 +2687,7 @@ void gld_DrawScene(player_t *player)
   {
     const int period = 250;
     float color;
-    int step = (SDL_GetTicks() % (period * 2)) + 1;
+    int step = (I_GetTime_MS() % (period * 2)) + 1;
     if (step > period)
     {
       step = period * 2 - step;

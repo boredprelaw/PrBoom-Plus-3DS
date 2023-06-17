@@ -36,7 +36,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "SDL.h"
 
 #include "doomstat.h"
 #include "d_net.h"
@@ -259,8 +258,8 @@ angle_t R_PointToAngleEx(fixed_t x, fixed_t y)
 angle_t R_PointToAngleEx2(fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
 {
   // [crispy] fix overflows for very long distances
-  int64_t y_viewy = (int64_t)y - y1;
-  int64_t x_viewx = (int64_t)x - x1;
+  long long y_viewy = (long long)y - y1;
+  long long x_viewx = (long long)x - x1;
 
   // [crispy] the worst that could happen is e.g. INT_MIN-INT_MAX = 2*INT_MIN
   if (x_viewx < INT_MIN || x_viewx > INT_MAX ||y_viewy < INT_MIN || y_viewy > INT_MAX)
@@ -1054,7 +1053,7 @@ int renderer_fps = 0;
 void R_ShowStats(void)
 {
   static unsigned int FPS_SavedTick = 0, FPS_FrameCount = 0;
-  unsigned int tick = SDL_GetTicks();
+  unsigned int tick = I_GetTime_MS();
   FPS_FrameCount++;
   if(tick >= FPS_SavedTick + 1000)
   {

@@ -56,6 +56,7 @@
 extern int ms_to_next_tick;
 dboolean I_StartDisplay(void);
 void I_EndDisplay(void);
+int I_GetTime_MS(void);
 int I_GetTime_RealTime(void);     /* killough */
 #ifndef PRBOOM_SERVER
 fixed_t I_GetTimeFrac (void);

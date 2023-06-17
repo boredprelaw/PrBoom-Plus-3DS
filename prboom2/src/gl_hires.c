@@ -44,7 +44,6 @@
 #include <unistd.h>
 #endif
 #include <sys/stat.h>
-#include <SDL.h>
 #include "doomstat.h"
 #include "v_video.h"
 #include "gl_intern.h"
@@ -77,7 +76,7 @@ int gld_ProgressStart(void)
   if (!progress_texid)
   {
     progress_texid = CaptureScreenAsTexID();
-    lastupdate = SDL_GetTicks() - 100;
+    lastupdate = I_GetTime_MS() - 100;
     return true;
   }
 
@@ -144,7 +143,7 @@ void gld_ProgressUpdate(const char * text, int progress, int total)
     return;
 
   // do not do it often
-  tic = SDL_GetTicks();
+  tic = I_GetTime_MS();
   if (tic - lastupdate < 100)
     return;
   lastupdate = tic;

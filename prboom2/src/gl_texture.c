@@ -49,7 +49,6 @@
 #endif
 #include <stdio.h>
 #include <string.h>
-#include <SDL.h>
 #include "doomtype.h"
 #include "w_wad.h"
 #include "m_argv.h"
@@ -69,6 +68,7 @@
 #include "gl_intern.h"
 #include "gl_struct.h"
 #include "p_spec.h"
+#include "i_system.h"
 #include "e6y.h"
 
 int imageformats[5] = {0, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA};
@@ -905,15 +905,6 @@ void gld_BindTexture(GLTexture *gltexture, unsigned int flags)
     return;
   }
 
-#ifdef HAVE_LIBSDL2_IMAGE
-  if (gld_LoadHiresTex(gltexture, CR_DEFAULT))
-  {
-    gld_SetTexClamp(gltexture, flags);
-    last_glTexID = gltexture->texid_p;
-    return;
-  }
-#endif
-
   gld_GetTextureTexID(gltexture, CR_DEFAULT);
 
   if (last_glTexID == gltexture->texid_p)
@@ -1031,15 +1022,6 @@ void gld_BindPatch(GLTexture *gltexture, int cm)
     last_glTexID = NULL;
     return;
   }
-
-#ifdef HAVE_LIBSDL2_IMAGE
-  if (gld_LoadHiresTex(gltexture, cm))
-  {
-    gld_SetTexClamp(gltexture, GLTEXTURE_CLAMPXY);
-    last_glTexID = gltexture->texid_p;
-    return;
-  }
-#endif
 
   gld_GetTextureTexID(gltexture, cm);
 
@@ -1162,15 +1144,6 @@ void gld_BindFlat(GLTexture *gltexture, unsigned int flags)
     return;
   }
 
-#ifdef HAVE_LIBSDL2_IMAGE
-  if (gld_LoadHiresTex(gltexture, CR_DEFAULT))
-  {
-    gld_SetTexClamp(gltexture, flags);
-    last_glTexID = gltexture->texid_p;
-    return;
-  }
-#endif
-
   gld_GetTextureTexID(gltexture, CR_DEFAULT); 
 
   if (last_glTexID == gltexture->texid_p)
@@ -1250,9 +1223,6 @@ void gld_FlushTextures(void)
   gl_has_hires = 0;
   
   gld_ResetLastTexture();
-#ifdef HAVE_LIBSDL2_IMAGE
-  gld_HiRes_BuildTables();
-#endif
 
   gld_InitSky();
 
@@ -1284,7 +1254,7 @@ void gld_Precache(void)
   GLTexture *gltexture;
   box_skybox_t *sb;
 
-  unsigned int tics = SDL_GetTicks();
+  unsigned int tics = I_GetTime_MS();
 
   int usehires = (gl_texture_external_hires) || 
     (gl_texture_internal_hires && r_have_internal_hires);
@@ -1492,13 +1462,6 @@ void gld_Precache(void)
       }
   Z_Free(hitlist);
 
-  if (gl_texture_external_hires)
-  {
-#ifdef HAVE_LIBSDL2_IMAGE
-    gld_PrecacheGUIPatches();
-#endif
-  }
-
   gld_ProgressEnd();
 
   // e6y: some statistics.  make sense for hires
@@ -1510,7 +1473,7 @@ void gld_Precache(void)
     else
       sprintf(map, "E%iM%i", gameepisode, gamemap);
     
-    lprintf(LO_INFO, "gld_Precache: %s done in %d ms\n", map, SDL_GetTicks() - tics);
+    lprintf(LO_INFO, "gld_Precache: %s done in %d ms\n", map, I_GetTime_MS() - tics);
   }
 }
 

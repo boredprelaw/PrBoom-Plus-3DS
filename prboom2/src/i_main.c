@@ -84,7 +84,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 static int basetime = 0;
 
-static int I_GetTime_MS(void)
+int I_GetTime_MS(void)
 {
   int ticks = SDL_GetTicks();
 

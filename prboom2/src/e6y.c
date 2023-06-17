@@ -47,8 +47,6 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include "SDL.h"
-
 #include "hu_lib.h"
 
 #include "doomtype.h"
@@ -1250,7 +1248,7 @@ int HU_DrawDemoProgress(int force)
 
     // Unnecessary updates of progress bar
     // can slow down demo skipping and playback
-    tick = SDL_GetTicks();
+    tick = I_GetTime_MS();
     if (tick - last_update < max_period)
       return false;
     last_update = tick;
