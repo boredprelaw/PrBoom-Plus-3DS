@@ -993,8 +993,6 @@ void I_UpdateVideoMode(void)
       SCREENWIDTH, SCREENHEIGHT,
       init_flags);
     sdl_glcontext = SDL_GL_CreateContext(sdl_window);
-
-    gld_CheckHardwareGamma();
 #endif
   }
   else
@@ -1255,24 +1253,6 @@ static void UpdateFocus(void)
       window_focused = true;
     }
   }
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-  {
-    if (gl_hardware_gamma)
-    {
-      if (!window_focused)
-      {
-        // e6y: Restore of startup gamma if window loses focus
-        gld_SetGammaRamp(-1);
-      }
-      else
-      {
-        gld_SetGammaRamp(useglgamma);
-      }
-    }
-  }
-#endif
 
   // Should the screen be grabbed?
   //    screenvisible = (state & SDL_APPACTIVE) != 0;

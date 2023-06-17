@@ -4814,34 +4814,18 @@ dboolean M_Responder (event_t* ev) {
 
     if (ch == key_gamma)       // gamma toggle
       {
-//e6y
-#ifdef GL_DOOM
-        if (V_GetMode() == VID_MODEGL && gl_hardware_gamma)
-        {
-          static char str[200];
-          useglgamma++;
-          if (useglgamma > MAX_GLGAMMA)
-            useglgamma = 0;
-          sprintf(str, "Gamma correction level %d", useglgamma); 
-          players[consoleplayer].message = str; 
-
-          gld_SetGammaRamp(useglgamma);
-        }
-        else
-#endif
-        {
-      usegamma++;
-      if (usegamma > 4)
-  usegamma = 0;
-      players[consoleplayer].message =
-  usegamma == 0 ? s_GAMMALVL0 :
-  usegamma == 1 ? s_GAMMALVL1 :
-  usegamma == 2 ? s_GAMMALVL2 :
-  usegamma == 3 ? s_GAMMALVL3 :
-  s_GAMMALVL4;
-      V_SetPalette(0);
-      return true;
-        }
+        usegamma++;
+        if (usegamma > 4)
+          usegamma = 0;
+        
+        players[consoleplayer].message =
+          usegamma == 0 ? s_GAMMALVL0 :
+          usegamma == 1 ? s_GAMMALVL1 :
+          usegamma == 2 ? s_GAMMALVL2 :
+          usegamma == 3 ? s_GAMMALVL3 :
+          s_GAMMALVL4;
+        V_SetPalette(0);
+        return true;
       }
 
 

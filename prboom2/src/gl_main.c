@@ -358,12 +358,6 @@ void gld_Init(int width, int height)
   glClear(GL_COLOR_BUFFER_BIT);
   glClearColor(0.0f, 0.5f, 0.5f, 1.0f);
 
-  // e6y
-  // if you have a prior crash in the game,
-  // you can restore the gamma values to at least a linear value
-  // with -resetgamma command-line switch
-  gld_ResetGammaRamp();
-
   gld_InitLightTable();
   gld_InitSky();
   M_ChangeLightMode();
@@ -917,53 +911,6 @@ void gld_SetPalette(int palette)
     extra_blue=1.0f;
   if (extra_alpha>1.0f)
     extra_alpha=1.0f;
-}
-
-unsigned char *gld_ReadScreen(void)
-{ // NSM convert to static
-  static unsigned char *scr = NULL;
-  static unsigned char *buffer = NULL;
-  static int scr_size = 0;
-  static int buffer_size = 0;
-
-  int i, size;
-
-  size = SCREENWIDTH * 3;
-  if (!buffer || size > buffer_size)
-  {
-    buffer_size = size;
-    buffer = realloc (buffer, size);
-  }
-  size = SCREENWIDTH * SCREENHEIGHT * 3;
-  if (!scr || size > scr_size)
-  {
-    scr_size = size;
-    scr = realloc (scr, size);
-  }
-
-  if (buffer && scr)
-  {
-    GLint pack_aligment;
-    glGetIntegerv(GL_PACK_ALIGNMENT, &pack_aligment);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    
-    glFlush();
-    glReadPixels(0, 0, SCREENWIDTH, SCREENHEIGHT, GL_RGB, GL_UNSIGNED_BYTE, scr);
-    
-    glPixelStorei(GL_PACK_ALIGNMENT, pack_aligment);
-
-    gld_ApplyGammaRamp(scr, SCREENWIDTH * 3, SCREENWIDTH, SCREENHEIGHT);
-
-    for (i=0; i<SCREENHEIGHT/2; i++)
-    {
-      memcpy(buffer, &scr[i*SCREENWIDTH*3], SCREENWIDTH*3);
-      memcpy(&scr[i*SCREENWIDTH*3],
-        &scr[(SCREENHEIGHT-(i+1))*SCREENWIDTH*3], SCREENWIDTH*3);
-      memcpy(&scr[(SCREENHEIGHT-(i+1))*SCREENWIDTH*3], buffer, SCREENWIDTH*3);
-    }
-  }
-
-  return scr;
 }
 
 GLvoid gld_Set2DMode(void)

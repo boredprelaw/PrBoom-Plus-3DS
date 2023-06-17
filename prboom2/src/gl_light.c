@@ -66,7 +66,6 @@ typedef void (*gld_InitLightTable_f)(void);
 
 typedef struct
 {
-  int use_hwgamma;
   int rellight;
   gld_InitLightTable_f Init;
   gld_CalcLightLevel_f GetLight;
@@ -92,25 +91,24 @@ static float gld_CalcFogDensity_fogbased(sector_t *sector, int lightlevel, GLDra
 
 static GLLight gld_light[gl_lightmode_last] = {
   //gl_lightmode_glboom
-  {false, 16,
+  {16,
    gld_InitLightTable_glboom,
    gld_CalcLightLevel_glboom, gld_CalcLightLevel_glboom,
    gld_CalcFogDensity_glboom},
   
    //gl_lightmode_gzdoom
-  {true, 8,
+  {8,
    gld_InitLightTable_gzdoom,
    gld_CalcLightLevel_gzdoom, gld_CalcLightLevel_gzdoom,
    gld_CalcFogDensity_gzdoom},
   
    //gl_lightmode_fogbased
-  {true, 8,
+  {8,
    gld_InitLightTable_fogbased,
    gld_CalcLightLevel_fogbased, gld_CalcLightLevel_gzdoom,
    gld_CalcFogDensity_fogbased},
 };
 
-int gl_hardware_gamma = false;
 gld_CalcLightLevel_f gld_CalcLightLevel = gld_CalcLightLevel_glboom;
 gld_Calc2DLightLevel_f gld_Calc2DLightLevel = gld_CalcLightLevel_glboom;
 gld_CalcFogDensity_f gld_CalcFogDensity = gld_CalcFogDensity_glboom;
@@ -119,21 +117,12 @@ void M_ChangeLightMode(void)
 {
   gl_lightmode = gl_lightmode_default;
 
-  gl_hardware_gamma = gld_light[gl_lightmode].use_hwgamma;
   gl_rellight = gld_light[gl_lightmode].rellight;
   gld_CalcLightLevel = gld_light[gl_lightmode].GetLight;
   gld_Calc2DLightLevel = gld_light[gl_lightmode].Get2DLight;
   gld_CalcFogDensity = gld_light[gl_lightmode].GetFog;
 
-  if (gld_light[gl_lightmode].use_hwgamma)
-  {
-    gld_SetGammaRamp(useglgamma);
-  }
-  else
-  {
-    gld_SetGammaRamp(-1);
-    gld_FlushTextures();
-  }
+  gld_FlushTextures();
 }
 
 void gld_InitLightTable(void)

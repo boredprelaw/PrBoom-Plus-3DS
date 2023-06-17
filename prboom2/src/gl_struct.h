@@ -71,16 +71,11 @@ typedef enum
 
 extern int gl_skymode;
 extern int gl_drawskys;
-extern int gl_hardware_gamma;
 extern gl_lightmode_t gl_lightmode;
 extern gl_lightmode_t gl_lightmode_default;
 extern const char *gl_lightmodes[];
 extern int gl_light_ambient;
-extern int useglgamma;
-int gld_SetGammaRamp(int gamma);
-void gld_CheckHardwareGamma(void);
 void gld_FlushTextures(void);
-void gld_ApplyGammaRamp(byte *buf, int pitch, int width, int height);
 void M_ChangeLightMode(void);
 
 //detail
@@ -114,7 +109,6 @@ void gld_DrawLine_f(float x0, float y0, float x1, float y1, int BaseColor);
 void gld_DrawWeapon(int weaponlump, vissprite_t *vis, int lightlevel);
 void gld_FillBlock(int x, int y, int width, int height, int col);
 void gld_SetPalette(int palette);
-unsigned char *gld_ReadScreen(void);
 
 void gld_CleanMemory(void);
 void gld_CleanStaticMemory(void);
