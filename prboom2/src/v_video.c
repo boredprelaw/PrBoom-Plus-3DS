@@ -38,7 +38,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "SDL.h"
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -1207,11 +1206,20 @@ static void WRAP_V_DrawLine(fline_t* fl, int color)
   }
 }
 
-extern SDL_Surface *screen;
-#define RGB2COLOR(r, g, b)\
-  ((r >> screen->format->Rloss) << screen->format->Rshift) |\
-  ((g >> screen->format->Gloss) << screen->format->Gshift) |\
-  ((b >> screen->format->Bloss) << screen->format->Bshift)\
+#define RGB2COLOR15(r, g, b)\
+  ((r >> 3) << 11) |\
+  ((g >> 3) << 6) |\
+  ((b >> 3) << 1)\
+
+#define RGB2COLOR16(r, g, b)\
+  ((r >> 4) << 12) |\
+  ((g >> 4) << 8) |\
+  ((b >> 4) << 4)\
+
+#define RGB2COLOR32(r, g, b)\
+  (r << 24) |\
+  (g << 16) |\
+  (b << 8)\
 
 // Given 65536, we need 2048; 65536 / 2048 == 32 == 2^5
 // Why 2048? ANG90 == 0x40000000 which >> 19 == 0x800 == 2048.
@@ -1237,7 +1245,7 @@ static void V_PlotPixelWu15(int scrn, int x, int y, byte color, int weight)
   byte b = (*(rgb + 2) * weight) >> wu_weightbits;
   
   ((unsigned short *)screens[scrn].data)[x+screens[scrn].short_pitch*y] =
-    (unsigned short)RGB2COLOR(r, g, b);
+    (unsigned short)RGB2COLOR15(r, g, b);
 }
 static void V_PlotPixelWu16(int scrn, int x, int y, byte color, int weight)
 {
@@ -1248,7 +1256,7 @@ static void V_PlotPixelWu16(int scrn, int x, int y, byte color, int weight)
   byte b = (*(rgb + 2) * weight) >> wu_weightbits;
   
   ((unsigned short *)screens[scrn].data)[x+screens[scrn].short_pitch*y] =
-    (unsigned short)RGB2COLOR(r, g, b);
+    (unsigned short)RGB2COLOR16(r, g, b);
 }
 static void V_PlotPixelWu32(int scrn, int x, int y, byte color, int weight)
 {
@@ -1259,7 +1267,7 @@ static void V_PlotPixelWu32(int scrn, int x, int y, byte color, int weight)
   byte b = (*(rgb + 2) * weight) >> wu_weightbits;
   
   ((unsigned int *)screens[scrn].data)[x+screens[scrn].int_pitch*y] =
-    (unsigned int)RGB2COLOR(r, g, b);
+    (unsigned int)RGB2COLOR32(r, g, b);
 }
 
 //
