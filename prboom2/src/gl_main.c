@@ -359,7 +359,6 @@ void gld_Init(int width, int height)
   M_ChangeAllowFog();
 
   gld_InitDetail();
-  gld_InitShadows();
 
   if(!gld_LoadGLDefs("GLBDEFS"))
   {
@@ -2297,7 +2296,6 @@ void gld_ProjectSprite(mobj_t* thing, int lightlevel)
   else
   {
     gld_AddDrawItem((gl_sprite_blend || (sprite.flags & (MF_SHADOW | MF_TRANSLUCENT)) ? GLDIT_TSPRITE : GLDIT_SPRITE), &sprite);
-    gld_ProcessThingShadow(thing);
   }
 
   if (health_bar)
@@ -2681,8 +2679,6 @@ void gld_DrawScene(player_t *player)
     // projected animated walls
     gld_DrawProjectedWalls(GLDIT_FAWALL);
   }
-
-  gld_RenderShadows();
 
   /* Transparent sprites and transparent things must be rendered
    * in far-to-near order. The approach used here is to sort in-

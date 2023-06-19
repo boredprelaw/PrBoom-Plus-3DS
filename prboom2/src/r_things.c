@@ -599,19 +599,7 @@ int r_near_clip_plane = MINZ;
 
 void R_SetClipPlanes(void)
 {
-  // thing is behind view plane?
-#ifdef GL_DOOM
-  if ((V_GetMode() == VID_MODEGL) &&
-      (HaveMouseLook() || (render_fov > FOV90)) &&
-      (!render_paperitems || simple_shadows.loaded))
-  {
-    r_near_clip_plane = -(FRACUNIT * MAX(64, simple_shadows.max_radius));
-  }
-  else
-#endif
-  {
-    r_near_clip_plane = MINZ;
-  }
+  r_near_clip_plane = MINZ;
 }
 
 //
