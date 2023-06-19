@@ -46,15 +46,13 @@
 #pragma interface
 #endif
 
-extern SDL_Window *sdl_window;
-extern SDL_Renderer *sdl_renderer;
-
 void I_PreInitGraphics(void); /* CPhipps - do stuff immediately on start */
 void I_InitScreenResolution(void); /* init resolution */
 void I_SetWindowCaption(void); /* Set the window caption */
 void I_SetWindowIcon(void); /* Set the application icon */
 void I_InitGraphics (void);
 void I_UpdateVideoMode(void);
+void I_SwapBuffers(void);
 void I_ShutdownGraphics(void);
 
 /* Takes full 8 bit values. */

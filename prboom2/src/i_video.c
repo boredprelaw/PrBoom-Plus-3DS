@@ -110,10 +110,10 @@ int gl_depthbuffer_bits=16;
 extern void M_QuitDOOM(int choice);
 
 int vanilla_keymap;
-SDL_Surface *screen;
+static SDL_Surface *screen;
 static SDL_Surface *buffer;
-SDL_Window *sdl_window;
-SDL_Renderer *sdl_renderer;
+static SDL_Window *sdl_window;
+static SDL_Renderer *sdl_renderer;
 static SDL_Texture *sdl_texture;
 static SDL_GLContext sdl_glcontext;
 static unsigned int windowid = 0;
@@ -514,6 +514,11 @@ static void I_UploadNewPalette(int pal, int force)
 
 //////////////////////////////////////////////////////////////////////////////
 // Graphics API
+
+void I_SwapBuffers(void)
+{
+  SDL_GL_SwapWindow(sdl_window);
+}
 
 void I_ShutdownGraphics(void)
 {

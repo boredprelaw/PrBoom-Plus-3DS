@@ -41,7 +41,6 @@
 
 #include "z_zone.h"
 #include <math.h>
-#include <SDL_opengl.h>
 #include "doomtype.h"
 #include "w_wad.h"
 #include "m_argv.h"
@@ -944,7 +943,7 @@ void gld_Finish(void)
     glFinish();
   }
 
-  SDL_GL_SwapWindow(sdl_window);
+  I_SwapBuffers();
 }
 
 GLuint flats_vbo_id = 0; // ID of VBO
