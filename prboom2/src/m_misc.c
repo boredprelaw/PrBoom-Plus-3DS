@@ -749,7 +749,7 @@ default_t defaults[] =
   {"mapcolor_frnd",   {&mapcolor_frnd}, {112},0,255,
    def_colour,ss_auto},
   //jff 3/9/98 add option to not show secrets til after found
-  {"map_secret_after", {&map_secret_after}, {0},0,1, // show secret after gotten
+  {"map_secret_after", {&map_secret_after}, {1},0,1, // show secret after gotten
    def_bool,ss_auto}, // prevents showing secret sectors till after entered
   {"map_point_coord", {&map_point_coordinates}, {0},0,1,
    def_bool,ss_auto},
@@ -869,7 +869,7 @@ default_t defaults[] =
    def_bool,ss_stat},
   {"hudadd_demotime", {&hudadd_demotime},  {0},0,1,
    def_bool,ss_stat},
-  {"hudadd_secretarea", {&hudadd_secretarea},  {0},0,1,
+  {"hudadd_secretarea", {&hudadd_secretarea},  {1},0,1,
    def_bool,ss_stat},
   {"hudadd_smarttotals", {&hudadd_smarttotals},  {0},0,1,
    def_bool,ss_stat},
@@ -924,7 +924,7 @@ default_t defaults[] =
    def_int,ss_stat},
 
   {"Prboom-plus misc settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"showendoom", {&showendoom},  {0},0,1,
+  {"showendoom", {&showendoom},  {1},0,1,
    def_bool,ss_stat},
   {"health_bar", {&health_bar}, {0},0,1,
    def_bool,ss_stat},
