@@ -38,20 +38,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
-#else
-#include <sched.h>
-#endif
-
-#include <errno.h>
-
 #include "doomdef.h"
 #include "m_argv.h"
 #include "d_main.h"
@@ -430,137 +416,9 @@ static void I_Quit (void)
   I_DemoExShutdown();
 }
 
-#ifdef SECURE_UID
-uid_t stored_euid = -1;
-#endif
-
-//
-// Ability to use only the allowed CPUs
-//
-
-static void I_SetAffinityMask(void)
-{
-  // Forcing single core only for "SDL MIDI Player"
-  process_affinity_mask = 1;
-
-  // Set the process affinity mask so that all threads
-  // run on the same processor.  This is a workaround for a bug in 
-  // SDL_mixer that causes occasional crashes.
-  if (process_affinity_mask)
-  {
-    const char *errbuf = NULL;
-#ifdef _WIN32
-    HMODULE kernel32_dll;
-    SetAffinityFunc SetAffinity = NULL;
-    int ok = false;
-
-    // Find the kernel interface DLL.
-    kernel32_dll = LoadLibrary("kernel32.dll");
-
-    if (kernel32_dll)
-    {
-      // Find the SetProcessAffinityMask function.
-      SetAffinity = (SetAffinityFunc)GetProcAddress(kernel32_dll, "SetProcessAffinityMask");
-
-      // If the function was not found, we are on an old (Win9x) system
-      // that doesn't have this function.  That's no problem, because
-      // those systems don't support SMP anyway.
-
-      if (SetAffinity)
-      {
-        ok = SetAffinity(GetCurrentProcess(), process_affinity_mask);
-      }
-    }
-
-    if (!ok)
-    {
-      errbuf = WINError();
-    }
-#elif defined(HAVE_SCHED_SETAFFINITY)
-    // POSIX version:
-    int i;
-    {
-      cpu_set_t set;
-
-      CPU_ZERO(&set);
-
-      for(i = 0; i < 16; i++)
-      {
-        CPU_SET((process_affinity_mask>>i)&1, &set);
-      }
-
-      if (sched_setaffinity(getpid(), sizeof(set), &set) == -1)
-      {
-        errbuf = strerror(errno);
-      }
-    }
-#else
-    return;
-#endif
-
-    if (errbuf == NULL)
-    {
-      lprintf(LO_INFO, "I_SetAffinityMask: manual affinity mask is %d\n", process_affinity_mask);
-    }
-    else
-    {
-      lprintf(LO_ERROR, "I_SetAffinityMask: failed to set process affinity mask (%s)\n", errbuf);
-    }
-  }
-}
-
-//
-// Sets the priority class for the prboom-plus process
-//
-
-void I_SetProcessPriority(void)
-{
-  if (process_priority)
-  {
-    const char *errbuf = NULL;
-
-#ifdef _WIN32
-    {
-      DWORD dwPriorityClass = NORMAL_PRIORITY_CLASS;
-
-      if (process_priority == 1)
-        dwPriorityClass = HIGH_PRIORITY_CLASS;
-      else if (process_priority == 2)
-        dwPriorityClass = REALTIME_PRIORITY_CLASS;
-
-      if (SetPriorityClass(GetCurrentProcess(), dwPriorityClass) == 0)
-      {
-        errbuf = WINError();
-      }
-    }
-#else
-    return;
-#endif
-
-    if (errbuf == NULL)
-    {
-      lprintf(LO_INFO, "I_SetProcessPriority: priority for the process is %d\n", process_priority);
-    }
-    else
-    {
-      lprintf(LO_ERROR, "I_SetProcessPriority: failed to set priority for the process (%s)\n", errbuf);
-    }
-  }
-}
-
 //int main(int argc, const char * const * argv)
 int main(int argc, char **argv)
 {
-#ifdef SECURE_UID
-  /* First thing, revoke setuid status (if any) */
-  stored_euid = geteuid();
-  if (getuid() != stored_euid)
-    if (seteuid(getuid()) < 0)
-      fprintf(stderr, "Failed to revoke setuid\n");
-    else
-      fprintf(stderr, "Revoked uid %d\n",stored_euid);
-#endif
-
   myargc = argc;
   myargv = (char**)malloc(sizeof(myargv[0]) * myargc);
   memcpy(myargv, argv, sizeof(myargv[0]) * myargc);
@@ -613,12 +471,6 @@ int main(int argc, char **argv)
   signal(SIGINT,  I_SignalHandler);  /* killough 3/6/98: allow CTRL-BRK during init */
   signal(SIGABRT, I_SignalHandler);
 #endif
-
-  // Ability to use only the allowed CPUs
-  I_SetAffinityMask();
-
-  // Priority class for the prboom-plus process
-  I_SetProcessPriority();
 
   /* cphipps - call to video specific startup code */
   I_PreInitGraphics();
