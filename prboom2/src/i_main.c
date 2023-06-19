@@ -257,50 +257,6 @@ void I_ExeptionProcess(void)
   }
 }
 
-
-/* killough 2/22/98: Add support for ENDBOOM, which is PC-specific
- *
- * this converts BIOS color codes to ANSI codes.
- * Its not pretty, but it does the job - rain
- * CPhipps - made static
- */
-
-inline static int convert(int color, int *bold)
-{
-  if (color > 7) {
-    color -= 8;
-    *bold = 1;
-  }
-  switch (color) {
-  case 0:
-    return 0;
-  case 1:
-    return 4;
-  case 2:
-    return 2;
-  case 3:
-    return 6;
-  case 4:
-    return 1;
-  case 5:
-    return 5;
-  case 6:
-    return 3;
-  case 7:
-    return 7;
-  }
-  return 0;
-}
-
-/* CPhipps - flags controlling ENDOOM behaviour */
-enum {
-  endoom_colours = 1,
-  endoom_nonasciichars = 2,
-  endoom_droplastline = 4
-};
-
-int endoom_mode;
-
 static void PrintVer(void)
 {
   char vbuf[200];
@@ -316,10 +272,6 @@ static void I_EndDoom(void)
 
   const unsigned char *endoom_data;
   unsigned char *screendata;
-
-#ifndef _WIN32
-  PrintVer();
-#endif
 
   if (!showendoom || demorecording)
   {

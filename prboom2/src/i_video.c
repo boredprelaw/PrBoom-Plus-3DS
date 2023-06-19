@@ -94,9 +94,6 @@ static SDL_Cursor* cursors[2] = {NULL, NULL};
 dboolean window_focused;
 static int mouse_currently_grabbed = true;
 
-// Window resize state.
-static void ApplyWindowResize(SDL_Event *resize_event);
-
 static void ActivateMouse(void);
 static void DeactivateMouse(void);
 //static int AccelerateMouse(int val);
@@ -116,7 +113,6 @@ static SDL_Window *sdl_window;
 static SDL_Renderer *sdl_renderer;
 static SDL_Texture *sdl_texture;
 static SDL_GLContext sdl_glcontext;
-static unsigned int windowid = 0;
 static SDL_Rect src_rect = { 0, 0, 0, 0 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -350,18 +346,12 @@ while (SDL_PollEvent(Event))
   break;
 
   case SDL_WINDOWEVENT:
-    if (Event->window.windowID == windowid)
+    switch (Event->window.event)
     {
-      switch (Event->window.event)
-      {
-      case SDL_WINDOWEVENT_FOCUS_GAINED:
-      case SDL_WINDOWEVENT_FOCUS_LOST:
-        UpdateFocus();
-        break;
-      case SDL_WINDOWEVENT_SIZE_CHANGED:
-        ApplyWindowResize(Event);
-        break;
-      }
+    case SDL_WINDOWEVENT_FOCUS_GAINED:
+    case SDL_WINDOWEVENT_FOCUS_LOST:
+      UpdateFocus();
+      break;
     }
     break;
 
@@ -1032,20 +1022,6 @@ void I_UpdateVideoMode(void)
     }
   }
 
-  // Workaround for SDL 2.0.14 alt-tab bug (taken from Doom Retro)
-#if defined(_WIN32)
-{
-   SDL_version ver;
-   SDL_GetVersion(&ver);
-   if (ver.major == 2 && ver.minor == 0 && (ver.patch == 14 || ver.patch == 16))
-   {
-      SDL_SetHintWithPriority(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "1", SDL_HINT_OVERRIDE);
-   }
-}
-#endif
-
-  windowid = SDL_GetWindowID(sdl_window);
-
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
   {
@@ -1090,38 +1066,8 @@ void I_UpdateVideoMode(void)
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
   {
-    int temp;
-    lprintf(LO_INFO,"SDL OpenGL PixelFormat:\n");
-    SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_RED_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_GREEN_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_GREEN_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_BLUE_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_BLUE_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_ACCUM_RED_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_ACCUM_RED_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_ACCUM_GREEN_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_ACCUM_GREEN_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_ACCUM_BLUE_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_ACCUM_BLUE_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_ACCUM_ALPHA_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_ACCUM_ALPHA_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_DOUBLEBUFFER, &temp );
-    lprintf(LO_INFO,"    SDL_GL_DOUBLEBUFFER: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_BUFFER_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_BUFFER_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_DEPTH_SIZE: %i\n",temp);
-    SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &temp );
-    lprintf(LO_INFO,"    SDL_GL_STENCIL_SIZE: %i\n",temp);
-
     gld_Init(SCREENWIDTH, SCREENHEIGHT);
-  }
 
-  if (V_GetMode() == VID_MODEGL)
-  {
     M_ChangeFOV();
     deh_changeCompTranslucency();
   }
@@ -1277,8 +1223,4 @@ void UpdateGrab(void)
   }
 
   currently_grabbed = grab;
-}
-
-static void ApplyWindowResize(SDL_Event *resize_event)
-{
 }
