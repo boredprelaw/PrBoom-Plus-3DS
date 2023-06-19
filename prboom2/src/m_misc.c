@@ -972,10 +972,6 @@ default_t defaults[] =
    def_bool,ss_stat},
 
   {"Prboom-plus OpenGL settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"gl_allow_detail_textures", {&gl_allow_detail_textures},  {1},0,1,
-   def_bool,ss_stat},
-  {"gl_detail_maxdist", {&gl_detail_maxdist},  {0},0,65535,
-   def_int,ss_stat},
   {"render_fov", {&render_fov},  {90},20,160,
    def_int,ss_stat},
   {"gl_spriteclip",{(int*)&gl_spriteclip},{spriteclip_smart}, spriteclip_const, spriteclip_smart, def_int,ss_none},

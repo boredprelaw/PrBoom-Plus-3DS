@@ -592,8 +592,6 @@ GLTexture *gld_RegisterTexture(int texture_num, dboolean mipmap, dboolean force)
       return gltexture;
 
     gltexture->textype=GLDT_TEXTURE;
-
-    gld_SetTexDetail(gltexture);
   }
   return gltexture;
 }
@@ -717,10 +715,7 @@ void gld_SetTexFilters(GLTexture *gltexture)
     break;
   }
 
-  if (render_usedetail && gltexture->detail)
-    mag_filter = GL_LINEAR;
-  else
-    mag_filter = tex_filter[mip].mag_filter;
+  mag_filter = tex_filter[mip].mag_filter;
 
   if ((gltexture->flags & GLTEXTURE_MIPMAP) && tex_filter[mip].mipmap)
   {
@@ -1069,8 +1064,6 @@ GLTexture *gld_RegisterFlat(int lump, dboolean mipmap)
       return gltexture;
 
     gltexture->textype=GLDT_FLAT;
-
-    gld_SetTexDetail(gltexture);
   }
   return gltexture;
 }

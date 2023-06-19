@@ -654,7 +654,6 @@ void gld_PreprocessLevel(void)
 #endif
 
   //e6y
-  gld_PreprocessDetail();
   gld_InitVertexData();
 
   gl_preprocessed = true;

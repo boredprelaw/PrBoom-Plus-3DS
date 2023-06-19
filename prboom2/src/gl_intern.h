@@ -118,10 +118,6 @@ typedef struct
   GLTexType textype;
   unsigned int flags;
   float scalexfac, scaleyfac; //e6y: right/bottom UV coordinates for patch drawing
-
-  //detail
-  detail_t *detail;
-  float detail_width, detail_height;
 } GLTexture;
 
 typedef struct
@@ -387,8 +383,8 @@ void gld_Precache(void);
 void SetFrameTextureMode(void);
 
 //gl_vertex
-void gld_SplitLeftEdge(const GLWall *wall, dboolean detail);
-void gld_SplitRightEdge(const GLWall *wall, dboolean detail);
+void gld_SplitLeftEdge(const GLWall *wall);
+void gld_SplitRightEdge(const GLWall *wall);
 void gld_RecalcVertexHeights(const vertex_t *v);
 
 //e6y

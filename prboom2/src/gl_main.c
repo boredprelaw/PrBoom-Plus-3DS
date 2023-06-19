@@ -71,6 +71,10 @@
 #include "hu_stuff.h"
 #include "e6y.h"//e6y
 
+float xCamera,yCamera,zCamera;
+TAnimItemParam *anim_flats = NULL;
+TAnimItemParam *anim_textures = NULL;
+
 int gl_clear;
 
 int gl_preprocessed = false;
@@ -268,10 +272,6 @@ int gld_LoadGLDefs(const char * defsLump)
         result = true;
         gld_ParseSkybox();
         break;
-      case TAG_DETAIL:
-        result = true;
-        gld_ParseDetail();
-        break;
       }
     }
 
@@ -357,8 +357,6 @@ void gld_Init(int width, int height)
   gld_InitSky();
   M_ChangeLightMode();
   M_ChangeAllowFog();
-
-  gld_InitDetail();
 
   if(!gld_LoadGLDefs("GLBDEFS"))
   {
@@ -1086,8 +1084,6 @@ void gld_StartDrawScene(void)
 
   rendermarker++;
   scene_has_overlapped_sprites = false;
-  scene_has_wall_details = 0;
-  scene_has_flat_details = 0;
 }
 
 //e6y
@@ -1204,9 +1200,6 @@ static void gld_AddDrawWallItem(GLDrawItemType itemtype, void *itemdata)
     }
   }
 
-  if (((GLWall*)itemdata)->gltexture->detail)
-    scene_has_wall_details++;
-
   gld_AddDrawItem(itemtype, itemdata);
 }
 
@@ -1246,7 +1239,7 @@ static void gld_DrawWall(GLWall *wall)
 
   // split left edge of wall
   if (!wall->glseg->fracleft)
-    gld_SplitLeftEdge(wall, false);
+    gld_SplitLeftEdge(wall);
 
   // upper left corner
   glTexCoord2f(wall->ul,wall->vt);
@@ -1258,7 +1251,7 @@ static void gld_DrawWall(GLWall *wall)
 
   // split right edge of wall
   if (!wall->glseg->fracright)
-    gld_SplitRightEdge(wall, false);
+    gld_SplitRightEdge(wall);
 
   // lower right corner
   glTexCoord2f(wall->ur,wall->vb);
@@ -1852,9 +1845,6 @@ static void gld_AddFlat(int sectornum, dboolean ceiling, visplane_t *plane)
   }
 
   flat.alpha = 1.0;
-
-  if (flat.gltexture->detail)
-    scene_has_flat_details++;
 
   gld_AddDrawItem(((flat.flags & GLFLAT_CEILING) ? GLDIT_CEILING : GLDIT_FLOOR), &flat);
 }
@@ -2485,9 +2475,6 @@ void gld_DrawScene(player_t *player)
   gl_EnableFog(true);
   gl_EnableFog(false);
 
-  gld_EnableDetail(false);
-  gld_InitFrameDetails();
-
 #if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
   glEnableClientState(GL_VERTEX_ARRAY);
@@ -2556,9 +2543,6 @@ void gld_DrawScene(player_t *player)
   // disable backside removing
   glDisable(GL_CULL_FACE);
 
-  // detail texture works only with flats and walls
-  gld_EnableDetail(false);
-
   // top, bottom, one-sided walls
   gld_DrawItemsSortByTexture(GLDIT_WALL);
   for (i = gld_drawinfo.num_items[GLDIT_WALL] - 1; i >= 0; i--)
@@ -2580,7 +2564,6 @@ void gld_DrawScene(player_t *player)
   }
 
   gl_EnableFog(false);
-  gld_EnableDetail(false);
 
   // projected walls
   gld_DrawProjectedWalls(GLDIT_FWALL);
@@ -2750,12 +2733,6 @@ void gld_DrawScene(player_t *player)
       glAlphaFunc(GL_GEQUAL, 0.5f);
       glEnable(GL_ALPHA_TEST);
   }
-
-  // e6y: detail
-  if (render_usedetail)
-    gld_DrawDetail_NoARB();
-
-  gld_EnableDetail(false);
 
 #if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
   if (gl_ext_arb_vertex_buffer_object)

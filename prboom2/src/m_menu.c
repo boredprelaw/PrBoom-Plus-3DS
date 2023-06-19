@@ -3453,7 +3453,6 @@ setup_menu_t gen_settings8[] = { // General Settings screen4
   {"Enable External Hi-Res",     S_YESNO, m_null, G_X,G_Y+ 9*8, {"gl_texture_external_hires"}, 0, 0, M_ChangeTextureUseHires},
   {"Override PWAD's graphics with Hi-Res" ,S_YESNO|S_PRGWARN,m_null,G_X,G_Y+10*8, {"gl_hires_override_pwads"}, 0, 0, M_ChangeTextureUseHires},
 
-  {"Allow Detail Textures",      S_YESNO,  m_null, G_X, G_Y+12*8, {"gl_allow_detail_textures"}, 0, 0, M_ChangeUseDetail},
   {"Blend Animations",           S_YESNO,  m_null, G_X, G_Y+13*8, {"gl_blend_animations"}},
 #endif //GL_DOOM
 

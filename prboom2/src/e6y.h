@@ -185,7 +185,6 @@ void M_ChangeMouseInvert(void);
 void M_ChangeFOV(void);
 
 #ifdef GL_DOOM
-void M_ChangeUseDetail(void);
 void M_ChangeSpriteClip(void);
 void M_ChangeAllowBoomColormaps(void);
 void M_ChangeTextureUseHires(void);

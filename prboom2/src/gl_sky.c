@@ -270,7 +270,6 @@ void gld_DrawStripsSky(void)
     SetTextureMode(TM_OPAQUE);
   }
 
-  gld_EnableDetail(false);
   glMatrixMode(GL_TEXTURE);
 
   skyymid_multiplier = 1.0f;
@@ -756,15 +755,9 @@ static void RenderDome(SkyBoxParams_t *sky)
     return;
 
   if (invul_method == INVUL_CM && frame_fixedcolormap == INVERSECOLORMAP)
-    vbo = &sky_vbo[1]; 
+    vbo = &sky_vbo[1];
   else
-    vbo = &sky_vbo[0]; 
-  
-
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  // be sure the second ARB is not enabled
-  gld_EnableDetail(false);
-#endif
+    vbo = &sky_vbo[0];
 
   glRotatef(-180.0f + sky->x_offset, 0.f, 1.f, 0.f);
 
