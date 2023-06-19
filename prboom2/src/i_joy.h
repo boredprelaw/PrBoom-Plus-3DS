@@ -31,17 +31,16 @@
  *
  *-----------------------------------------------------------------------------*/
 
+extern int joybup;
+extern int joybdown;
+extern int joybleft;
+extern int joybright;
 extern int joybfire;
 extern int joybstrafe;
 extern int joybstrafeleft;
 extern int joybstraferight;
 extern int joybuse;
 extern int joybspeed;
-
-extern int joyleft;
-extern int joyright;
-extern int joyup;
-extern int joydown;
 
 void I_InitJoystick(void);
 void I_PollJoystick(void);

@@ -654,10 +654,14 @@ default_t defaults[] =
    0,MAX_KEY,def_key,ss_keys}, // key to cycle to the previous weapon
 
   {"Joystick settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"joy_left",{&joyleft},{0},  UL,UL,def_int,ss_none},
-  {"joy_right",{&joyright},{0},UL,UL,def_int,ss_none},
-  {"joy_up",  {&joyup},  {0},  UL,UL,def_int,ss_none},
-  {"joy_down",{&joydown},{0},  UL,UL,def_int,ss_none},
+  {"joyb_up",{&joybup},{8},0,UL,
+   def_int,ss_keys},
+  {"joyb_down",{&joybdown},{9},0,UL,
+   def_int,ss_keys},
+  {"joyb_left",{&joybleft},{10},0,UL,
+   def_int,ss_keys},
+  {"joyb_right",{&joybright},{11},0,UL,
+   def_int,ss_keys},
   {"joyb_fire",{&joybfire},{0},0,UL,
    def_int,ss_keys}, // joystick button number to use for fire
   {"joyb_strafe",{&joybstrafe},{1},0,UL,

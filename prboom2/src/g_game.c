@@ -268,6 +268,10 @@ int     mousebturnright;
 int     mousebturnleft;
 int     mousebuse;
 int     mousebspeed;
+int     joybup;
+int     joybdown;
+int     joybleft;
+int     joybright;
 int     joybfire;
 int     joybstrafe;
 int     joybstrafeleft;
@@ -333,7 +337,7 @@ static int   dclicks2;
 // joystick values are repeated
 static int   joyxmove;
 static int   joyymove;
-static dboolean joyarray[9];
+static dboolean joyarray[13];
 static dboolean *joybuttons = &joyarray[1];    // allow [-1]
 
 // Game events info
@@ -500,6 +504,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     // on the keyboard and joystick
   if (joyxmove < 0 || joyxmove > 0 ||
       gamekeydown[key_right] || gamekeydown[key_left] ||
+      joybuttons[joybright] || joybuttons[joybleft] ||
       mousebuttons[mousebturnright] || mousebuttons[mousebturnleft])
     turnheld += ticdup;
   else
@@ -523,9 +528,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (strafe)
     {
-      if (gamekeydown[key_right] || mousebuttons[mousebturnright])
+      if (gamekeydown[key_right] || mousebuttons[mousebturnright] || joybuttons[joybright])
         side += sidemove[speed];
-      if (gamekeydown[key_left] || mousebuttons[mousebturnleft])
+      if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         side -= sidemove[speed];
       if (joyxmove > 0)
         side += sidemove[speed];
@@ -534,9 +539,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     }
   else
     {
-      if (gamekeydown[key_right] || mousebuttons[mousebturnright])
+      if (gamekeydown[key_right] || mousebuttons[mousebturnright] || joybuttons[joybright])
         cmd->angleturn -= angleturn[tspeed];
-      if (gamekeydown[key_left] || mousebuttons[mousebturnleft])
+      if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         cmd->angleturn += angleturn[tspeed];
       if (joyxmove > 0)
         cmd->angleturn -= angleturn[tspeed];
@@ -544,9 +549,9 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         cmd->angleturn += angleturn[tspeed];
     }
 
-  if (gamekeydown[key_up])
+  if (gamekeydown[key_up] || joybuttons[joybup])
     forward += forwardmove[speed];
-  if (gamekeydown[key_down])
+  if (gamekeydown[key_down] || joybuttons[joybdown])
     forward -= forwardmove[speed];
   if (joyymove < 0)
     forward += forwardmove[speed];
@@ -1070,6 +1075,10 @@ dboolean G_Responder (event_t* ev)
       joybuttons[5] = ev->data1 & 32;
       joybuttons[6] = ev->data1 & 64;
       joybuttons[7] = ev->data1 & 128;
+      joybuttons[8] = ev->data1 & 256;
+      joybuttons[9] = ev->data1 & 512;
+      joybuttons[10] = ev->data1 & 1024;
+      joybuttons[11] = ev->data1 & 2048;
       joyxmove = ev->data2;
       joyymove = ev->data3;
       return true;    // eat events
@@ -4369,6 +4378,7 @@ void P_WalkTicker()
     // on the keyboard and joystick
   if (joyxmove < 0 || joyxmove > 0 ||
       gamekeydown[key_right] || gamekeydown[key_left] ||
+      joybuttons[joybright] || joybuttons[joybleft] ||
       mousebuttons[mousebturnright] || mousebuttons[mousebturnleft])
     turnheld += ticdup;
   else
@@ -4383,9 +4393,9 @@ void P_WalkTicker()
 
   if (strafe)
     {
-      if (gamekeydown[key_right] || mousebuttons[mousebturnright])
+      if (gamekeydown[key_right] || mousebuttons[mousebturnright] || joybuttons[joybright])
         side += sidemove[speed];
-      if (gamekeydown[key_left] || mousebuttons[mousebturnleft])
+      if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         side -= sidemove[speed];
       if (joyxmove > 0)
         side += sidemove[speed];
@@ -4394,9 +4404,9 @@ void P_WalkTicker()
     }
   else
     {
-      if (gamekeydown[key_right] || mousebuttons[mousebturnright])
+      if (gamekeydown[key_right] || mousebuttons[mousebturnright] || joybuttons[joybright])
         angturn -= angleturn[tspeed];
-      if (gamekeydown[key_left] || mousebuttons[mousebturnleft])
+      if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         angturn += angleturn[tspeed];
       if (joyxmove > 0)
         angturn -= angleturn[tspeed];
@@ -4404,9 +4414,9 @@ void P_WalkTicker()
         angturn += angleturn[tspeed];
     }
 
-  if (gamekeydown[key_up])
+  if (gamekeydown[key_up] || joybuttons[joybup])
     forward += forwardmove[speed];
-  if (gamekeydown[key_down])
+  if (gamekeydown[key_down] || joybuttons[joybdown])
     forward -= forwardmove[speed];
   if (joyymove < 0)
     forward += forwardmove[speed];

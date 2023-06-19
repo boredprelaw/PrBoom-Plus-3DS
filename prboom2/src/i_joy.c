@@ -47,11 +47,6 @@
 #include "lprintf.h"
 #include "i_system.h"
 
-int joyleft;
-int joyright;
-int joyup;
-int joydown;
-
 static SDL_GameController *joystick = NULL;
 
 static void I_EndJoystick(void)
@@ -79,12 +74,16 @@ void I_PollJoystick(void)
     (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_LEFTSHOULDER)<<4) |
     (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)<<5) |
     (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_START)<<6) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_BACK)<<7);
+    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_BACK)<<7) |
+    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_UP)<<8) |
+    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_DOWN)<<9) |
+    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT)<<10) |
+    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT)<<11);
   axis_value = SDL_GameControllerGetAxis(joystick, SDL_CONTROLLER_AXIS_LEFTX) / 3000;
-  if (abs(axis_value)<7) axis_value=0;
+  if (abs(axis_value)<2) axis_value=0;
   ev.data2 = axis_value;
   axis_value = SDL_GameControllerGetAxis(joystick, SDL_CONTROLLER_AXIS_LEFTY) / 3000;
-  if (abs(axis_value)<7) axis_value=0;
+  if (abs(axis_value)<2) axis_value=0;
   ev.data3 = axis_value;
 
   D_PostEvent(&ev);
@@ -105,10 +104,5 @@ void I_InitJoystick(void)
     I_AtExit(I_EndJoystick, true);
 
     lprintf(LO_INFO, "%sopened %s\n", fname, SDL_GameControllerName(joystick));
-
-    joyup = 32767;
-    joydown = -32768;
-    joyright = 32767;
-    joyleft = -32768;
   }
 }

@@ -2440,10 +2440,10 @@ int mult_screens_index; // the index of the current screen in a set
 setup_menu_t keys_settings1[] =  // Key Binding screen strings
 {
   {"MOVEMENT"    ,S_SKIP|S_TITLE,m_null,KB_X,KB_Y},
-  {"FORWARD"     ,S_KEY       ,m_scrn,KB_X,KB_Y+1*8,{&key_up},&mousebforward},
-  {"BACKWARD"    ,S_KEY       ,m_scrn,KB_X,KB_Y+2*8,{&key_down},&mousebbackward},
-  {"TURN LEFT"   ,S_KEY       ,m_scrn,KB_X,KB_Y+3*8,{&key_left},&mousebturnleft},
-  {"TURN RIGHT"  ,S_KEY       ,m_scrn,KB_X,KB_Y+4*8,{&key_right},&mousebturnright},
+  {"FORWARD"     ,S_KEY       ,m_scrn,KB_X,KB_Y+1*8,{&key_up},&mousebforward,&joybup},
+  {"BACKWARD"    ,S_KEY       ,m_scrn,KB_X,KB_Y+2*8,{&key_down},&mousebbackward,&joybdown},
+  {"TURN LEFT"   ,S_KEY       ,m_scrn,KB_X,KB_Y+3*8,{&key_left},&mousebturnleft,&joybleft},
+  {"TURN RIGHT"  ,S_KEY       ,m_scrn,KB_X,KB_Y+4*8,{&key_right},&mousebturnright,&joybright},
   {"RUN"         ,S_KEY       ,m_scrn,KB_X,KB_Y+5*8,{&key_speed},&mousebspeed,&joybspeed},
   {"STRAFE LEFT" ,S_KEY       ,m_scrn,KB_X,KB_Y+6*8,{&key_strafeleft},0,&joybstrafeleft},
   {"STRAFE RIGHT",S_KEY       ,m_scrn,KB_X,KB_Y+7*8,{&key_straferight},0,&joybstraferight},
@@ -4353,10 +4353,10 @@ setup_menu_t helpstrings[] =  // HELP screen strings
   {"FIRE"        ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y1+11*8,{&key_fire},&mousebfire,&joybfire},
 
   {"MOVEMENT"    ,S_SKIP|S_TITLE,m_null,KT_X3,KT_Y3},
-  {"FORWARD"     ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 1*8,{&key_up},&mousebforward},
-  {"BACKWARD"    ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 2*8,{&key_down},&mousebbackward},
-  {"TURN LEFT"   ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 3*8,{&key_left},&mousebturnleft},
-  {"TURN RIGHT"  ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 4*8,{&key_right},&mousebturnright},
+  {"FORWARD"     ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 1*8,{&key_up},&mousebforward,&joybup},
+  {"BACKWARD"    ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 2*8,{&key_down},&mousebbackward,&joybdown},
+  {"TURN LEFT"   ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 3*8,{&key_left},&mousebturnleft,&joybleft},
+  {"TURN RIGHT"  ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 4*8,{&key_right},&mousebturnright,&joybright},
   {"RUN"         ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 5*8,{&key_speed},&mousebspeed,&joybspeed},
   {"STRAFE LEFT" ,S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 6*8,{&key_strafeleft},0,&joybstrafeleft},
   {"STRAFE RIGHT",S_SKIP|S_KEY,m_null,KT_X3,KT_Y3+ 7*8,{&key_straferight},0,&joybstraferight},
@@ -4582,26 +4582,26 @@ dboolean M_Responder (event_t* ev) {
   // Process joystick input
 
   if (ev->type == ev_joystick && joywait < I_GetTime())  {
-    if (ev->data3 == -1)
+    if (ev->data3 < 0 || ev->data1&256)
       {
   ch = key_menu_up;                                // phares 3/7/98
   joywait = I_GetTime() + 5;
       }
-    else if (ev->data3 == 1)
+    else if (ev->data3 > 0 || ev->data1&512)
       {
   ch = key_menu_down;                              // phares 3/7/98
   joywait = I_GetTime() + 5;
       }
 
-    if (ev->data2 == -1)
+    if (ev->data2 < 0 || ev->data1&1024)
       {
   ch = key_menu_left;                              // phares 3/7/98
-  joywait = I_GetTime() + 2;
+  joywait = I_GetTime() + 5;
       }
-    else if (ev->data2 == 1)
+    else if (ev->data2 > 0 || ev->data1&2048)
       {
   ch = key_menu_right;                             // phares 3/7/98
-  joywait = I_GetTime() + 2;
+  joywait = I_GetTime() + 5;
       }
 
     if (ev->data1&1)
@@ -4613,6 +4613,12 @@ dboolean M_Responder (event_t* ev) {
     if (ev->data1&2)
       {
   ch = key_menu_backspace;                         // phares 3/7/98
+  joywait = I_GetTime() + 5;
+      }
+
+    if (ev->data1&64)
+      {
+  ch = key_menu_escape;                         // phares 3/7/98
   joywait = I_GetTime() + 5;
       }
 
