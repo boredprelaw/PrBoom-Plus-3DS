@@ -4615,10 +4615,16 @@ dboolean M_Responder (event_t* ev) {
   ch = key_menu_backspace;                         // phares 3/7/98
   joywait = I_GetTime() + 5;
       }
+    
+    if (ev->data1&8)
+      {
+  ch = 'y';                                        // phares 3/7/98
+  joywait = I_GetTime() + 5;
+      }
 
     if (ev->data1&64)
       {
-  ch = key_menu_escape;                         // phares 3/7/98
+  ch = key_menu_escape;                            // phares 3/7/98
   joywait = I_GetTime() + 5;
       }
 
