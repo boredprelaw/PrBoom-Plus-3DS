@@ -37,7 +37,9 @@
 
 #include <stdlib.h>
 
-#include "SDL.h"
+#include <SDL.h>
+#include <SDL_gamecontroller.h>
+
 #include "doomdef.h"
 #include "doomtype.h"
 #include "m_argv.h"

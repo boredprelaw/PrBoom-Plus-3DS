@@ -43,8 +43,6 @@
 
 #include "gl_opengl.h"
 
-#include <SDL.h>
-
 #include "doomstat.h"
 #include "v_video.h"
 #include "gl_intern.h"

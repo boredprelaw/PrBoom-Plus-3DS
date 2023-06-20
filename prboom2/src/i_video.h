@@ -40,7 +40,6 @@
 
 #include "doomtype.h"
 #include "v_video.h"
-#include "SDL.h"
 
 #ifdef __GNUG__
 #pragma interface
@@ -48,15 +47,10 @@
 
 void I_PreInitGraphics(void); /* CPhipps - do stuff immediately on start */
 void I_InitScreenResolution(void); /* init resolution */
-void I_SetWindowCaption(void); /* Set the window caption */
-void I_SetWindowIcon(void); /* Set the application icon */
 void I_InitGraphics (void);
 void I_UpdateVideoMode(void);
 void I_SwapBuffers(void);
 void I_ShutdownGraphics(void);
-
-/* Takes full 8 bit values. */
-void I_SetPalette(int pal); /* CPhipps - pass down palette number */
 
 void I_UpdateNoBlit (void);
 void I_FinishUpdate (void);
@@ -79,10 +73,6 @@ void I_StartTic (void);
  */
 
 void I_StartFrame (void);
-
-void I_UpdateRenderSize(void);	// Handle potential
-extern int renderW;		// resolution scaling
-extern int renderH;		// - DTIED
 
 // Set the process affinity mask so that all threads
 extern int process_affinity_mask;

@@ -35,8 +35,6 @@
 #include "config.h"
 #endif
 
-#include <SDL.h>
-
 #include <math.h>
 
 #include "doomstat.h"

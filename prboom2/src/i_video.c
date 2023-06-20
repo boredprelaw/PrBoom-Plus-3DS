@@ -39,7 +39,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "SDL.h"
+#include <SDL.h>
+#include <SDL_video.h>
 
 #include "m_argv.h"
 #include "doomstat.h"
