@@ -91,7 +91,6 @@ extern int process_priority;
 // Use vanilla keybaord mapping
 extern int vanilla_keymap;
 
-extern dboolean window_focused;
 void UpdateGrab(void);
 
 #endif

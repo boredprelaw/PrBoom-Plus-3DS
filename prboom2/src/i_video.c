@@ -36,25 +36,10 @@
 #include "config.h"
 #endif
 
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
-#include <windows.h>
-#endif // _WIN32
-
 #include <stdlib.h>
 #include <assert.h>
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include "SDL.h"
-//e6y
-#ifdef _WIN32
-#include <SDL_syswm.h>
-#endif
 
 #include "m_argv.h"
 #include "doomstat.h"
@@ -91,7 +76,6 @@
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
-dboolean window_focused;
 static int mouse_currently_grabbed = true;
 
 static void ActivateMouse(void);
@@ -99,10 +83,6 @@ static void DeactivateMouse(void);
 //static int AccelerateMouse(int val);
 static void I_ReadMouse(void);
 static dboolean MouseShouldBeGrabbed();
-static void UpdateFocus(void);
-
-int gl_colorbuffer_bits=16;
-int gl_depthbuffer_bits=16;
 
 extern void M_QuitDOOM(int choice);
 
@@ -316,7 +296,7 @@ while (SDL_PollEvent(Event))
 
   case SDL_MOUSEBUTTONDOWN:
   case SDL_MOUSEBUTTONUP:
-  if (mouse_enabled && window_focused)
+  if (mouse_enabled)
   {
     event.type = ev_mouse;
     event.data1 = I_SDLtoDoomMouseState(SDL_GetMouseState(NULL, NULL));
@@ -326,7 +306,7 @@ while (SDL_PollEvent(Event))
   break;
 
   case SDL_MOUSEWHEEL:
-  if (mouse_enabled && window_focused)
+  if (mouse_enabled)
   {
     if (Event->wheel.y > 0)
     {
@@ -344,16 +324,6 @@ while (SDL_PollEvent(Event))
     }
   }
   break;
-
-  case SDL_WINDOWEVENT:
-    switch (Event->window.event)
-    {
-    case SDL_WINDOWEVENT_FOCUS_GAINED:
-    case SDL_WINDOWEVENT_FOCUS_LOST:
-      UpdateFocus();
-      break;
-    }
-    break;
 
   case SDL_QUIT:
     S_StartSound(NULL, sfx_swtchn);
@@ -709,7 +679,7 @@ static unsigned int I_TestCPUCacheMisses(int width, int height, unsigned int min
   s = (char*)malloc(width * height);
   d = (char*)malloc(width * height);
 
-  tickStart = SDL_GetTicks();
+  tickStart = I_GetTime_MS();
   k = 0;
   do
   {
@@ -723,7 +693,7 @@ static unsigned int I_TestCPUCacheMisses(int width, int height, unsigned int min
     }
     k++;
   }
-  while (SDL_GetTicks() - tickStart < mintime);
+  while (I_GetTime_MS() - tickStart < mintime);
 
   free(d);
   free(s);
@@ -865,15 +835,6 @@ void I_InitScreenResolution(void)
   lprintf(LO_INFO,"I_InitScreenResolution: Using resolution %dx%d\n", SCREENWIDTH, SCREENHEIGHT);
 }
 
-// 
-// Set the window caption
-//
-
-void I_SetWindowCaption(void)
-{
-  SDL_SetWindowTitle(NULL, PACKAGE_NAME " " PACKAGE_VERSION);
-}
-
 void I_InitGraphics(void)
 {
   static int    firsttime=1;
@@ -888,14 +849,10 @@ void I_InitGraphics(void)
     /* Set the video mode */
     I_UpdateVideoMode();
 
-    //e6y: setup the window title
-    I_SetWindowCaption();
-
     /* Initialize the input system */
     I_InitInputs();
 
     //e6y: new mouse code
-    UpdateFocus();
     UpdateGrab();
   }
 }
@@ -926,7 +883,6 @@ video_mode_t I_GetModeFromString(const char *modestr)
 void I_UpdateVideoMode(void)
 {
   int init_flags = 0;
-  int actualheight;
 
   if(sdl_window)
   {
@@ -964,20 +920,6 @@ void I_UpdateVideoMode(void)
   if (V_GetMode() == VID_MODEGL)
   {
 #ifdef GL_DOOM
-    SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ACCUM_RED_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ACCUM_GREEN_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ACCUM_BLUE_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_ACCUM_ALPHA_SIZE, 0 );
-    SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-    SDL_GL_SetAttribute( SDL_GL_BUFFER_SIZE, gl_colorbuffer_bits );
-    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, gl_depthbuffer_bits );
-    SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
-
     sdl_window = SDL_CreateWindow(
       PACKAGE_NAME " " PACKAGE_VERSION,
       SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -997,19 +939,6 @@ void I_UpdateVideoMode(void)
       SCREENWIDTH, SCREENHEIGHT,
       init_flags);
     sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
-
-    // [FG] aspect ratio correction for the canonical video modes
-    if (SCREENHEIGHT == 200 || SCREENHEIGHT == 400)
-    {
-      actualheight = 6*SCREENHEIGHT/5;
-    }
-    else
-    {
-      actualheight = SCREENHEIGHT;
-    }
-
-    SDL_SetWindowMinimumSize(sdl_window, SCREENWIDTH, actualheight);
-    SDL_RenderSetLogicalSize(sdl_renderer, SCREENWIDTH, actualheight);
 
     screen = SDL_CreateRGBSurface(0, SCREENWIDTH, SCREENHEIGHT, V_GetNumPixelBits(), 0, 0, 0, 0);
     buffer = SDL_CreateRGBSurface(0, SCREENWIDTH, SCREENHEIGHT, 32, 0, 0, 0, 0);
@@ -1120,7 +1049,7 @@ static void SmoothMouse(int* x, int* y)
 
 static void I_ReadMouse(void)
 {
-  if (mouse_enabled && window_focused)
+  if (mouse_enabled)
   {
     int x, y;
 
@@ -1156,15 +1085,6 @@ static void I_ReadMouse(void)
 
 static dboolean MouseShouldBeGrabbed()
 {
-  // never grab the mouse when in screensaver mode
-
-  //if (screensaver_mode)
-  //    return false;
-
-  // if the window doesnt have focus, never grab it
-  if (!window_focused)
-    return false;
-
   // if we specify not to grab the mouse, never grab
   if (!mouse_enabled)
     return false;
@@ -1180,29 +1100,6 @@ static dboolean MouseShouldBeGrabbed()
 
   // only grab mouse when playing levels (but not demos)
   return (gamestate == GS_LEVEL) && !demoplayback;
-}
-
-// Update the value of window_focused when we get a focus event
-//
-// We try to make ourselves be well-behaved: the grab on the mouse
-// is removed if we lose focus (such as a popup window appearing),
-// and we dont move the mouse around if we aren't focused either.
-static void UpdateFocus(void)
-{
-  Uint32 flags = 0;
-
-  window_focused = false;
-  if(sdl_window)
-  {
-    flags = SDL_GetWindowFlags(sdl_window);
-    if ((flags & SDL_WINDOW_SHOWN) && !(flags & SDL_WINDOW_MINIMIZED) && (flags & SDL_WINDOW_INPUT_FOCUS))
-    {
-      window_focused = true;
-    }
-  }
-
-  // Should the screen be grabbed?
-  //    screenvisible = (state & SDL_APPACTIVE) != 0;
 }
 
 void UpdateGrab(void)

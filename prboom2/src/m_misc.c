@@ -155,8 +155,6 @@ extern int viewwidth;
 extern int viewheight;
 #ifdef GL_DOOM
 extern int gl_nearclip;
-extern int gl_colorbuffer_bits;
-extern int gl_depthbuffer_bits;
 extern int gl_texture_filter;
 extern int gl_sprite_filter;
 extern int gl_patch_filter;
@@ -176,8 +174,6 @@ extern int gl_ztrick;
 #else
 // dummy variables for !GL_DOOM
 static int gl_nearclip;
-extern int gl_colorbuffer_bits;
-extern int gl_depthbuffer_bits;
 static int gl_texture_filter;
 static int gl_sprite_filter;
 static int gl_patch_filter;
@@ -420,10 +416,6 @@ default_t defaults[] =
    def_bool,ss_none},
   {"gl_nearclip",{&gl_nearclip},{5},0,UL,
    def_int,ss_none}, /* near clipping plane pos */
-  {"gl_colorbuffer_bits",{&gl_colorbuffer_bits},{32},16,32,
-   def_int,ss_none},
-  {"gl_depthbuffer_bits",{&gl_depthbuffer_bits},{24},16,32,
-   def_int,ss_none},
   {"gl_texture_filter",{(int*)&gl_texture_filter},
    {filter_nearest_mipmap_linear}, filter_nearest, filter_count - 1, def_int,ss_none},
   {"gl_sprite_filter",{(int*)&gl_sprite_filter},
