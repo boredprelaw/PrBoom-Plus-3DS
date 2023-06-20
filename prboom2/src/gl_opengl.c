@@ -37,15 +37,15 @@
 
 #include <stdio.h>
 
-#include <SDL_opengl.h>
-#include "gl_opengl.h"
-
 #include "doomtype.h"
 #include "lprintf.h"
 
-#define isExtensionSupported(ext) strstr(extensions, ext)
-
 #ifdef GL_DOOM
+
+#include <SDL_opengl.h>
+#include "gl_opengl.h"
+
+#define isExtensionSupported(ext) strstr(extensions, ext)
 
 dboolean gl_ext_arb_vertex_buffer_object = false;
 

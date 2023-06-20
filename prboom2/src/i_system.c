@@ -236,6 +236,9 @@ int I_Filelength(int handle)
 
 const char *I_DoomExeDir(void)
 {
+#ifdef __3DS__
+  return "sdmc:/3ds/PrBoom-Plus";
+#else
   static const char current_dir_dummy[] = {"."}; // proff - rem extra slash 8/21/03
   static char *base;
   if (!base)        // cache multiple requests
@@ -256,6 +259,7 @@ const char *I_DoomExeDir(void)
       }
     }
   return base;
+#endif
 }
 
 const char* I_GetTempDir(void)
@@ -320,9 +324,6 @@ char* I_FindFileInternal(const char* wfname, const char* ext, dboolean isStatic)
     {"/usr/share/games/doom"},
     {"/usr/local/share/doom"},
     {"/usr/share/doom"},
-#ifdef __3DS__
-    {"sdmc:/3ds/PrBoom-Plus"},
-#endif
   }, *search;
 
   static size_t num_search;

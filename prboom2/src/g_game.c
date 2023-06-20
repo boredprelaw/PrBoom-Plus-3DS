@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <strings.h>
 #ifdef _MSC_VER
 #include <io.h>
 #else
@@ -2842,7 +2843,7 @@ struct MapEntry *G_LookupMapinfo(int gameepisode, int gamemap)
 	else snprintf(lumpname, 9, "E%dM%d", gameepisode, gamemap);
 	for (i = 0; i < Maps.mapcount; i++)
 	{
-		if (!stricmp(lumpname, Maps.maps[i].mapname))
+		if (!strcasecmp(lumpname, Maps.maps[i].mapname))
 		{
 			return &Maps.maps[i];
 		}
@@ -2855,7 +2856,7 @@ struct MapEntry *G_LookupMapinfoByName(const char *lumpname)
 	unsigned i;
 	for (i = 0; i < Maps.mapcount; i++)
 	{
-		if (!stricmp(lumpname, Maps.maps[i].mapname))
+		if (!strcasecmp(lumpname, Maps.maps[i].mapname))
 		{
 			return &Maps.maps[i];
 		}

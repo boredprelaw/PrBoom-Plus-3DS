@@ -35,19 +35,11 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#ifdef _MSC_VER
-#include <io.h>
-#include <direct.h>
-#else
 #include <unistd.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <strings.h>
 
 #include "doomdef.h"
 #include "doomtype.h"
@@ -84,6 +76,10 @@
 #include "am_map.h"
 #include "umapinfo.h"
 #include "statdump.h"
+
+#ifdef __3DS__
+#include <3ds.h>
+#endif
 
 //e6y
 #include "r_demo.h"
@@ -446,7 +442,11 @@ static void D_DoomLoop(void)
   if (quickstart_window_ms > 0)
     I_uSleep(quickstart_window_ms * 1000);
 
+#ifdef __3DS__
+  while (aptMainLoop())
+#else
   for (;;)
+#endif
   {
     WasRenderedInTryRunTics = false;
     // frame syncronous IO operations
@@ -696,7 +696,7 @@ void D_AddFile (const char *file, wad_source_t source)
 
   // No Rest For The Living
   len=strlen(wadfiles[numwadfiles].name);
-  if (len>=9 && !strnicmp(wadfiles[numwadfiles].name+len-9,"nerve.wad",9))
+  if (len>=9 && !strncasecmp(wadfiles[numwadfiles].name+len-9,"nerve.wad",9))
     gamemission = pack_nerve;
 
   numwadfiles++;
@@ -865,18 +865,18 @@ void AddIWAD(const char *iwad)
   case registered:
   case shareware:
     gamemission = doom;
-    if (i>=8 && !strnicmp(iwad+i-8,"chex.wad",8))
+    if (i>=8 && !strncasecmp(iwad+i-8,"chex.wad",8))
       gamemission = chex;
     break;
   case commercial:
     gamemission = doom2;
-    if (i>=10 && !strnicmp(iwad+i-10,"doom2f.wad",10))
+    if (i>=10 && !strncasecmp(iwad+i-10,"doom2f.wad",10))
       language=french;
-    else if (i>=7 && !strnicmp(iwad+i-7,"tnt.wad",7))
+    else if (i>=7 && !strncasecmp(iwad+i-7,"tnt.wad",7))
       gamemission = pack_tnt;
-    else if (i>=12 && !strnicmp(iwad+i-12,"plutonia.wad",12))
+    else if (i>=12 && !strncasecmp(iwad+i-12,"plutonia.wad",12))
       gamemission = pack_plut;
-    else if (i>=8 && !strnicmp(iwad+i-8,"hacx.wad",8))
+    else if (i>=8 && !strncasecmp(iwad+i-8,"hacx.wad",8))
       gamemission = hacx;
     break;
   default:
@@ -1229,7 +1229,7 @@ static void DoLooseFiles(void)
     while (looses[k].ext)
     {
       extlen = strlen(looses[k].ext);
-      if (arglen >= extlen && !stricmp(&myargv[i][arglen - extlen], looses[k].ext))
+      if (arglen >= extlen && !strcasecmp(&myargv[i][arglen - extlen], looses[k].ext))
       {
         (*(looses[k].list))[(*looses[k].count)++] = strdup(myargv[i]);
         break;

@@ -33,18 +33,13 @@
  *
  *-----------------------------------------------------------------------------*/
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
+
 #include "doomtype.h"
 #include "lprintf.h"
 #include "i_main.h"
@@ -71,6 +66,18 @@ int lprintf(OutputLevels pri, const char *s, ...)
   doom_vsnprintf(msg,sizeof(msg),s,v);    /* print message in buffer  */
   va_end(v);
 
+#ifdef __3DS__
+  FILE *logfile = fopen("sdmc:/3ds/PrBoom-Plus/log.txt", "a");
+
+  if (lvl&cons_output_mask)               /* mask output as specified */
+  {
+    r=fprintf(logfile,"%s",msg);
+  }
+  if (!isatty(1) && lvl&cons_error_mask)  /* if stdout redirected     */
+    r=fprintf(logfile,"%s",msg);           /* select output at console */
+
+  fclose(logfile);
+#else
   if (lvl&cons_output_mask)               /* mask output as specified */
   {
     // do not crash with unicode dirs
@@ -80,6 +87,7 @@ int lprintf(OutputLevels pri, const char *s, ...)
   }
   if (!isatty(1) && lvl&cons_error_mask)  /* if stdout redirected     */
     r=fprintf(stderr,"%s",msg);           /* select output at console */
+#endif
 
   return r;
 }

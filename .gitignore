@@ -6,6 +6,13 @@
 stdout.txt
 stderr.txt
 
+# 3DS files
+*.3dsx
+*.smdh
+*.cia
+icon.bin
+banner.bin
+
 # Visual Studio Code
 .vscode/
 
@@ -22,6 +29,7 @@ stderr.txt
 *.ilk
 *.map
 *.exp
+*.lst
 
 # Precompiled Headers
 *.gch

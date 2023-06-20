@@ -47,6 +47,8 @@
 #include "d_deh.h"  // Ty 03/22/98 - externalizations
 #include "f_finale.h" // CPhipps - hmm...
 
+#include <strings.h>
+
 void F_StartCast (void);
 void F_TextWrite(void);
 void F_BunnyScroll(void);
@@ -121,7 +123,7 @@ void FMI_Ticker(void)
 		next_level:
 			if (gamemapinfo->endpic[0] && (strcmp(gamemapinfo->endpic, "-") != 0))
 			{
-				if (!stricmp(gamemapinfo->endpic, "$CAST"))
+				if (!strcasecmp(gamemapinfo->endpic, "$CAST"))
 				{
 					F_StartCast();
 					using_FMI = false;
@@ -131,11 +133,11 @@ void FMI_Ticker(void)
 					finalecount = 0;
 					finalestage = 1;
 					wipegamestate = -1;         // force a wipe
-					if (!stricmp(gamemapinfo->endpic, "$BUNNY"))
+					if (!strcasecmp(gamemapinfo->endpic, "$BUNNY"))
 					{
 						S_StartMusic(mus_bunny);
 					}
-					else if (!stricmp(gamemapinfo->endpic, "!"))
+					else if (!strcasecmp(gamemapinfo->endpic, "!"))
 					{
 						using_FMI = false;
 					}

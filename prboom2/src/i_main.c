@@ -59,7 +59,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <SDL_timer.h>
+#include <SDL/SDL_timer.h>
+
+#ifdef __3DS__
+#include <3ds.h>
+#endif
 
 #include "e6y.h"
 
@@ -373,6 +377,14 @@ static void I_Quit (void)
 //int main(int argc, const char * const * argv)
 int main(int argc, char **argv)
 {
+#ifdef __3DS__
+  bool isN3DS = 0;
+  APT_CheckNew3DS(&isN3DS);
+
+	if(isN3DS)
+		osSetSpeedupEnable(true);
+#endif
+
   myargc = argc;
   myargv = (char**)malloc(sizeof(myargv[0]) * myargc);
   memcpy(myargv, argv, sizeof(myargv[0]) * myargc);

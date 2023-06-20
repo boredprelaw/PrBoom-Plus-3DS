@@ -41,12 +41,12 @@
 #define USE_VERTEX_ARRAYS
 //#define USE_VBO
 
-#include <GL/gl.h>
-#include <GL/glext.h>
-
 #include "doomtype.h"
 
 #ifdef GL_DOOM
+
+#include <GL/gl.h>
+#include <GL/glext.h>
 
 extern dboolean gl_ext_arb_vertex_buffer_object;
 

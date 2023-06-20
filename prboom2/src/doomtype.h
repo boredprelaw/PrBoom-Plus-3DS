@@ -101,11 +101,7 @@ typedef unsigned __int64 uint_64_t;
 
 // Definition of PACKEDATTR from Chocolate Doom
 #ifdef __GNUC__
-  #if defined(_WIN32) && !defined(__clang__)
-    #define PACKEDATTR __attribute__((packed,gcc_struct))
-  #else
-    #define PACKEDATTR __attribute__((packed))
-  #endif
+  #define PACKEDATTR __attribute__((packed))
 #else
   #define PACKEDATTR
 #endif

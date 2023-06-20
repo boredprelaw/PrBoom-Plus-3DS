@@ -32,20 +32,15 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 #include <math.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
-#include <SDL.h>
-#include <SDL_audio.h>
-#include <SDL_mutex.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_audio.h>
+#include <SDL/SDL_mutex.h>
 
 #define USE_RWOPS
-#include <SDL_mixer.h>
+#include <SDL/SDL_mixer.h>
 
 #include "z_zone.h"
 

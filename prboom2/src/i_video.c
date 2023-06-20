@@ -32,15 +32,12 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
+#include <strings.h>
 #include <stdlib.h>
 #include <assert.h>
 
-#include <SDL.h>
-#include <SDL_video.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_video.h>
 
 #include "m_argv.h"
 #include "doomstat.h"
@@ -696,17 +693,17 @@ video_mode_t I_GetModeFromString(const char *modestr)
 {
   video_mode_t mode;
 
-  if (!stricmp(modestr,"15")) {
+  if (!strcasecmp(modestr,"15")) {
     mode = VID_MODE15;
-  } else if (!stricmp(modestr,"15bit")) {
+  } else if (!strcasecmp(modestr,"15bit")) {
     mode = VID_MODE15;
-  } else if (!stricmp(modestr,"16")) {
+  } else if (!strcasecmp(modestr,"16")) {
     mode = VID_MODE16;
-  } else if (!stricmp(modestr,"16bit")) {
+  } else if (!strcasecmp(modestr,"16bit")) {
     mode = VID_MODE16;
-  } else if (!stricmp(modestr,"gl")) {
+  } else if (!strcasecmp(modestr,"gl")) {
     mode = VID_MODEGL;
-  } else if (!stricmp(modestr,"OpenGL")) {
+  } else if (!strcasecmp(modestr,"OpenGL")) {
     mode = VID_MODEGL;
   } else {
     mode = VID_MODE32;
@@ -717,7 +714,7 @@ video_mode_t I_GetModeFromString(const char *modestr)
 
 void I_UpdateVideoMode(void)
 {
-  int init_flags = SDL_DOUBLEBUF;
+  int init_flags = 0;
 
   if(screen)
   {

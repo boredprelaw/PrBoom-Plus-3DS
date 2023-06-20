@@ -37,8 +37,7 @@ CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 
 OFILES  := $(addprefix $(BUILD)/, $(CFILES:.c=.o)) $(addprefix $(BUILD)/, $(CPPFILES:.cpp=.o))
 
-INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			-I/mingw32/include/SDL
+INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir))
 
 .PHONY: all clean
 
