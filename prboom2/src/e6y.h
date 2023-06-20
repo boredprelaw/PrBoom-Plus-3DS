@@ -273,10 +273,6 @@ typedef struct timetable_s
   int stat[TT_MAX];
 } timetable_t;
 
-#ifdef _WIN32
-const char* WINError(void);
-#endif
-
 extern int stats_level;
 extern int stroller;
 void e6y_G_DoCompleted(void);
@@ -313,10 +309,6 @@ extern int levelstarttic;
 extern int force_singletics_to;
 
 int HU_DrawDemoProgress(int force);
-
-#ifdef _WIN32
-int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t BufferLength);
-#endif
 
 void I_vWarning(const char *message, va_list argList);
 void I_Warning(const char *message, ...);

@@ -37,6 +37,8 @@
 
 #include <stdlib.h>
 
+#define WIN32_MEAN_AND_LEAN
+#include <windows.h>
 #include <xinput.h>
 
 #include "doomdef.h"

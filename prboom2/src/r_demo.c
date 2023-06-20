@@ -36,12 +36,7 @@
 #include "config.h"
 #endif
 
-#ifdef _WIN32
-#include <io.h>
-#include <process.h>
-#else
 #include <unistd.h>
-#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1311,12 +1306,7 @@ int ParseDemoPattern(const char *str, waddata_t* waddata, char **missed, dboolea
     {
       D_TryGetWad(pToken);
     }
-#ifdef _MSC_VER
-    token = malloc(PATH_MAX);
-    if (GetFullPath(pToken, ".wad", token, PATH_MAX))
-#else
     if ((token = I_FindFile(pToken, ".wad")))
-#endif
     {
       wadfiles = realloc(wadfiles, sizeof(*wadfiles)*(numwadfiles+1));
       wadfiles[numwadfiles].name = token;

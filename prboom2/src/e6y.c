@@ -31,15 +31,6 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <direct.h>
-#include <winreg.h>
-#endif
 #include <string.h>
 #include <math.h>
 
@@ -168,34 +159,6 @@ dboolean mlook_or_fov;
 
 int maxViewPitch;
 int minViewPitch;
-
-#ifdef _WIN32
-const char* WINError(void)
-{
-  static char *WinEBuff = NULL;
-  DWORD err = GetLastError();
-  char *ch;
-
-  if (WinEBuff)
-  {
-    LocalFree(WinEBuff);
-  }
-
-  if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-    NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-    (LPTSTR) &WinEBuff, 0, NULL) == 0)
-  {
-    return "Unknown error";
-  }
-
-  if ((ch = strchr(WinEBuff, '\n')) != 0)
-    *ch = 0;
-  if ((ch = strchr(WinEBuff, '\r')) != 0)
-    *ch = 0;
-
-  return WinEBuff;
-}
-#endif
 
 //--------------------------------------------------
 
@@ -769,9 +732,8 @@ void I_vWarning(const char *message, va_list argList)
   char msg[1024];
   doom_vsnprintf(msg,sizeof(msg),message,argList);
   lprintf(LO_ERROR, "%s\n", msg);
-#ifdef _WIN32
+
   I_MessageBox(msg, PRB_MB_OK);
-#endif
 }
 
 void I_Warning(const char *message, ...)
@@ -785,15 +747,6 @@ void I_Warning(const char *message, ...)
 int I_MessageBox(const char* text, unsigned int type)
 {
   int result = PRB_IDCANCEL;
-
-#ifdef _WIN32
-  {
-    HWND current_hwnd = GetForegroundWindow();
-    result = MessageBox(GetDesktopWindow(), text, PACKAGE_NAME, type|MB_TASKMODAL|MB_TOPMOST);
-    I_SwitchToWindow(current_hwnd);
-    return result;
-  }
-#endif
 
 #if 0
   {
@@ -1267,39 +1220,6 @@ int HU_DrawDemoProgress(int force)
 
   return true;
 }
-
-#ifdef _WIN32
-int GetFullPath(const char* FileName, const char* ext, char *Buffer, size_t BufferLength)
-{
-  int i, Result;
-  char *p;
-  char dir[PATH_MAX];
-  
-  for (i=0; i<3; i++)
-  {
-    switch(i)
-    {
-    case 0:
-      M_getcwd(dir, sizeof(dir));
-      break;
-    case 1:
-      if (!M_getenv("DOOMWADDIR"))
-        continue;
-      strcpy(dir, M_getenv("DOOMWADDIR"));
-      break;
-    case 2:
-      strcpy(dir, I_DoomExeDir());
-      break;
-    }
-
-    Result = SearchPath(dir,FileName,ext,BufferLength,Buffer,&p);
-    if (Result)
-      return Result;
-  }
-
-  return false;
-}
-#endif
 
 //Begin of GZDoom code
 /*

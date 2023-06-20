@@ -33,14 +33,6 @@
 #include "config.h"
 #endif
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-#ifndef CALLBACK
-#define CALLBACK
-#endif
-
 #include <math.h>
 
 #include "gl_opengl.h"

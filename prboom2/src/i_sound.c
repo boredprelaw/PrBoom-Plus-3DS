@@ -779,19 +779,7 @@ void I_ShutdownMusic(void)
 void I_InitMusic(void)
 {
   if (!music_tmp) {
-#ifndef _WIN32
-    music_tmp = strdup("/tmp/"PACKAGE_TARNAME"-music-XXXXXX");
-    {
-      int fd = mkstemp(music_tmp);
-      if (fd<0) {
-        lprintf(LO_ERROR, "I_InitMusic: failed to create music temp file %s", music_tmp);
-        free(music_tmp); music_tmp = NULL; return;
-      } else 
-        close(fd);
-    }
-#else /* !_WIN32 */
     music_tmp = strdup("doom.tmp");
-#endif
     I_AtExit(I_ShutdownMusic, true);
   }
 }

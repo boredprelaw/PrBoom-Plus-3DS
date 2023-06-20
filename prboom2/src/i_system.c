@@ -33,11 +33,6 @@
  *-----------------------------------------------------------------------------
  */
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
 #include <stdio.h>
 
 #include <stdarg.h>
@@ -46,26 +41,10 @@
 #include <time.h>
 #include <signal.h>
 #include <string.h>
-#ifdef _MSC_VER
-#define    F_OK    0    /* Check for file existence */
-#define    W_OK    2    /* Check for write permission */
-#define    R_OK    4    /* Check for read permission */
-#include <io.h>
-#include <direct.h>
-#else
-#include <unistd.h>
-#endif
 #include <sys/stat.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
-#ifdef _MSC_VER
-#include <io.h>
-#endif
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -88,10 +67,6 @@
 #pragma implementation "i_system.h"
 #endif
 #include "i_system.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include "z_zone.h"
 
@@ -259,27 +234,6 @@ int I_Filelength(int handle)
 
 #ifndef PRBOOM_SERVER
 
-void I_SwitchToWindow(HWND hwnd)
-{
-  typedef BOOL (WINAPI *TSwitchToThisWindow) (HWND wnd, BOOL restore);
-  static TSwitchToThisWindow SwitchToThisWindow = NULL;
-
-  if (!SwitchToThisWindow)
-    SwitchToThisWindow = (TSwitchToThisWindow)GetProcAddress(GetModuleHandle("user32.dll"), "SwitchToThisWindow");
-  
-  if (SwitchToThisWindow)
-  {
-    HWND hwndLastActive = GetLastActivePopup(hwnd);
-
-    if (IsWindowVisible(hwndLastActive))
-      hwnd = hwndLastActive;
-
-    SetForegroundWindow(hwnd);
-    Sleep(100);
-    SwitchToThisWindow(hwnd, TRUE);
-  }
-}
-
 const char *I_DoomExeDir(void)
 {
   static const char current_dir_dummy[] = {"."}; // proff - rem extra slash 8/21/03
@@ -306,12 +260,7 @@ const char *I_DoomExeDir(void)
 
 const char* I_GetTempDir(void)
 {
-  static char tmp_path[PATH_MAX] = {0};
-
-  if (tmp_path[0] == 0)
-  {
-    GetTempPath(sizeof(tmp_path), tmp_path);
-  }
+  static char tmp_path[PATH_MAX] = "temp";
 
   return tmp_path;
 }
@@ -371,6 +320,9 @@ char* I_FindFileInternal(const char* wfname, const char* ext, dboolean isStatic)
     {"/usr/share/games/doom"},
     {"/usr/local/share/doom"},
     {"/usr/share/doom"},
+#ifdef __3DS__
+    {"sdmc:/3ds/PrBoom-Plus"},
+#endif
   }, *search;
 
   static size_t num_search;
