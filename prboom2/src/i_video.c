@@ -89,12 +89,6 @@ extern void M_QuitDOOM(int choice);
 
 int vanilla_keymap;
 static SDL_Surface *screen;
-static SDL_Surface *buffer;
-static SDL_Window *sdl_window;
-static SDL_Renderer *sdl_renderer;
-static SDL_Texture *sdl_texture;
-static SDL_GLContext sdl_glcontext;
-static SDL_Rect src_rect = { 0, 0, 0, 0 };
 
 ////////////////////////////////////////////////////////////////////////////
 // Input code
@@ -109,68 +103,12 @@ video_mode_t I_GetModeFromString(const char *modestr);
 /////////////////////////////////////////////////////////////////////////////////
 // Keyboard handling
 
-// Vanilla keymap taken from chocolate-doom and adjusted for prboom-plus
-#define SCANCODE_TO_KEYS_ARRAY {                                          \
-  0,   0,   0,   0,   'a',                                  /* 0-9 */     \
-  'b', 'c', 'd', 'e', 'f',                                                \
-  'g', 'h', 'i', 'j', 'k',                                  /* 10-19 */   \
-  'l', 'm', 'n', 'o', 'p',                                                \
-  'q', 'r', 's', 't', 'u',                                  /* 20-29 */   \
-  'v', 'w', 'x', 'y', 'z',                                                \
-  '1', '2', '3', '4', '5',                                  /* 30-39 */   \
-  '6', '7', '8', '9', '0',                                                \
-  KEYD_ENTER, KEYD_ESCAPE, KEYD_BACKSPACE, KEYD_TAB, ' ',   /* 40-49 */   \
-  KEYD_MINUS, KEYD_EQUALS, '[', ']', '\\',                                \
-  '\\', ';', '\'', '`', ',',                                /* 50-59 */   \
-  '.', '/', KEYD_CAPSLOCK, KEYD_F1, KEYD_F2,                              \
-  KEYD_F3, KEYD_F4, KEYD_F5, KEYD_F6, KEYD_F7,              /* 60-69 */   \
-  KEYD_F8, KEYD_F9, KEYD_F10, KEYD_F11, KEYD_F12, KEYD_PRINTSC,           \
-  KEYD_SCROLLLOCK, KEYD_PAUSE, KEYD_INSERT, KEYD_HOME,      /* 70-79 */   \
-  KEYD_PAGEUP, KEYD_DEL, KEYD_END, KEYD_PAGEDOWN, KEYD_RIGHTARROW,        \
-  KEYD_LEFTARROW, KEYD_DOWNARROW, KEYD_UPARROW,             /* 80-89 */   \
-  KEYD_NUMLOCK, KEYD_KEYPADDIVIDE,                                        \
-  KEYD_KEYPADMULTIPLY, KEYD_KEYPADMINUS, KEYD_KEYPADPLUS,                 \
-  KEYD_KEYPADENTER, KEYD_KEYPAD1, KEYD_KEYPAD2, KEYD_KEYPAD3,             \
-  KEYD_KEYPAD4, KEYD_KEYPAD5, KEYD_KEYPAD6,                 /* 90-99 */   \
-  KEYD_KEYPAD7, KEYD_KEYPAD8, KEYD_KEYPAD9, KEYD_KEYPAD0,                 \
-  KEYD_KEYPADPERIOD, 0, 0, 0, KEYD_EQUALS                   /* 100-103 */ \
-}
-// Map keys like vanilla doom
-static int VanillaTranslateKey(SDL_Keysym* key)
-{
-  static const int scancode_map[] = SCANCODE_TO_KEYS_ARRAY ;
-  int rc = 0, sc = key->scancode;
-
-  if (sc > 3 && sc < sizeof(scancode_map)/sizeof(scancode_map[0]))
-    rc = scancode_map[sc];
-  // Key is mapped..
-  if (rc) return rc;
-
-  switch (sc) { // Code (Ctrl/Shift/Alt) from scancode.
-  case SDL_SCANCODE_LSHIFT:
-  case SDL_SCANCODE_RSHIFT: return KEYD_RSHIFT;
-  case SDL_SCANCODE_LCTRL:
-  case SDL_SCANCODE_RCTRL:  return KEYD_RCTRL;
-  case SDL_SCANCODE_LALT:
-  case SDL_SCANCODE_RALT:
-  case SDL_SCANCODE_LGUI:
-  case SDL_SCANCODE_RGUI:  return KEYD_RALT;
-
-  // Default to the symbolic key (outside of vanilla keys)
-  default: return key->sym;
-  }
-}
-
 //
 //  Translates the key currently in key
 //
-
-static int I_TranslateKey(SDL_Keysym* key)
+static int I_TranslateKey(SDL_keysym* key)
 {
   int rc = 0;
-  
-  if (vanilla_keymap)
-    return VanillaTranslateKey(key);
 
   switch (key->sym) {
   case SDLK_LEFT: rc = KEYD_LEFTARROW;  break;
@@ -202,16 +140,16 @@ static int I_TranslateKey(SDL_Keysym* key)
   case SDLK_PAUSE:  rc = KEYD_PAUSE;  break;
   case SDLK_EQUALS: rc = KEYD_EQUALS; break;
   case SDLK_MINUS:  rc = KEYD_MINUS;  break;
-  case SDLK_KP_0:  rc = KEYD_KEYPAD0;  break;
-  case SDLK_KP_1:  rc = KEYD_KEYPAD1;  break;
-  case SDLK_KP_2:  rc = KEYD_KEYPAD2;  break;
-  case SDLK_KP_3:  rc = KEYD_KEYPAD3;  break;
-  case SDLK_KP_4:  rc = KEYD_KEYPAD4;  break;
-  case SDLK_KP_5:  rc = KEYD_KEYPAD5;  break;
-  case SDLK_KP_6:  rc = KEYD_KEYPAD6;  break;
-  case SDLK_KP_7:  rc = KEYD_KEYPAD7;  break;
-  case SDLK_KP_8:  rc = KEYD_KEYPAD8;  break;
-  case SDLK_KP_9:  rc = KEYD_KEYPAD9;  break;
+  case SDLK_KP0:  rc = KEYD_KEYPAD0;  break;
+  case SDLK_KP1:  rc = KEYD_KEYPAD1;  break;
+  case SDLK_KP2:  rc = KEYD_KEYPAD2;  break;
+  case SDLK_KP3:  rc = KEYD_KEYPAD3;  break;
+  case SDLK_KP4:  rc = KEYD_KEYPAD4;  break;
+  case SDLK_KP5:  rc = KEYD_KEYPAD5;  break;
+  case SDLK_KP6:  rc = KEYD_KEYPAD6;  break;
+  case SDLK_KP7:  rc = KEYD_KEYPAD7;  break;
+  case SDLK_KP8:  rc = KEYD_KEYPAD8;  break;
+  case SDLK_KP9:  rc = KEYD_KEYPAD9;  break;
   case SDLK_KP_PLUS:  rc = KEYD_KEYPADPLUS; break;
   case SDLK_KP_MINUS: rc = KEYD_KEYPADMINUS;  break;
   case SDLK_KP_DIVIDE:  rc = KEYD_KEYPADDIVIDE; break;
@@ -223,12 +161,12 @@ static int I_TranslateKey(SDL_Keysym* key)
   case SDLK_LCTRL:
   case SDLK_RCTRL:  rc = KEYD_RCTRL;  break;
   case SDLK_LALT:
-  case SDLK_LGUI:
+  case SDLK_LSUPER:
   case SDLK_RALT:
-  case SDLK_RGUI:  rc = KEYD_RALT;   break;
+  case SDLK_RSUPER:  rc = KEYD_RALT;   break;
   case SDLK_CAPSLOCK: rc = KEYD_CAPSLOCK; break;
-  case SDLK_PRINTSCREEN: rc = KEYD_PRINTSC; break;
-  case SDLK_SCROLLLOCK: rc = KEYD_SCROLLLOCK; break;
+  case SDLK_PRINT: rc = KEYD_PRINTSC; break;
+  case SDLK_SCROLLOCK: rc = KEYD_SCROLLLOCK; break;
   default:    rc = key->sym;    break;
   }
 
@@ -264,76 +202,73 @@ static void I_GetEvent(void)
 
   static int mwheeluptic = 0, mwheeldowntic = 0;
 
-while (SDL_PollEvent(Event))
-{
-  switch (Event->type) {
-  case SDL_KEYDOWN:
-    if (Event->key.keysym.mod & KMOD_LALT)
-    {
-      // Prevent executing action on Alt-Tab
-      if (Event->key.keysym.sym == SDLK_TAB)
+  while (SDL_PollEvent(Event))
+  {
+    switch (Event->type) {
+    case SDL_KEYDOWN:
+      if (Event->key.keysym.mod & KMOD_LALT)
       {
-        break;
+        // Prevent executing action on Alt-Tab
+        if (Event->key.keysym.sym == SDLK_TAB)
+        {
+          break;
+        }
+        // Immediately exit on Alt+F4 ("Boss Key")
+        else if (Event->key.keysym.sym == SDLK_F4)
+        {
+          I_SafeExit(0);
+          break;
+        }
       }
-      // Immediately exit on Alt+F4 ("Boss Key")
-      else if (Event->key.keysym.sym == SDLK_F4)
-      {
-        I_SafeExit(0);
-        break;
-      }
-    }
-    event.type = ev_keydown;
-    event.data1 = I_TranslateKey(&Event->key.keysym);
-    D_PostEvent(&event);
-    break;
-
-  case SDL_KEYUP:
-  {
-    event.type = ev_keyup;
-    event.data1 = I_TranslateKey(&Event->key.keysym);
-    D_PostEvent(&event);
-  }
-  break;
-
-  case SDL_MOUSEBUTTONDOWN:
-  case SDL_MOUSEBUTTONUP:
-  if (mouse_enabled)
-  {
-    event.type = ev_mouse;
-    event.data1 = I_SDLtoDoomMouseState(SDL_GetMouseState(NULL, NULL));
-    event.data2 = event.data3 = 0;
-    D_PostEvent(&event);
-  }
-  break;
-
-  case SDL_MOUSEWHEEL:
-  if (mouse_enabled)
-  {
-    if (Event->wheel.y > 0)
-    {
       event.type = ev_keydown;
-      event.data1 = KEYD_MWHEELUP;
-      mwheeluptic = gametic;
+      event.data1 = I_TranslateKey(&Event->key.keysym);
+      D_PostEvent(&event);
+      break;
+
+    case SDL_KEYUP:
+    {
+      event.type = ev_keyup;
+      event.data1 = I_TranslateKey(&Event->key.keysym);
       D_PostEvent(&event);
     }
-    else if (Event->wheel.y < 0)
+    break;
+
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP:
+    if (mouse_enabled)
     {
-      event.type = ev_keydown;
-      event.data1 = KEYD_MWHEELDOWN;
-      mwheeldowntic = gametic;
-      D_PostEvent(&event);
+      if (Event->button.button == SDL_BUTTON_WHEELUP)
+      {
+        event.type = ev_keydown;
+        event.data1 = KEYD_MWHEELUP;
+        mwheeluptic = gametic;
+        D_PostEvent(&event);
+      }
+      else if (Event->button.button == SDL_BUTTON_WHEELDOWN)
+      {
+        event.type = ev_keydown;
+        event.data1 = KEYD_MWHEELDOWN;
+        mwheeldowntic = gametic;
+        D_PostEvent(&event);
+      }
+      else
+      {
+        event.type = ev_mouse;
+        event.data1 = I_SDLtoDoomMouseState(SDL_GetMouseState(NULL, NULL));
+        event.data2 = event.data3 = 0;
+        D_PostEvent(&event);
+      }
+    }
+    break;
+
+    case SDL_QUIT:
+      S_StartSound(NULL, sfx_swtchn);
+      M_QuitDOOM(0);
+
+    default:
+      break;
     }
   }
-  break;
-
-  case SDL_QUIT:
-    S_StartSound(NULL, sfx_swtchn);
-    M_QuitDOOM(0);
-
-  default:
-    break;
-  }
-}
 
   if(mwheeluptic && mwheeluptic + 1 < gametic)
   {
@@ -425,7 +360,7 @@ inline static dboolean I_SkipFrame(void)
 
 void I_SwapBuffers(void)
 {
-  SDL_GL_SwapWindow(sdl_window);
+  SDL_GL_SwapBuffers();
 }
 
 void I_ShutdownGraphics(void)
@@ -452,12 +387,6 @@ void I_FinishUpdate (void)
   // The screen wipe following pressing the exit switch on a level
   // is noticably jerkier with I_SkipFrame
   // if (I_SkipFrame())return;
-
-#ifdef MONITOR_VISIBILITY
-  //!!if (!(SDL_GetAppState()&SDL_APPACTIVE)) {
-  //!!  return;
-  //!!}
-#endif
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -490,32 +419,15 @@ void I_FinishUpdate (void)
       SDL_UnlockSurface(screen);
   }
 
-  // Blit from the paletted 8-bit screen buffer to the intermediate
-  // 32-bit RGBA buffer that we can load into the texture.
-  SDL_LowerBlit(screen, &src_rect, buffer, &src_rect);
-
-  // Update the intermediate texture with the contents of the RGBA buffer.
-  SDL_UpdateTexture(sdl_texture, &src_rect, buffer->pixels, buffer->pitch);
-
-  // Make sure the pillarboxes are kept clear each frame.
-  SDL_RenderClear(sdl_renderer);
-
-  SDL_RenderCopy(sdl_renderer, sdl_texture, &src_rect, NULL);
-
   // Draw!
-  SDL_RenderPresent(sdl_renderer);
+  SDL_Flip(screen);
 }
 
 // I_PreInitGraphics
 
 static void I_ShutdownSDL(void)
 {
-  if (sdl_glcontext) SDL_GL_DeleteContext(sdl_glcontext);
   if (screen) SDL_FreeSurface(screen);
-  if (buffer) SDL_FreeSurface(buffer);
-  if (sdl_texture) SDL_DestroyTexture(sdl_texture);
-  if (sdl_renderer) SDL_DestroyRenderer(sdl_renderer);
-  if (sdl_window) SDL_DestroyWindow(sdl_window);
 
   SDL_Quit();
   return;
@@ -526,14 +438,7 @@ void I_PreInitGraphics(void)
   int p;
 
   // Initialize SDL
-  unsigned int flags = 0;
-  if (!(M_CheckParm("-nodraw") && M_CheckParm("-nosound")))
-    flags = SDL_INIT_VIDEO;
-#ifdef PRBOOM_DEBUG
-  flags |= SDL_INIT_NOPARACHUTE;
-#endif
-
-  p = SDL_Init(flags);
+  p = SDL_InitSubSystem(SDL_INIT_VIDEO);
   if (p < 0)
   {
     I_Error("Could not initialize SDL [%s]", SDL_GetError());
@@ -691,7 +596,7 @@ void I_InitScreenResolution(void)
   int i, p, w, h;
   char c, x;
   video_mode_t mode;
-  int init = (sdl_window == NULL);
+  int init = (screen == NULL);
 
   I_GetScreenResolution();
 
@@ -812,9 +717,9 @@ video_mode_t I_GetModeFromString(const char *modestr)
 
 void I_UpdateVideoMode(void)
 {
-  int init_flags = 0;
+  int init_flags = SDL_DOUBLEBUF;
 
-  if(sdl_window)
+  if(screen)
   {
 #ifdef GL_DOOM
     if (V_GetMode() == VID_MODEGL)
@@ -827,67 +732,26 @@ void I_UpdateVideoMode(void)
 
     I_InitScreenResolution();
 
-    if (sdl_glcontext) SDL_GL_DeleteContext(sdl_glcontext);
     if (screen) SDL_FreeSurface(screen);
-    if (buffer) SDL_FreeSurface(buffer);
-    if (sdl_texture) SDL_DestroyTexture(sdl_texture);
-    if (sdl_renderer) SDL_DestroyRenderer(sdl_renderer);
-    SDL_DestroyWindow(sdl_window);
-    
-    sdl_renderer = NULL;
-    sdl_window = NULL;
-    sdl_glcontext = NULL;
+
     screen = NULL;
-    buffer = NULL;
-    sdl_texture = NULL;
-  }
-
-  // Initialize SDL with this graphics mode
-  if (V_GetMode() == VID_MODEGL) {
-    init_flags = SDL_WINDOW_OPENGL;
-  }
-
-  if (V_GetMode() == VID_MODEGL)
-  {
-#ifdef GL_DOOM
-    sdl_window = SDL_CreateWindow(
-      PACKAGE_NAME " " PACKAGE_VERSION,
-      SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      SCREENWIDTH, SCREENHEIGHT,
-      init_flags);
-    sdl_glcontext = SDL_GL_CreateContext(sdl_window);
-#endif
-  }
-  else
-  {
-    // Always use vsync on 3DS
-    int flags = SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC;
-
-    sdl_window = SDL_CreateWindow(
-      PACKAGE_NAME " " PACKAGE_VERSION,
-      SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      SCREENWIDTH, SCREENHEIGHT,
-      init_flags);
-    sdl_renderer = SDL_CreateRenderer(sdl_window, -1, flags);
-
-    screen = SDL_CreateRGBSurface(0, SCREENWIDTH, SCREENHEIGHT, V_GetNumPixelBits(), 0, 0, 0, 0);
-    buffer = SDL_CreateRGBSurface(0, SCREENWIDTH, SCREENHEIGHT, 32, 0, 0, 0, 0);
-    SDL_FillRect(buffer, NULL, 0);
-
-    sdl_texture = SDL_CreateTextureFromSurface(sdl_renderer, buffer);
-
-    if(screen == NULL) {
-      I_Error("Couldn't set %dx%d video mode [%s]", SCREENWIDTH, SCREENHEIGHT, SDL_GetError());
-    }
   }
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
   {
-    // Always use vsync on 3DS
-    SDL_GL_SetSwapInterval(1);
+    init_flags |= SDL_OPENGL;
   }
 #endif
+
+  // Set window title
+  SDL_WM_SetCaption(PACKAGE_NAME " " PACKAGE_VERSION, "game");
+
+  screen = SDL_SetVideoMode(SCREENWIDTH, SCREENHEIGHT, V_GetNumPixelBits(), init_flags);
+
+  if(screen == NULL) {
+    I_Error("Couldn't set %dx%d video mode [%s]", SCREENWIDTH, SCREENHEIGHT, SDL_GetError());
+  }
 
   if (V_GetMode() != VID_MODEGL)
   {
@@ -930,20 +794,19 @@ void I_UpdateVideoMode(void)
     deh_changeCompTranslucency();
   }
 #endif
-
-  src_rect.w = SCREENWIDTH;
-  src_rect.h = SCREENHEIGHT;
 }
 
 static void ActivateMouse(void)
 {
-  SDL_SetRelativeMouseMode(SDL_TRUE);
+  SDL_WM_GrabInput(SDL_GRAB_ON);
+  SDL_ShowCursor(SDL_DISABLE);
   SDL_GetRelativeMouseState(NULL, NULL);
 }
 
 static void DeactivateMouse(void)
 {
-  SDL_SetRelativeMouseMode(SDL_FALSE);
+  SDL_WM_GrabInput(SDL_GRAB_OFF);
+  SDL_ShowCursor(SDL_ENABLE);
 }
 
 //

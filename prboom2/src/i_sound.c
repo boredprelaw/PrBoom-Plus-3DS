@@ -628,8 +628,7 @@ void I_InitSound(void)
   audio_channels = 2;
   audio_buffers = getSliceSize();
 
-  if (Mix_OpenAudioDevice(audio_rate, MIX_DEFAULT_FORMAT, audio_channels, audio_buffers,
-                          NULL, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE) < 0)
+  if (Mix_OpenAudio(audio_rate, MIX_DEFAULT_FORMAT, audio_channels, audio_buffers) < 0)
   {
     lprintf(LO_INFO,"couldn't open audio with desired format (%s)\n", SDL_GetError());
     nosfxparm = true;
@@ -910,7 +909,7 @@ int I_RegisterSong(const void *data, size_t len)
         rw_midi = SDL_RWFromConstMem(data, len);
         if (rw_midi)
         {
-          music[0] = Mix_LoadMUS_RW(rw_midi, SDL_FALSE);
+          music[0] = Mix_LoadMUS_RW(rw_midi);
         }
       }
 
@@ -979,7 +978,7 @@ int I_RegisterSong(const void *data, size_t len)
       rw_midi = SDL_RWFromMem(outbuf, outbuf_len);
       if (rw_midi)
       {
-        music[0] = Mix_LoadMUS_RW(rw_midi, SDL_FALSE);
+        music[0] = Mix_LoadMUS_RW(rw_midi);
       }
       
       if (!music[0])

@@ -18,13 +18,13 @@ INCLUDES	:=
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-CFLAGS	:=	-m32 -static -O3 -ffast-math -D_WIN32 -DHAVE_DIRENT_H -DHAVE_LIBZ \
+CFLAGS	:=	-m32 -mwindows -static -O3 -ffast-math -D_WIN32 -DHAVE_DIRENT_H -DHAVE_LIBZ \
 			-DPACKAGE_NAME=\"PrBoom-Plus\" -DPACKAGE_VERSION=\"2.6.2\" -DPACKAGE_TARNAME=\"prboom-plus\" -DPACKAGE_HOMEPAGE=\"https://example.com\" \
-			-DPRBOOMDATADIR=\".\" -DDOOMWADDIR=\".\" `pkg-config --static --cflags sdl2 sdl2_mixer zlib`
+			-DPRBOOMDATADIR=\".\" -DDOOMWADDIR=\".\" `pkg-config --static --cflags sdl sdl_mixer zlib`
 
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 
-LIBS    := `pkg-config --static --libs sdl2 sdl2_mixer zlib` -lopengl32 -lcomctl32 -lstdc++
+LIBS    := `pkg-config --static --libs sdl sdl_mixer zlib` -lxinput1_4 -lmad -lopengl32 -lcomctl32 -lstdc++
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -38,7 +38,7 @@ CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 OFILES  := $(addprefix $(BUILD)/, $(CFILES:.c=.o)) $(addprefix $(BUILD)/, $(CPPFILES:.cpp=.o))
 
 INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			-I/mingw32/include/SDL2
+			-I/mingw32/include/SDL
 
 .PHONY: all clean
 

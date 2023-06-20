@@ -4580,12 +4580,12 @@ dboolean M_Responder (event_t* ev) {
   // Process joystick input
 
   if (ev->type == ev_joystick && joywait < I_GetTime())  {
-    if (ev->data3 < 0 || ev->data1&256)
+    if (ev->data3 > 0 || ev->data1&256)
       {
   ch = key_menu_up;                                // phares 3/7/98
   joywait = I_GetTime() + 5;
       }
-    else if (ev->data3 > 0 || ev->data1&512)
+    else if (ev->data3 < 0 || ev->data1&512)
       {
   ch = key_menu_down;                              // phares 3/7/98
   joywait = I_GetTime() + 5;

@@ -37,8 +37,7 @@
 
 #include <stdlib.h>
 
-#include <SDL.h>
-#include <SDL_gamecontroller.h>
+#include <xinput.h>
 
 #include "doomdef.h"
 #include "doomtype.h"
@@ -49,42 +48,50 @@
 #include "lprintf.h"
 #include "i_system.h"
 
-static SDL_GameController *joystick = NULL;
-
-static void I_EndJoystick(void)
-{
-  lprintf(LO_DEBUG, "I_EndJoystick : closing joystick\n");
-
-  if(joystick)
-    SDL_GameControllerClose(joystick);
-}
+static XINPUT_STATE joystick;
 
 void I_PollJoystick(void)
 {
   event_t ev;
-  Sint16 axis_value;
+  short axis_value;
 
-  if (!joystick)
-    return;
+  if(XInputGetState(0, &joystick) == ERROR_DEVICE_NOT_CONNECTED)
+    memset(&joystick, 0, sizeof(joystick));
 
   ev.type = ev_joystick;
-  ev.data1 =
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_A)<<0) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_B)<<1) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_X)<<2) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_Y)<<3) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_LEFTSHOULDER)<<4) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)<<5) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_START)<<6) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_BACK)<<7) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_UP)<<8) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_DOWN)<<9) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_LEFT)<<10) |
-    (SDL_GameControllerGetButton(joystick, SDL_CONTROLLER_BUTTON_DPAD_RIGHT)<<11);
-  axis_value = SDL_GameControllerGetAxis(joystick, SDL_CONTROLLER_AXIS_LEFTX) / 3000;
+
+  ev.data1 = 0;
+  
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_A)
+    ev.data1 |= (1 << 0);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_B)
+    ev.data1 |= (1 << 1);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_X)
+    ev.data1 |= (1 << 2);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_Y)
+    ev.data1 |= (1 << 3);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER)
+    ev.data1 |= (1 << 4);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER)
+    ev.data1 |= (1 << 5);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_START)
+    ev.data1 |= (1 << 6);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_BACK)
+    ev.data1 |= (1 << 7);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP)
+    ev.data1 |= (1 << 8);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN)
+    ev.data1 |= (1 << 9);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT)
+    ev.data1 |= (1 << 10);
+  if (joystick.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT)
+    ev.data1 |= (1 << 11);
+
+  axis_value = joystick.Gamepad.sThumbLX / 3000;
   if (abs(axis_value)<2) axis_value=0;
   ev.data2 = axis_value;
-  axis_value = SDL_GameControllerGetAxis(joystick, SDL_CONTROLLER_AXIS_LEFTY) / 3000;
+
+  axis_value = joystick.Gamepad.sThumbLY / 3000;
   if (abs(axis_value)<2) axis_value=0;
   ev.data3 = axis_value;
 
@@ -93,18 +100,4 @@ void I_PollJoystick(void)
 
 void I_InitJoystick(void)
 {
-  const char* fname = "I_InitJoystick : ";
-
-  SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
-
-  joystick = SDL_GameControllerOpen(0);
-
-  if (!joystick) {
-    lprintf(LO_ERROR, "%serror opening joystick\n", fname);
-  }
-  else {
-    I_AtExit(I_EndJoystick, true);
-
-    lprintf(LO_INFO, "%sopened %s\n", fname, SDL_GameControllerName(joystick));
-  }
 }

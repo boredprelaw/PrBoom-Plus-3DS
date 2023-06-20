@@ -553,7 +553,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
   if (gamekeydown[key_strafeleft] || joybuttons[joybstrafeleft])
     side -= sidemove[speed];
   
-  forward -= (joyymove * forwardmove[speed]) / 10;
+  forward += (joyymove * forwardmove[speed]) / 10;
 
     // buttons
   cmd->chatchar = HU_dequeueChatChar();
@@ -4411,7 +4411,7 @@ void P_WalkTicker()
   if (gamekeydown[key_strafeleft])
     side -= sidemove[speed];
   
-  forward -= (joyymove * forwardmove[speed]) / 10;
+  forward += (joyymove * forwardmove[speed]) / 10;
 
   //mouse
   if (mousebuttons[mousebforward])

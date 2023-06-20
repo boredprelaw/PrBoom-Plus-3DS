@@ -292,34 +292,6 @@ void gld_Init(int width, int height)
   lprintf(LO_INFO,"GL_VENDOR: %s\n",glGetString(GL_VENDOR));
   lprintf(LO_INFO,"GL_RENDERER: %s\n",glGetString(GL_RENDERER));
   lprintf(LO_INFO,"GL_VERSION: %s\n",glGetString(GL_VERSION));
-  lprintf(LO_INFO,"GL_EXTENSIONS:\n");
-  {
-    char ext_name[256];
-    const char *extensions = (const char*)glGetString(GL_EXTENSIONS);
-    const char *rover = extensions;
-    const char *p = rover;
-
-    while (*rover)
-    {
-      size_t len = 0;
-      p = rover;
-      while (*p && *p != ' ')
-      {
-        p++;
-        len++;
-      }
-      if (*p)
-      {
-        len = MIN(len, sizeof(ext_name)-1);
-        memset(ext_name, 0, sizeof(ext_name));
-        strncpy(ext_name, rover, len);
-        lprintf(LO_INFO,"\t%s\n", ext_name);
-      }
-      rover = p;
-      while (*rover && *rover == ' ')
-        rover++;
-    }
-  }
 
   gld_InitOpenGL();
   gld_InitPalettedTextures();

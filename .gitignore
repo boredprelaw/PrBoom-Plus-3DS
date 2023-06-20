@@ -3,6 +3,8 @@
 *.dat
 *.wad
 *.dsg
+stdout.txt
+stderr.txt
 
 # Visual Studio Code
 .vscode/
