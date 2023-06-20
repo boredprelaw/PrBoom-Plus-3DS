@@ -71,6 +71,8 @@
 #include "i_system.h"
 #include "e6y.h"
 
+#ifdef GL_DOOM
+
 int imageformats[5] = {0, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA};
 
 /* TEXTURES */
@@ -1425,3 +1427,5 @@ void gld_CleanStaticMemory(void)
 {
   gld_CleanTexItems(numlumps, &gld_GLStaticPatchTextures);
 }
+
+#endif

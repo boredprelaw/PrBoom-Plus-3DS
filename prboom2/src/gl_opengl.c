@@ -45,6 +45,8 @@
 
 #define isExtensionSupported(ext) strstr(extensions, ext)
 
+#ifdef GL_DOOM
+
 dboolean gl_ext_arb_vertex_buffer_object = false;
 
 // cfg values
@@ -154,3 +156,5 @@ void SetTextureMode(tex_mode_e type)
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   }
 }
+
+#endif

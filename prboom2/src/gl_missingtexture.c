@@ -48,6 +48,8 @@
 #include "r_main.h"
 #include "e6y.h"
 
+#ifdef GL_DOOM
+
 typedef struct
 {
   int count;        // size of the list with adjoining sectors
@@ -457,3 +459,5 @@ void gld_SetupFloodedPlaneLight(GLWall *wall)
     gld_StaticLightAlpha(wall->light, wall->alpha);
   }
 }
+
+#endif

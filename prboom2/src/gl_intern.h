@@ -37,6 +37,8 @@
 #include "v_video.h"
 #include "xs_Float.h"
 
+#ifdef GL_DOOM
+
 #define MAXCOORD (32767.0f / MAP_COEFF)
 
 #define SMALLDELTA 0.001f
@@ -540,5 +542,7 @@ extern int flats_display_list;
 extern byte *segrendered; // true if sector rendered (only here for malloc)
 extern byte *linerendered[2]; // true if linedef rendered (only here for malloc)
 extern GLuint flats_vbo_id;
+
+#endif // GL_DOOM
 
 #endif // _GL_INTERN_H

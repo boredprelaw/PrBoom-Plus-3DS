@@ -47,6 +47,8 @@
 #include "gl_opengl.h"
 #include "e6y.h"
 
+#ifdef GL_DOOM
+
 gl_lightmode_t gl_lightmode;
 gl_lightmode_t gl_lightmode_default;
 const char *gl_lightmodes[] = {"glboom", "gzdoom", "fog based"};
@@ -384,3 +386,5 @@ void gl_EnableFog(int on)
   }
   gl_fogenabled=on;
 }
+
+#endif

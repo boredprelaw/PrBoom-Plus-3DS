@@ -56,6 +56,8 @@
 
 #include "m_io.h"
 
+#ifdef GL_DOOM
+
 static FILE *levelinfo;
 
 static int gld_max_vertexes = 0;
@@ -677,3 +679,5 @@ void gld_ProcessTexturedMap(void)
     triangulate_subsectors = 0;
   }
 }
+
+#endif

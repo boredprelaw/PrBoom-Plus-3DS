@@ -40,6 +40,8 @@
 #include "am_map.h"
 #include "lprintf.h"
 
+#ifdef GL_DOOM
+
 am_icon_t am_icons[am_icon_count + 1] = 
 {
   {-1, "M_SHADOW"},
@@ -220,3 +222,5 @@ void gld_DrawMapLines(void)
   }
 #endif
 }
+
+#endif

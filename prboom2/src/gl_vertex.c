@@ -81,6 +81,8 @@
 #include "gl_intern.h"
 #include "r_main.h"
 
+#ifdef GL_DOOM
+
 typedef struct vertexsplit_info_s
 {
   dboolean changed;
@@ -437,3 +439,5 @@ void gld_CleanVertexData()
     gl_splitsbysector = NULL;
   }
 }
+
+#endif

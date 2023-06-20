@@ -46,6 +46,8 @@
 
 #include "doomtype.h"
 
+#ifdef GL_DOOM
+
 extern dboolean gl_ext_arb_vertex_buffer_object;
 
 /* VBO */
@@ -73,5 +75,7 @@ typedef enum
   TM_INVERTOPAQUE = TMF_INVERTBIT | TMF_OPAQUEBIT,
 } tex_mode_e;
 void SetTextureMode(tex_mode_e type);
+
+#endif // GL_DOOM
 
 #endif // _GL_OPENGL_H

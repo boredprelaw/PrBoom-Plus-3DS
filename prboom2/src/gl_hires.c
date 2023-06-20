@@ -61,6 +61,8 @@
 
 #include "m_io.h"
 
+#ifdef GL_DOOM
+
 unsigned int gl_has_hires = 0;
 int gl_texture_external_hires = -1;
 int gl_texture_internal_hires = -1;
@@ -175,3 +177,5 @@ void gld_ProgressUpdate(const char * text, int progress, int total)
 
   I_FinishUpdate();
 }
+
+#endif

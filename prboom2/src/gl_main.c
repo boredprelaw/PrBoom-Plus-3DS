@@ -71,6 +71,8 @@
 #include "hu_stuff.h"
 #include "e6y.h"//e6y
 
+#ifdef GL_DOOM
+
 float xCamera,yCamera,zCamera;
 TAnimItemParam *anim_flats = NULL;
 TAnimItemParam *anim_textures = NULL;
@@ -2745,3 +2747,5 @@ void gld_DrawScene(player_t *player)
   glDisableClientState(GL_COLOR_ARRAY);
 #endif
 }
+
+#endif

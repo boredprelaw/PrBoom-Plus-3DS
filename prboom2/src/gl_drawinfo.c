@@ -38,6 +38,8 @@
 #include "gl_intern.h"
 #include "lprintf.h"
 
+#ifdef GL_DOOM
+
 GLDrawInfo gld_drawinfo;
 
 //
@@ -167,3 +169,5 @@ void gld_AddDrawItem(GLDrawItemType itemtype, void *itemdata)
 }
 #undef SIZEOF8
 #undef NEWSIZE
+
+#endif

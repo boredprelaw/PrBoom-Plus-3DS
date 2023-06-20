@@ -43,6 +43,8 @@
 #include "lprintf.h"
 #include "e6y.h"
 
+#ifdef GL_DOOM
+
 static GLuint wipe_scr_start_tex = 0;
 static GLuint wipe_scr_end_tex = 0;
 
@@ -151,3 +153,5 @@ int gld_wipe_EndScreen(void)
 
   return 0;
 }
+
+#endif

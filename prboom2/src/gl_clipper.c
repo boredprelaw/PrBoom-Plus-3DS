@@ -74,6 +74,8 @@
 #include "r_main.h"
 #include "e6y.h"
 
+#ifdef GL_DOOM
+
 float frustum[6][4];
 
 typedef struct clipnode_s
@@ -460,3 +462,5 @@ dboolean gld_SphereInFrustum(float x, float y, float z, float radius)
   }
   return true;
 }
+
+#endif

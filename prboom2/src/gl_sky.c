@@ -57,6 +57,8 @@
 
 #include "e6y.h"
 
+#ifdef GL_DOOM
+
 typedef struct
 {
   int mode;
@@ -1280,3 +1282,5 @@ int gld_DrawBoxSkyBox(void)
 
   return true;
 }
+
+#endif

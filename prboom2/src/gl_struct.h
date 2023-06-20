@@ -34,7 +34,9 @@
 #ifndef _GL_STRUCT_H
 #define _GL_STRUCT_H
 
+#ifdef GL_DOOM
 #include <GL/gl.h>
+#endif
 
 extern int nodesVersion;
 
@@ -174,6 +176,8 @@ dboolean gld_SphereInFrustum(float x, float y, float z, float radius);
 sector_t* GetBestFake(sector_t *sector, int ceiling, int validcount);
 sector_t* GetBestBleedSector(sector_t* source, int ceiling);
 
+#ifdef GL_DOOM
+
 //shadows
 typedef struct shadow_params_s
 {
@@ -193,6 +197,8 @@ typedef struct shadow_params_s
 extern simple_shadow_params_t simple_shadows;
 extern int gl_shadows_maxdist;
 extern int gl_shadows_factor;
+
+#endif
 
 void gld_DrawMapLines(void);
 
@@ -246,6 +252,8 @@ enum
   am_icon_count
 };
 
+#ifdef GL_DOOM
+
 typedef struct am_icon_s
 {
   GLuint tex_id;
@@ -253,6 +261,8 @@ typedef struct am_icon_s
   int lumpnum;
 } am_icon_t;
 extern am_icon_t am_icons[];
+
+#endif
 
 void gld_InitMapPics(void);
 void gld_AddNiceThing(int type, float x, float y, float radius, float angle,
