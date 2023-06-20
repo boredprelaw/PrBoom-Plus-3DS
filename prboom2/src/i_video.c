@@ -419,59 +419,6 @@ inline static dboolean I_SkipFrame(void)
   }
 }
 
-///////////////////////////////////////////////////////////
-// Palette stuff.
-//
-static void I_UploadNewPalette(int pal, int force)
-{
-  // This is used to replace the current 256 colour cmap with a new one
-  // Used by 256 colour PseudoColor modes
-
-  // Array of SDL_Color structs used for setting the 256-colour palette
-  static SDL_Color* colours;
-  static int cachedgamma;
-  static size_t num_pals;
-
-  if (V_GetMode() == VID_MODEGL)
-    return;
-
-  if ((colours == NULL) || (cachedgamma != usegamma) || force) {
-    int pplump = W_GetNumForName("PLAYPAL");
-    int gtlump = (W_CheckNumForName)("GAMMATBL",ns_prboom);
-    register const byte * palette = (const byte*)W_CacheLumpNum(pplump);
-    register const byte * const gtable = (const byte *)W_CacheLumpNum(gtlump) + 256*(cachedgamma = usegamma);
-    register int i;
-
-    num_pals = W_LumpLength(pplump) / (3*256);
-    num_pals *= 256;
-
-    if (!colours) {
-      // First call - allocate and prepare colour array
-      colours = (SDL_Color*)malloc(sizeof(*colours)*num_pals);
-    }
-
-    // set the colormap entries
-    for (i=0 ; (size_t)i<num_pals ; i++) {
-      colours[i].r = gtable[palette[0]];
-      colours[i].g = gtable[palette[1]];
-      colours[i].b = gtable[palette[2]];
-      palette += 3;
-    }
-
-    W_UnlockLumpNum(pplump);
-    W_UnlockLumpNum(gtlump);
-    num_pals/=256;
-  }
-
-#ifdef RANGECHECK
-  if ((size_t)pal >= num_pals)
-    I_Error("I_UploadNewPalette: Palette number out of range (%d>=%d)",
-      pal, num_pals);
-#endif
-
-  SDL_SetPaletteColors(screen->format->palette, colours+256*pal, 0, 256);
-}
-
 //////////////////////////////////////////////////////////////////////////////
 // Graphics API
 
@@ -496,9 +443,6 @@ void I_UpdateNoBlit (void)
 //
 // I_FinishUpdate
 //
-static int newpal = 0;
-#define NO_PALETTE_CHANGE 1000
-
 void I_FinishUpdate (void)
 {
   //e6y: new mouse code
@@ -545,13 +489,6 @@ void I_FinishUpdate (void)
       SDL_UnlockSurface(screen);
   }
 
-  /* Update the display buffer (flipping video pages if supported)
-   * If we need to change palette, that implicitely does a flip */
-  if (newpal != NO_PALETTE_CHANGE) {
-    I_UploadNewPalette(newpal, false);
-    newpal = NO_PALETTE_CHANGE;
-  }
-
   // Blit from the paletted 8-bit screen buffer to the intermediate
   // 32-bit RGBA buffer that we can load into the texture.
   SDL_LowerBlit(screen, &src_rect, buffer, &src_rect);
@@ -566,14 +503,6 @@ void I_FinishUpdate (void)
 
   // Draw!
   SDL_RenderPresent(sdl_renderer);
-}
-
-//
-// I_SetPalette
-//
-void I_SetPalette (int pal)
-{
-  newpal = pal;
 }
 
 // I_PreInitGraphics
@@ -987,7 +916,6 @@ void I_UpdateVideoMode(void)
   R_ExecuteSetViewSize();
 
   V_SetPalette(0);
-  I_UploadNewPalette(0, true);
 
   ST_SetResolution();
   AM_SetResolution();

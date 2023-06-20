@@ -812,7 +812,7 @@ void V_DestroyUnusedTrueColorPalettes(void) {
 // V_SetPalette
 //
 // CPhipps - New function to set the palette to palette number pal.
-// Handles loading of PLAYPAL and calls I_SetPalette
+// Handles loading of PLAYPAL
 
 void V_SetPalette(int pal)
 {
@@ -823,7 +823,6 @@ void V_SetPalette(int pal)
     gld_SetPalette(pal);
 #endif
   } else {
-    I_SetPalette(pal);
     if (V_GetMode() == VID_MODE15 || V_GetMode() == VID_MODE16 || V_GetMode() == VID_MODE32) {
       // V_SetPalette can be called as part of the gamma setting before
       // we've loaded any wads, which prevents us from reading the palette - POPE
