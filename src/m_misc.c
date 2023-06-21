@@ -643,17 +643,17 @@ default_t defaults[] =
    def_int,ss_keys},
   {"joyb_down",{&joybdown},{9},0,UL,
    def_int,ss_keys},
-  {"joyb_left",{&joybleft},{10},0,UL,
+  {"joyb_left",{&joybleft},{4},0,UL,
    def_int,ss_keys},
-  {"joyb_right",{&joybright},{11},0,UL,
+  {"joyb_right",{&joybright},{5},0,UL,
    def_int,ss_keys},
   {"joyb_fire",{&joybfire},{0},0,UL,
    def_int,ss_keys}, // joystick button number to use for fire
   {"joyb_strafe",{&joybstrafe},{1},0,UL,
    def_int,ss_keys}, // joystick button number to use for strafing
-  {"joyb_strafeleft",{&joybstrafeleft},{4},0,UL,
+  {"joyb_strafeleft",{&joybstrafeleft},{10},0,UL,
    def_int,ss_keys}, // joystick button number to use for strafe left
-  {"joyb_straferight",{&joybstraferight},{5},0,UL,
+  {"joyb_straferight",{&joybstraferight},{11},0,UL,
    def_int,ss_keys}, // joystick button number to use for strafe right
   {"joyb_speed",{&joybspeed},{2},0,UL,
    def_int,ss_keys}, // joystick button number to use for running
@@ -948,7 +948,7 @@ default_t defaults[] =
   {"sprites_doom_order", {&sprites_doom_order}, {DOOM_ORDER_STATIC},0,DOOM_ORDER_LAST - 1,
    def_int,ss_stat},
 
-  {"movement_mouselook", {&movement_mouselook},  {0},0,1,
+  {"movement_mouselook", {&movement_mouselook},  {1},0,1,
    def_bool,ss_stat},
   {"movement_mousenovert", {&movement_mousenovert},  {0},0,1,
    def_bool,ss_stat},

@@ -338,6 +338,8 @@ static int   dclicks2;
 // joystick values are repeated
 static int   joyxmove;
 static int   joyymove;
+static int   joyrxmove;
+static int   joyrymove;
 static dboolean joyarray[13];
 static dboolean *joybuttons = &joyarray[1];    // allow [-1]
 
@@ -532,8 +534,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         side += sidemove[speed];
       if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         side -= sidemove[speed];
-      
-      side += (joyxmove * sidemove[speed]) / 10;
     }
   else
     {
@@ -541,9 +541,14 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         cmd->angleturn -= angleturn[tspeed];
       if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         cmd->angleturn += angleturn[tspeed];
-      
-      cmd->angleturn -= joyxmove * 100;
     }
+  
+  // Gamepad left stick X
+  side += (joyxmove * sidemove[speed]) / 10;
+
+  // Gamepad right stick
+  cmd->angleturn -= joyrxmove * 200;
+  mlooky -= joyrymove * 200;
 
   if (gamekeydown[key_up] || joybuttons[joybup])
     forward += forwardmove[speed];
@@ -905,6 +910,7 @@ static void G_DoLoadLevel (void)
   // clear cmd building stuff
   memset (gamekeydown, 0, sizeof(gamekeydown));
   joyxmove = joyymove = 0;
+  joyrxmove = joyrymove = 0;
   mousex = mousey = 0;
   mlooky = 0;//e6y
   special_event = 0; paused = false;
@@ -1075,6 +1081,8 @@ dboolean G_Responder (event_t* ev)
       joybuttons[11] = ev->data1 & 2048;
       joyxmove = ev->data2;
       joyymove = ev->data3;
+      joyrxmove = ev->data4;
+      joyrymove = ev->data5;
       return true;    // eat events
 
     default:
@@ -4390,8 +4398,6 @@ void P_WalkTicker()
         side += sidemove[speed];
       if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         side -= sidemove[speed];
-      
-      side += (joyxmove * sidemove[speed]) / 10;
     }
   else
     {
@@ -4399,9 +4405,14 @@ void P_WalkTicker()
         angturn -= angleturn[tspeed];
       if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         angturn += angleturn[tspeed];
-      
-      angturn -= joyxmove * 100;
     }
+
+  // Gamepad left stick X
+  side += (joyxmove * sidemove[speed]) / 10;
+
+  // Gamepad right stick
+  angturn -= joyrxmove * 200;
+  mlooky -= joyrymove * 200;
 
   if (gamekeydown[key_up] || joybuttons[joybup])
     forward += forwardmove[speed];

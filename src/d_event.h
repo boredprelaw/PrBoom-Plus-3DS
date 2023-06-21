@@ -60,6 +60,8 @@ typedef struct
   int       data1;    // keys / mouse/joystick buttons
   int       data2;    // mouse/joystick x move
   int       data3;    // mouse/joystick y move
+  int       data4;    // joystick right x move
+  int       data5;    // joystick right y move
 } event_t;
 
 
