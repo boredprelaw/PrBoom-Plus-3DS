@@ -67,9 +67,7 @@ void I_PollJoystick(void)
   ev.data1 = 0;
 
 #ifdef __3DS__
-  // TODO: No more SDL
-  // hidScanInput();
-  // irrstScanInput();
+  hidScanInput();
 
   unsigned int kHeld = hidKeysHeld();
 
@@ -171,9 +169,4 @@ void I_PollJoystick(void)
 
 void I_InitJoystick(void)
 {
-#ifdef __3DS__
-  // TODO: No more SDL
-  // hidInit();
-  // irrstInit();
-#endif
 }

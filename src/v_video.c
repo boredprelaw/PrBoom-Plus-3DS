@@ -707,11 +707,7 @@ void V_UpdateTrueColorPalette(video_mode_t mode) {
             ng = (int)(g*t+roundUpG);
             nb = (int)(b*t+roundUpB);
             Palettes32[((p*256+i)*VID_NUMCOLORWEIGHTS)+w] = (
-#ifdef __3DS__
-              (nr<<24) | (ng<<16) | (nb<<8)
-#else
               (nr<<16) | (ng<<8) | nb
-#endif
             );
           }
         }

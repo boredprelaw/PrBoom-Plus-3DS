@@ -233,10 +233,6 @@ int map_level_stat;
 
 default_t defaults[] =
 {
-  //e6y
-  {"System settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"process_priority", {&process_priority},{0},0,2,def_int,ss_none},
-  
   {"Misc settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"default_compatibility_level",{(int*)&default_compatibility_level},
    {-1},-1,MAX_COMPATIBILITY_LEVEL-1,

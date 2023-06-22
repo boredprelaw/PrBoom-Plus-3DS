@@ -59,8 +59,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <SDL/SDL_timer.h>
-
 #ifdef __3DS__
 #include <3ds.h>
 #endif
@@ -78,7 +76,7 @@ static int basetime = 0;
 
 int I_GetTime_MS(void)
 {
-  int ticks = SDL_GetTicks();
+  int ticks = svcGetSystemTick() / CPU_TICKS_PER_MSEC;
 
   if (basetime == 0)
     basetime = ticks;
