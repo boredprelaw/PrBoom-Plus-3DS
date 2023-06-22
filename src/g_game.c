@@ -278,6 +278,7 @@ int     joybstrafe;
 int     joybstrafeleft;
 int     joybstraferight;
 int     joybuse;
+int     joybnextweapon;
 int     joybspeed;
 
 #define MAXPLMOVE   (forwardmove[1])
@@ -575,6 +576,10 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // clear double clicks if hit use button
       dclicks = 0;
     }
+
+  // Next weapon with joypad
+  if (joybuttons[joybnextweapon])
+    next_weapon = 1;
 
   // Toggle between the top 2 favorite weapons.                   // phares
   // If not currently aiming one of these, switch to              // phares
