@@ -38,42 +38,40 @@
 
 #include <SDL/SDL.h>
 
-#include "m_argv.h"
-#include "doomstat.h"
-#include "doomdef.h"
-#include "doomtype.h"
-#include "v_video.h"
-#include "r_draw.h"
-#include "r_things.h"
-#include "r_plane.h"
-#include "r_main.h"
-#include "f_wipe.h"
-#include "d_main.h"
-#include "d_event.h"
-#include "d_deh.h"
-#include "i_joy.h"
-#include "i_video.h"
-#include "z_zone.h"
-#include "s_sound.h"
-#include "sounds.h"
-#include "w_wad.h"
-#include "st_stuff.h"
-#include "am_map.h"
-#include "g_game.h"
-#include "lprintf.h"
-#include "i_system.h"
+#include "../m_argv.h"
+#include "../doomstat.h"
+#include "../doomdef.h"
+#include "../doomtype.h"
+#include "../v_video.h"
+#include "../r_draw.h"
+#include "../r_things.h"
+#include "../r_plane.h"
+#include "../r_main.h"
+#include "../f_wipe.h"
+#include "../d_main.h"
+#include "../d_event.h"
+#include "../d_deh.h"
+#include "../i_joy.h"
+#include "../i_video.h"
+#include "../z_zone.h"
+#include "../s_sound.h"
+#include "../sounds.h"
+#include "../w_wad.h"
+#include "../st_stuff.h"
+#include "../am_map.h"
+#include "../g_game.h"
+#include "../lprintf.h"
+#include "../i_system.h"
 
 #ifdef GL_DOOM
-#include "gl_struct.h"
+#include "../gl_struct.h"
 #endif
 
-#include "e6y.h"//e6y
-#include "i_main.h"
-
-#include <3ds.h>
+#include "../e6y.h"//e6y
+#include "../i_main.h"
 
 //e6y: new mouse code
-//static SDL_Cursor* cursors[2] = {NULL, NULL};
+static SDL_Cursor* cursors[2] = {NULL, NULL};
 
 static int mouse_currently_grabbed = true;
 
@@ -86,8 +84,7 @@ static dboolean MouseShouldBeGrabbed();
 extern void M_QuitDOOM(int choice);
 
 int vanilla_keymap;
-static void *screen = NULL;
-static int screen_pitch;
+static SDL_Surface *screen;
 
 ////////////////////////////////////////////////////////////////////////////
 // Input code
@@ -201,7 +198,7 @@ static void I_GetEvent(void)
 
   static int mwheeluptic = 0, mwheeldowntic = 0;
 
-  /* while (SDL_PollEvent(Event))
+  while (SDL_PollEvent(Event))
   {
     switch (Event->type) {
     case SDL_KEYDOWN:
@@ -267,7 +264,7 @@ static void I_GetEvent(void)
     default:
       break;
     }
-  } */
+  }
 
   if(mwheeluptic && mwheeluptic + 1 < gametic)
   {
@@ -319,12 +316,12 @@ static void I_InitInputs(void)
   // check if the user wants to use the mouse
   mouse_enabled = usemouse && !nomouse_parm;
   
-  // SDL_PumpEvents();
+  SDL_PumpEvents();
 
   // Save the default cursor so it can be recalled later
-  //cursors[0] = SDL_GetCursor();
+  cursors[0] = SDL_GetCursor();
   // Create an empty cursor
-  //cursors[1] = SDL_CreateCursor(&empty_cursor_data, &empty_cursor_data, 8, 1, 0, 0);
+  cursors[1] = SDL_CreateCursor(&empty_cursor_data, &empty_cursor_data, 8, 1, 0, 0);
 
   if (mouse_enabled)
   {
@@ -333,38 +330,18 @@ static void I_InitInputs(void)
 
   I_InitJoystick();
 }
-/////////////////////////////////////////////////////////////////////////////
-
-// I_SkipFrame
-//
-// Returns true if it thinks we can afford to skip this frame
-
-inline static dboolean I_SkipFrame(void)
-{
-  static int frameno;
-
-  frameno++;
-  switch (gamestate) {
-  case GS_LEVEL:
-    if (!paused)
-      return false;
-  default:
-    // Skip odd frames
-    return (frameno & 1) ? true : false;
-  }
-}
 
 //////////////////////////////////////////////////////////////////////////////
 // Graphics API
 
 void I_SwapBuffers(void)
 {
-  // SDL_GL_SwapBuffers();
+  SDL_GL_SwapBuffers();
 }
 
 void I_ShutdownGraphics(void)
 {
-  // SDL_FreeCursor(cursors[1]);
+  SDL_FreeCursor(cursors[1]);
   DeactivateMouse();
 }
 
@@ -375,14 +352,6 @@ void I_UpdateNoBlit (void)
 {
 }
 
-static inline u16 argb1555_2_rgba5551(u16 x) {
-  return (x << 1) | ((x & 0x8000) >> 15);
-}
-
-static inline u32 argb8_2_rgba8(u32 x) {
-  return (x << 8) | ((x & 0xff000000) >> 24);
-}
-
 //
 // I_FinishUpdate
 //
@@ -390,10 +359,6 @@ void I_FinishUpdate (void)
 {
   //e6y: new mouse code
   UpdateGrab();
-
-  // The screen wipe following pressing the exit switch on a level
-  // is noticably jerkier with I_SkipFrame
-  // if (I_SkipFrame())return;
 
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL) {
@@ -403,74 +368,53 @@ void I_FinishUpdate (void)
   }
 #endif
 
-  switch(V_GetMode()) {
-  case VID_MODE15:
-  {
-    u16* dst_ptr = (u16*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL) + 239;
-    u16* src_ptr = (u16*)screens[0].data;
+  if (SDL_MUSTLOCK(screen)) {
+      int h;
+      byte *src;
+      byte *dest;
 
-    for(int y = 0; y < 240; y++) {
-      for(int x = 0; x < 400; x++) {
-        *dst_ptr = argb1555_2_rgba5551(*src_ptr);
-
-        dst_ptr += 240;
-        src_ptr++;
+      if (SDL_LockSurface(screen) < 0) {
+        lprintf(LO_INFO,"I_FinishUpdate: %s\n", SDL_GetError());
+        return;
       }
-      dst_ptr -= (400 * 240) + 1;
-    }
-    break;
-  }
-  case VID_MODE16:
-  {
-    u16* dst_ptr = (u16*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL) + 239;
-    u16* src_ptr = (u16*)screens[0].data;
 
-    for(int y = 0; y < 240; y++) {
-      for(int x = 0; x < 400; x++) {
-        *dst_ptr = *src_ptr;
-
-        dst_ptr += 240;
-        src_ptr++;
+      dest=(byte*)screen->pixels;
+      src=screens[0].data;
+      h=screen->h;
+      for (; h>0; h--)
+      {
+        memcpy(dest,src,SCREENWIDTH*V_GetPixelDepth()); //e6y
+        dest+=screen->pitch;
+        src+=screens[0].byte_pitch;
       }
-      dst_ptr -= (400 * 240) + 1;
-    }
-    break;
-  }
-  default: // VID_MODE32
-  {
-    u32* dst_ptr = (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL) + 239;
-    u32* src_ptr = (u32*)screens[0].data;
 
-    for(int y = 0; y < 240; y++) {
-      for(int x = 0; x < 400; x++) {
-        *dst_ptr = argb8_2_rgba8(*src_ptr);
-
-        dst_ptr += 240;
-        src_ptr++;
-      }
-      dst_ptr -= (400 * 240) + 1;
-    }
-    break;
-  }
+      SDL_UnlockSurface(screen);
   }
 
   // Draw!
-
-  // Flush and swap framebuffers
-  gfxFlushBuffers();
-  gfxSwapBuffers();
-
-  gspWaitForVBlank();
+  SDL_Flip(screen);
 }
+
+// I_PreInitGraphics
 
 static void I_ShutdownSDL(void)
 {
-  gfxExit();
+  if (screen) SDL_FreeSurface(screen);
+
+  SDL_Quit();
+  return;
 }
 
 void I_PreInitGraphics(void)
 {
-  gfxInitDefault();
+  int p;
+
+  // Initialize SDL
+  p = SDL_InitSubSystem(SDL_INIT_VIDEO);
+  if (p < 0)
+  {
+    I_Error("Could not initialize SDL [%s]", SDL_GetError());
+  }
 
   I_AtExit(I_ShutdownSDL, true);
 }
@@ -724,7 +668,7 @@ void I_UpdateVideoMode(void)
 
     I_InitScreenResolution();
 
-    if (screen) free(screen);
+    if (screen) SDL_FreeSurface(screen);
 
     screen = NULL;
   }
@@ -736,36 +680,32 @@ void I_UpdateVideoMode(void)
   }
 #endif
 
-  // Create window
-  GSPGPU_FramebufferFormat top_fmt;
+  // Set window title
+  SDL_WM_SetCaption(PACKAGE_NAME " " PACKAGE_VERSION, "game");
 
-  switch(V_GetNumPixelBits())
-  {
-    case 15:
-      top_fmt = GSP_RGB5_A1_OES;
-      screen_pitch = 400 * 2;
-      break;
-    case 16:
-      top_fmt = GSP_RGB565_OES;
-      screen_pitch = 400 * 2;
-      break;
-    default:
-      top_fmt = GSP_RGBA8_OES;
-      screen_pitch = 400 * 4;
-      break;
+  screen = SDL_SetVideoMode(SCREENWIDTH, SCREENHEIGHT, V_GetNumPixelBits(), init_flags);
+
+  if(screen == NULL) {
+    I_Error("Couldn't set %dx%d video mode [%s]", SCREENWIDTH, SCREENHEIGHT, SDL_GetError());
   }
-
-  gfxSetScreenFormat(GFX_TOP, top_fmt);
-
-  screen = malloc(screen_pitch * 240);
 
   if (V_GetMode() != VID_MODEGL)
   {
-    screens[0].not_on_heap = true;
-    screens[0].data = (unsigned char *) (screen);
-    screens[0].byte_pitch = screen_pitch;
-    screens[0].short_pitch = screen_pitch / V_GetModePixelDepth(VID_MODE16);
-    screens[0].int_pitch = screen_pitch / V_GetModePixelDepth(VID_MODE32);
+    lprintf(LO_INFO, "I_UpdateVideoMode: 0x%x, %s, %s\n", init_flags, screen && screen->pixels ? "SDL buffer" : "own buffer", screen && SDL_MUSTLOCK(screen) ? "lock-and-copy": "direct access");
+
+    // Get the info needed to render to the display
+    if (!SDL_MUSTLOCK(screen))
+    {
+      screens[0].not_on_heap = true;
+      screens[0].data = (unsigned char *) (screen->pixels);
+      screens[0].byte_pitch = screen->pitch;
+      screens[0].short_pitch = screen->pitch / V_GetModePixelDepth(VID_MODE16);
+      screens[0].int_pitch = screen->pitch / V_GetModePixelDepth(VID_MODE32);
+    }
+    else
+    {
+      screens[0].not_on_heap = false;
+    }
 
     V_AllocScreens();
 
@@ -794,15 +734,15 @@ void I_UpdateVideoMode(void)
 
 static void ActivateMouse(void)
 {
-  //SDL_WM_GrabInput(SDL_GRAB_ON);
-  //SDL_ShowCursor(SDL_DISABLE);
-  //SDL_GetRelativeMouseState(NULL, NULL);
+  SDL_WM_GrabInput(SDL_GRAB_ON);
+  SDL_ShowCursor(SDL_DISABLE);
+  SDL_GetRelativeMouseState(NULL, NULL);
 }
 
 static void DeactivateMouse(void)
 {
-  //SDL_WM_GrabInput(SDL_GRAB_OFF);
-  //SDL_ShowCursor(SDL_ENABLE);
+  SDL_WM_GrabInput(SDL_GRAB_OFF);
+  SDL_ShowCursor(SDL_ENABLE);
 }
 
 //
@@ -841,7 +781,7 @@ static void I_ReadMouse(void)
   {
     int x, y;
 
-    //SDL_GetRelativeMouseState(&x, &y);
+    SDL_GetRelativeMouseState(&x, &y);
     SmoothMouse(&x, &y);
 
     if (x != 0 || y != 0)

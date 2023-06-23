@@ -61,6 +61,8 @@
 
 #ifdef __3DS__
 #include <3ds.h>
+#else
+#include <SDL/SDL_timer.h>
 #endif
 
 #include "e6y.h"
@@ -76,7 +78,11 @@ static int basetime = 0;
 
 int I_GetTime_MS(void)
 {
+#ifdef __3DS__
   int ticks = svcGetSystemTick() / CPU_TICKS_PER_MSEC;
+#else
+  int ticks = SDL_GetTicks();
+#endif
 
   if (basetime == 0)
     basetime = ticks;

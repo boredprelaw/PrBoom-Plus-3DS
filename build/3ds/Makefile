@@ -34,7 +34,8 @@ include $(DEVKITARM)/3ds_rules
 TARGET		:=	PrBoom-Plus
 BUILD		:=	build
 
-SOURCES     :=  ../../src
+SOURCES     :=  ../../src \
+				../../src/3DS
 
 INCLUDES    :=	
 

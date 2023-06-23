@@ -2,6 +2,7 @@
 *.cfg
 *.dat
 *.wad
+*.deh
 *.dsg
 stdout.txt
 stderr.txt
