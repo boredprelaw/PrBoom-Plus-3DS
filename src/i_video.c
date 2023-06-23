@@ -459,6 +459,8 @@ void I_FinishUpdate (void)
   // Flush and swap framebuffers
   gfxFlushBuffers();
   gfxSwapBuffers();
+
+  gspWaitForVBlank();
 }
 
 static void I_ShutdownSDL(void)
@@ -469,8 +471,6 @@ static void I_ShutdownSDL(void)
 void I_PreInitGraphics(void)
 {
   gfxInitDefault();
-
-  gfxSetDoubleBuffering(GFX_TOP, false);
 
   I_AtExit(I_ShutdownSDL, true);
 }
@@ -756,7 +756,6 @@ void I_UpdateVideoMode(void)
   }
 
   gfxSetScreenFormat(GFX_TOP, top_fmt);
-  gfxSetDoubleBuffering(GFX_TOP, false);
 
   screen = malloc(screen_pitch * 240);
 
