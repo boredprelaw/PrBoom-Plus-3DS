@@ -42,28 +42,23 @@
 
 #ifdef GL_DOOM
 
-#include <SDL_opengl.h>
+#include <SDL/SDL.h>
 #include "gl_opengl.h"
-
-#define isExtensionSupported(ext) strstr(extensions, ext)
 
 dboolean gl_ext_arb_vertex_buffer_object = false;
 
-// cfg values
-int gl_ext_arb_vertex_buffer_object_default;
-
-/* VBO */
-PFNGLGENBUFFERSARBPROC              GLEXT_glGenBuffersARB              = NULL;
-PFNGLDELETEBUFFERSARBPROC           GLEXT_glDeleteBuffersARB           = NULL;
-PFNGLBINDBUFFERARBPROC              GLEXT_glBindBufferARB              = NULL;
-PFNGLBUFFERDATAARBPROC              GLEXT_glBufferDataARB              = NULL;
+// VBO
+PFNGLGENBUFFERSARBPROC GLEXT_glGenBuffersARB = NULL;
+PFNGLDELETEBUFFERSARBPROC GLEXT_glDeleteBuffersARB = NULL;
+PFNGLBINDBUFFERARBPROC GLEXT_glBindBufferARB = NULL;
+PFNGLBUFFERDATAARBPROC GLEXT_glBufferDataARB = NULL;
 
 void gld_InitOpenGL()
 {
   // VBO
 #ifdef USE_VBO
-  gl_ext_arb_vertex_buffer_object = gl_ext_arb_vertex_buffer_object_default &&
-    isExtensionSupported("GL_ARB_vertex_buffer_object") != NULL;
+  gl_ext_arb_vertex_buffer_object = true;
+
   if (gl_ext_arb_vertex_buffer_object)
   {
     GLEXT_glGenBuffersARB = SDL_GL_GetProcAddress("glGenBuffersARB");

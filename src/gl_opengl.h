@@ -34,11 +34,7 @@
 #ifndef _GL_OPENGL_H
 #define _GL_OPENGL_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#define USE_VERTEX_ARRAYS
+//#define USE_VERTEX_ARRAYS
 //#define USE_VBO
 
 #include "doomtype.h"
@@ -50,11 +46,11 @@
 
 extern dboolean gl_ext_arb_vertex_buffer_object;
 
-/* VBO */
-extern PFNGLGENBUFFERSARBPROC              GLEXT_glGenBuffersARB;
-extern PFNGLDELETEBUFFERSARBPROC           GLEXT_glDeleteBuffersARB;
-extern PFNGLBINDBUFFERARBPROC              GLEXT_glBindBufferARB;
-extern PFNGLBUFFERDATAARBPROC              GLEXT_glBufferDataARB;
+// VBO
+extern PFNGLGENBUFFERSARBPROC GLEXT_glGenBuffersARB;
+extern PFNGLDELETEBUFFERSARBPROC GLEXT_glDeleteBuffersARB;
+extern PFNGLBINDBUFFERARBPROC GLEXT_glBindBufferARB;
+extern PFNGLBUFFERDATAARBPROC GLEXT_glBufferDataARB;
   
 void gld_InitOpenGL();
 

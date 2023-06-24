@@ -497,7 +497,7 @@ typedef struct vbo_vertex_s
   float x, y, z;
   float u, v;
   unsigned char r, g, b, a;
-} PACKEDATTR vbo_vertex_t;
+} vbo_vertex_t;
 #define NULL_VBO_VERTEX ((vbo_vertex_t*)NULL)
 #define sky_vbo_x (gl_ext_arb_vertex_buffer_object ? &NULL_VBO_VERTEX->x : &vbo->data[0].x)
 #define sky_vbo_u (gl_ext_arb_vertex_buffer_object ? &NULL_VBO_VERTEX->u : &vbo->data[0].u)
@@ -507,7 +507,7 @@ typedef struct vbo_xyz_uv_s
 {
   float x, y, z;
   float u, v;
-} PACKEDATTR vbo_xyz_uv_t;
+} vbo_xyz_uv_t;
 extern vbo_xyz_uv_t *flats_vbo;
 #define NULL_VBO_XYZ_UV ((vbo_xyz_uv_t*)NULL)
 #define flats_vbo_x (gl_ext_arb_vertex_buffer_object ? &NULL_VBO_XYZ_UV->x : &flats_vbo[0].x)
@@ -518,7 +518,7 @@ typedef struct vbo_xy_uv_rgba_s
   float x, y;
   float u, v;
   unsigned char r, g, b, a;
-} PACKEDATTR vbo_xy_uv_rgba_t;
+} vbo_xy_uv_rgba_t;
 
 //BoxSkybox
 typedef struct box_skybox_s
