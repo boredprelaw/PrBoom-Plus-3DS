@@ -289,10 +289,6 @@ void gld_Init(int width, int height)
 {
   GLfloat params[4]={0.0f,0.0f,1.0f,0.0f};
 
-  lprintf(LO_INFO,"GL_VENDOR: %s\n",glGetString(GL_VENDOR));
-  lprintf(LO_INFO,"GL_RENDERER: %s\n",glGetString(GL_RENDERER));
-  lprintf(LO_INFO,"GL_VERSION: %s\n",glGetString(GL_VERSION));
-
   gld_InitOpenGL();
   gld_InitPalettedTextures();
   gld_InitTextureParams();
@@ -302,23 +298,16 @@ void gld_Init(int width, int height)
   glClearColor(0.0f, 0.5f, 0.5f, 1.0f);
   glClearDepth(1.0f);
 
-  glEnable(GL_BLEND);
-  glEnable(GL_DEPTH_CLAMP_NV);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // proff_dis
-  glShadeModel(GL_FLAT);
+  glEnable(GL_TEXTURE_2D);
   gld_EnableTexture2D(true);
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LEQUAL);
   glEnable(GL_ALPHA_TEST);
   glAlphaFunc(GL_GEQUAL,0.5f);
   glDisable(GL_CULL_FACE);
-  glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-
-  glTexGenfv(GL_Q,GL_EYE_PLANE,params);
-  glTexGenf(GL_S,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-  glTexGenf(GL_T,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
-  glTexGenf(GL_Q,GL_TEXTURE_GEN_MODE,GL_EYE_LINEAR);
 
   //e6y
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1860,9 +1849,7 @@ static void gld_DrawSprite(GLSprite *sprite)
     {
       glGetIntegerv(GL_BLEND_SRC, &blend_src);
       glGetIntegerv(GL_BLEND_DST, &blend_dst);
-      glBlendFunc(gl_fuzzsfactors[gl_thingspritefuzzmode],
-            gl_fuzzdfactors[gl_thingspritefuzzmode]);
-      //glColor4f(0.2f,0.2f,0.2f,(float)tran_filter_pct/100.0f);
+      glBlendFunc(gl_fuzzsfactors[gl_thingspritefuzzmode],gl_fuzzdfactors[gl_thingspritefuzzmode]);
       glAlphaFunc(GL_GEQUAL,0.1f);
       glColor4f(0.2f,0.2f,0.2f,0.33f);
       restore = 1;
@@ -2544,14 +2531,6 @@ void gld_DrawScene(player_t *player)
 
   gl_EnableFog(false);
   glEnable(GL_ALPHA_TEST);
-
-  // normal sky (not a skybox)
-  if (!skybox && (gl_drawskys == skytype_none || gl_drawskys == skytype_standard))
-  {
-    rendered_segs += gld_drawinfo.num_items[GLDIT_SWALL];
-    // fake strips of sky
-    gld_DrawStripsSky();
-  }
 
   // opaque sprites
   glAlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold_f);

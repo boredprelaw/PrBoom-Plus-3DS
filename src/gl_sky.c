@@ -250,96 +250,6 @@ void gld_AddSkyTexture(GLWall *wall, int sky1, int sky2, int skytype)
   }
 }
 
-void gld_DrawStripsSky(void)
-{
-  int i;
-  float skyymid_multiplier;
-  GLTexture *gltexture = NULL;
-
-  if (gl_drawskys == skytype_standard)
-  {
-    if (comp[comp_skymap] && (invul_method & INVUL_BW))
-      glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    glEnable(GL_TEXTURE_GEN_Q);
-    if (comp[comp_skymap] || !(invul_method & INVUL_BW))
-      glColor4fv(gl_whitecolor);
-
-    SetTextureMode(TM_OPAQUE);
-  }
-
-  glMatrixMode(GL_TEXTURE);
-
-  skyymid_multiplier = 1.0f;
-  if (tallscreen)
-  {
-    skyymid_multiplier = (float)ratio_multiplier / ratio_scale;
-  }
-
-  for (i = gld_drawinfo.num_items[GLDIT_SWALL] - 1; i >= 0; i--)
-  {
-    GLWall *wall = gld_drawinfo.items[GLDIT_SWALL][i].item.wall;
-
-    gltexture = (gl_drawskys == skytype_none ? NULL : wall->gltexture);
-    gld_BindTexture(gltexture, 0);
-
-    if (!gltexture)
-    {
-      glColor4f(1.0f,0.0f,0.0f,1.0f);
-    }
-
-    if (gltexture)
-    {
-      float sx, sy;
-
-      glPushMatrix();
-
-      gld_GetScreenSkyScale(wall, &sx, &sy);
-      glScalef(sx, sy * skyymid_multiplier, 1.0f);
-      glTranslatef(wall->skyyaw, wall->skyymid / skyymid_multiplier, 0.0f);
-    }
-
-#if 0
-    {
-      float r = (float)(wall->seg->sidedef - sides) / (float)(numsides - 1); 
-      float g = (float)wall->seg->linedef->iLineID / (float)(numlines - 1); 
-      float b = (float)i / (float)(gld_drawinfo.num_items[GLDIT_SWALL] - 1);
-      glColor4f(r, g, b, 1.0f);
-    }
-#endif
-
-    glBegin(GL_TRIANGLE_STRIP);
-    glVertex3f(wall->glseg->x1,wall->ytop,wall->glseg->z1);
-    glVertex3f(wall->glseg->x1,wall->ybottom,wall->glseg->z1);
-    glVertex3f(wall->glseg->x2,wall->ytop,wall->glseg->z2);
-    glVertex3f(wall->glseg->x2,wall->ybottom,wall->glseg->z2);
-    glEnd();
-
-    if (gltexture)
-    {
-      glPopMatrix();
-    }
-  }
-
-  glMatrixMode(GL_MODELVIEW);
-
-  gld_DrawSkyCaps();
-
-  if (gl_drawskys == skytype_standard)
-  {
-    glDisable(GL_TEXTURE_GEN_Q);
-    glDisable(GL_TEXTURE_GEN_T);
-    glDisable(GL_TEXTURE_GEN_S);
-
-    if (comp[comp_skymap] && (invul_method & INVUL_BW))
-      glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB,GL_COMBINE);
-
-    SetFrameTextureMode();
-  }
-}
-
 void gld_DrawSkyCaps(void)
 {
   if (SkyBox.type && SkyBox.wall.gltexture)
@@ -888,18 +798,13 @@ void gld_DrawDomeSkyBox(void)
 {
   if (SkyBox.wall.gltexture)
   {
-    GLint shading_mode = GL_FLAT;
-
     gld_DrawFakeSkyStrips();
-
-    glGetIntegerv(GL_SHADE_MODEL, &shading_mode);
-    glShadeModel(GL_SMOOTH);
 
     glDepthMask(false);
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_ALPHA_TEST);
-    SetTextureMode(TM_OPAQUE);
+    gld_EnableTexture2D(true);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -922,8 +827,6 @@ void gld_DrawDomeSkyBox(void)
     glDepthMask(true);
 
     SetFrameTextureMode();
-
-    glShadeModel(shading_mode);
   }
 }
 
@@ -1094,7 +997,7 @@ int gld_DrawBoxSkyBox(void)
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_ALPHA_TEST);
 
-  SetTextureMode(TM_OPAQUE);
+  gld_EnableTexture2D(true);
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

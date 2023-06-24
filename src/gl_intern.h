@@ -480,7 +480,6 @@ void gld_InitSky(void);
 void gld_AddSkyTexture(GLWall *wall, int sky1, int sky2, int skytype);
 void gld_GetSkyCapColors(void);
 void gld_InitFrameSky(void);
-void gld_DrawStripsSky(void);
 void gld_DrawScreenSkybox(void);
 void gld_GetScreenSkyScale(GLWall *wall, float *scale_x, float *scale_y);
 void gld_DrawDomeSkyBox(void);
