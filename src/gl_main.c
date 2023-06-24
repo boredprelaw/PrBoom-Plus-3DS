@@ -93,15 +93,6 @@ int flats_detail_display_list_size = 0;
 
 int gl_finish = 1;
 
-// e6y
-// This variables toggles the use of a trick to prevent the clearning of the 
-// z-buffer between frames. When this variable is set to "1", the game will not 
-// clear the z-buffer between frames. This will result in increased performance
-// only on very old hardware and might cause problems for some display hardware.
-int gl_ztrick;
-int gl_ztrickframe = 0;
-float gldepthmin, gldepthmax;
-
 unsigned int invul_method;
 float bw_red = 0.3f;
 float bw_green = 0.59f;
@@ -164,16 +155,16 @@ GLfloat cm2RGB[CR_LIMIT + 1][4] =
   {1.00f ,1.00f, 1.00f, 1.00f}, //CR_LIMIT
 };
 
-
 void SetFrameTextureMode(void)
 {
   if (invul_method & INVUL_BW)
   {
     glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE);
+
     glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB,GL_DOT3_RGB);
     glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB,GL_PRIMARY_COLOR);
-    glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_RGB,GL_SRC_COLOR);
     glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB,GL_TEXTURE);
+    glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_RGB,GL_SRC_COLOR);
     glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_RGB,GL_SRC_COLOR);
   }
 
@@ -943,29 +934,10 @@ void gld_Clear(void)
     glClearColor (gametic % 20 < 9 ? 1.0f : 0.0f, 0.0f, 0.0f, 1.0f);
   }
 
-  if (!gl_ztrick)
-    clearbits |= GL_DEPTH_BUFFER_BIT;
+  clearbits |= GL_DEPTH_BUFFER_BIT;
 
   if (clearbits)
     glClear(clearbits);
-
-  if (gl_ztrick)
-  {
-    gl_ztrickframe = !gl_ztrickframe;
-    if (gl_ztrickframe)
-    {
-      gldepthmin = 0.0f;
-      gldepthmax = 0.49999f;
-      glDepthFunc(GL_LEQUAL);
-    }
-    else
-    {
-      gldepthmin = 1.0f;
-      gldepthmax = 0.5f;
-      glDepthFunc(GL_GEQUAL);
-    }
-    glDepthRange(gldepthmin, gldepthmax);
-  }
 }
 
 void gld_StartDrawScene(void)

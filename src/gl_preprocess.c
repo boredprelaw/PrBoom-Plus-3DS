@@ -423,7 +423,7 @@ static void gld_MarkSectorsForClamp(void)
   {
     int loopnum; // current loop number
     GLLoopDef *currentloop; // the current loop
-    GLfloat minu, maxu, minv, maxv;
+    float minu, maxu, minv, maxv;
     dboolean fail;
 
     minu = minv = 65535;

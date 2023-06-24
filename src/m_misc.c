@@ -167,7 +167,6 @@ extern int gl_fog_color;
 
 extern int gl_finish;
 extern int gl_clear;
-extern int gl_ztrick;
 #else
 // dummy variables for !GL_DOOM
 static int gl_nearclip;
@@ -180,7 +179,6 @@ static int gl_fog;
 static int gl_fog_color;
 static int gl_finish;
 static int gl_clear;
-static int gl_ztrick;
 
 // dummy variables for !GL_DOOM declared in gl_struct.h
 int gl_sprite_offset_default;
@@ -401,8 +399,6 @@ default_t defaults[] =
   {"gl_finish",{&gl_finish},{1},0,1,
    def_bool,ss_none},
   {"gl_clear",{&gl_clear},{0},0,1,
-   def_bool,ss_none},
-  {"gl_ztrick",{&gl_ztrick},{0},0,1,
    def_bool,ss_none},
   {"gl_nearclip",{&gl_nearclip},{5},0,UL,
    def_int,ss_none}, /* near clipping plane pos */

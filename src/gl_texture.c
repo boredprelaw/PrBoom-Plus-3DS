@@ -121,13 +121,16 @@ void gld_InitPalettedTextures(void)
   }
 }
 
+#define C3D_MIN_TEXTURE_SIZE 8
 #define C3D_MAX_TEXTURE_SIZE 1024
 
 int gld_GetTexDimension(int value)
 {
   int i;
 
-  if (value > C3D_MAX_TEXTURE_SIZE)
+  if (value < C3D_MIN_TEXTURE_SIZE)
+    value = C3D_MIN_TEXTURE_SIZE;
+  else if (value > C3D_MAX_TEXTURE_SIZE)
     value = C3D_MAX_TEXTURE_SIZE;
   
   i = 1;
