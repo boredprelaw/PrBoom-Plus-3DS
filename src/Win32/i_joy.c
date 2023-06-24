@@ -37,14 +37,14 @@
 
 #include <stdlib.h>
 
-#include "../doomdef.h"
-#include "../doomtype.h"
-#include "../m_argv.h"
-#include "../d_event.h"
-#include "../d_main.h"
-#include "../i_joy.h"
-#include "../lprintf.h"
-#include "../i_system.h"
+#include "doomdef.h"
+#include "doomtype.h"
+#include "m_argv.h"
+#include "d_event.h"
+#include "d_main.h"
+#include "i_joy.h"
+#include "lprintf.h"
+#include "i_system.h"
 
 #define WIN32_MEAN_AND_LEAN
 #include <windows.h>

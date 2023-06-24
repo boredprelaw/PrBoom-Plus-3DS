@@ -37,7 +37,8 @@ BUILD		:=	build
 SOURCES     :=  ../../src \
 				../../src/3DS
 
-INCLUDES    :=	
+INCLUDES    :=	../../src \
+				../../src/3DS
 
 DATA		:=	data
 GRAPHICS	:=	gfx

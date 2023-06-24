@@ -14,7 +14,8 @@ BUILD		:=	build
 SOURCES		:=	../../src \
 				../../src/Win32
 
-INCLUDES	:=	
+INCLUDES	:=	../../src \
+				../../src/Win32
 
 #---------------------------------------------------------------------------------
 # options for code generation
