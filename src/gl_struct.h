@@ -35,7 +35,14 @@
 #define _GL_STRUCT_H
 
 #ifdef GL_DOOM
+
+#ifdef __3DS__
+#include "3DS/gl_wrapper.h"
+#else
 #include <GL/gl.h>
+#include <GL/glext.h>
+#endif
+
 #endif
 
 extern int nodesVersion;

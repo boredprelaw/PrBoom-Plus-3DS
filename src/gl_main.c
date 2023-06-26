@@ -1061,8 +1061,6 @@ static void gld_InvertScene(void)
 
 void gld_EndDrawScene(void)
 {
-  glDisable(GL_POLYGON_SMOOTH);
-
   glViewport(0, 0, SCREENWIDTH, SCREENHEIGHT);
   gl_EnableFog(false);
   gld_Set2DMode();

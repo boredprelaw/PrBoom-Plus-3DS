@@ -41,16 +41,20 @@
 
 #ifdef GL_DOOM
 
+#ifdef __3DS__
+#include "3DS/gl_wrapper.h"
+#else
 #include <GL/gl.h>
 #include <GL/glext.h>
+#endif
 
 extern dboolean gl_ext_arb_vertex_buffer_object;
 
 // VBO
-extern PFNGLGENBUFFERSARBPROC GLEXT_glGenBuffersARB;
-extern PFNGLDELETEBUFFERSARBPROC GLEXT_glDeleteBuffersARB;
-extern PFNGLBINDBUFFERARBPROC GLEXT_glBindBufferARB;
-extern PFNGLBUFFERDATAARBPROC GLEXT_glBufferDataARB;
+//extern PFNGLGENBUFFERSARBPROC GLEXT_glGenBuffersARB;
+//extern PFNGLDELETEBUFFERSARBPROC GLEXT_glDeleteBuffersARB;
+//extern PFNGLBINDBUFFERARBPROC GLEXT_glBindBufferARB;
+//extern PFNGLBUFFERDATAARBPROC GLEXT_glBufferDataARB;
   
 void gld_InitOpenGL();
 

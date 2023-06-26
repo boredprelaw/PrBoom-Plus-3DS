@@ -71,6 +71,12 @@
 #include "i_main.h"
 
 #include <3ds.h>
+#include <citro3d.h>
+
+#define DISPLAY_TRANSFER_FLAGS \
+  (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
+  GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) | \
+  GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
 //e6y: new mouse code
 //static SDL_Cursor* cursors[2] = {NULL, NULL};
@@ -87,7 +93,7 @@ extern void M_QuitDOOM(int choice);
 
 int vanilla_keymap;
 static void *screen = NULL;
-static int screen_pitch;
+static C3D_RenderTarget *hw_screen = NULL;
 
 ////////////////////////////////////////////////////////////////////////////
 // Input code
@@ -359,7 +365,13 @@ inline static dboolean I_SkipFrame(void)
 
 void I_SwapBuffers(void)
 {
-  // SDL_GL_SwapBuffers();
+  // End frame
+  C3D_FrameEnd(0);
+
+  // Start next frame
+  C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+  C3D_RenderTargetClear(hw_screen, C3D_CLEAR_ALL, 0x0000ffff, 0);
+  C3D_FrameDrawOn(hw_screen);
 }
 
 void I_ShutdownGraphics(void)
@@ -465,13 +477,10 @@ void I_FinishUpdate (void)
 
 static void I_ShutdownSDL(void)
 {
-  gfxExit();
 }
 
 void I_PreInitGraphics(void)
 {
-  gfxInitDefault();
-
   I_AtExit(I_ShutdownSDL, true);
 }
 
@@ -588,11 +597,10 @@ void I_InitScreenResolution(void)
   int i, p, w, h;
   char c, x;
   video_mode_t mode;
-  int init = (screen == NULL);
 
   I_GetScreenResolution();
 
-  if (init)
+  if (!screen && !hw_screen)
   {
     // e6y
     // change the screen size for the current session only
@@ -709,58 +717,60 @@ video_mode_t I_GetModeFromString(const char *modestr)
 
 void I_UpdateVideoMode(void)
 {
-  int init_flags = 0;
-
-  if(screen)
+  // Was HW renderer just used?
+  if(hw_screen)
   {
-#ifdef GL_DOOM
-    if (V_GetMode() == VID_MODEGL)
-    {
-      gld_CleanMemory();
-      // hires patches
-      gld_CleanStaticMemory();
-    }
-#endif
-
     I_InitScreenResolution();
 
-    if (screen) free(screen);
-
-    screen = NULL;
-  }
-
 #ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-  {
-    init_flags |= SDL_OPENGL;
-  }
+    gld_CleanMemory();
+    // hires patches
+    gld_CleanStaticMemory();
 #endif
 
-  // Create window
-  GSPGPU_FramebufferFormat top_fmt;
+    C3D_RenderTargetDelete(hw_screen);
+    hw_screen = NULL;
 
-  switch(V_GetNumPixelBits())
+    C3D_Fini();
+  }
+  // Was SW renderer just used?
+  else if(screen)
   {
-    case 15:
-      top_fmt = GSP_RGB5_A1_OES;
-      screen_pitch = 400 * 2;
-      break;
-    case 16:
-      top_fmt = GSP_RGB565_OES;
-      screen_pitch = 400 * 2;
-      break;
-    default:
-      top_fmt = GSP_RGBA8_OES;
-      screen_pitch = 400 * 4;
-      break;
+    I_InitScreenResolution();
+
+    free(screen);
+    screen = NULL;
+
+    gfxExit();
   }
 
-  gfxSetScreenFormat(GFX_TOP, top_fmt);
-
-  screen = malloc(screen_pitch * 240);
+  gfxInitDefault();
 
   if (V_GetMode() != VID_MODEGL)
   {
+    GSPGPU_FramebufferFormat top_fmt;
+    int screen_pitch;
+
+    switch(V_GetNumPixelBits())
+    {
+      case 15:
+        top_fmt = GSP_RGB5_A1_OES;
+        screen_pitch = 400 * 2;
+        break;
+      case 16:
+        top_fmt = GSP_RGB565_OES;
+        screen_pitch = 400 * 2;
+        break;
+      default:
+        top_fmt = GSP_RGBA8_OES;
+        screen_pitch = 400 * 4;
+        break;
+    }
+
+    gfxSetScreenFormat(GFX_TOP, top_fmt);
+
+    screen = malloc(screen_pitch * 240);
+
     screens[0].not_on_heap = true;
     screens[0].data = (unsigned char *) (screen);
     screens[0].byte_pitch = screen_pitch;
@@ -770,6 +780,18 @@ void I_UpdateVideoMode(void)
     V_AllocScreens();
 
     R_InitBuffer(SCREENWIDTH, SCREENHEIGHT);
+  }
+  else
+  {
+    C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+
+    hw_screen = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+    C3D_RenderTargetSetOutput(hw_screen, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+
+    // Start first frame
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+    C3D_RenderTargetClear(hw_screen, C3D_CLEAR_ALL, 0x0000ffff, 0);
+    C3D_FrameDrawOn(hw_screen);
   }
 
   // e6y: wide-res

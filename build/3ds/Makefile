@@ -57,7 +57,7 @@ ICON			:=	res/icon.png
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 
 CFLAGS	:=	$(ARCH) $(INCLUDE) -O3 -mword-relocations -ffunction-sections -ffast-math -fno-short-enums \
-			-D__3DS__ -DHAVE_DIRENT_H -DHAVE_LIBZ -DPACKAGE_NAME=\"PrBoom-Plus\" -DPACKAGE_VERSION=\"2.6.2\" \
+			-D__3DS__ -DGL_DOOM -DHAVE_DIRENT_H -DHAVE_LIBZ -DPACKAGE_NAME=\"PrBoom-Plus\" -DPACKAGE_VERSION=\"2.6.2\" \
 			-DPACKAGE_TARNAME=\"prboom-plus\" -DPACKAGE_HOMEPAGE=\"https://example.com\" \
 			-DPRBOOMDATADIR=\".\" -DDOOMWADDIR=\".\"
 
