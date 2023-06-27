@@ -158,6 +158,13 @@ typedef void GLvoid;
 #define GL_DOT3_RGB 0x86AE
 #define GL_DOT3_RGBA 0x86AF
 
+
+void gl_wrapper_init();
+void gl_wrapper_cleanup();
+
+void gl_wrapper_perspective(float fovy, float aspect, float znear);
+
+
 //========== GRAPHICS FUNCTIONS ==========
 
 void glEnable(GLenum cap);
@@ -217,11 +224,10 @@ void glMatrixMode(GLenum mode);
 void glLoadIdentity(void);
 void glLoadMatrixf(const GLfloat *m);
 
-void glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar);
-
 void glPushMatrix(void);
 void glPopMatrix(void);
 
+void glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar);
 void glTranslatef(GLfloat x, GLfloat y, GLfloat z);
 void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
 void glScalef(GLfloat x, GLfloat y, GLfloat z);

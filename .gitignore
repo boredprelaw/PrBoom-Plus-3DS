@@ -11,6 +11,8 @@ stderr.txt
 *.3dsx
 *.smdh
 *.cia
+*.shbin
+*_shbin.h
 icon.bin
 banner.bin
 

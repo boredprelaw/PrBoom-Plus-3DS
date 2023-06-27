@@ -1012,7 +1012,13 @@ void gld_StartDrawScene(void)
   glEnable(GL_DEPTH_TEST);
 
   glMatrixMode(GL_PROJECTION);
+
+#ifdef __3DS__
+  // HACK: Hijack the projection matrix with a tilted perspective matrix suitable for the 3DS
+  gl_wrapper_perspective(render_fovy, render_aspect, 0.05f);
+#else
   glLoadMatrixf(projMatrix);
+#endif
 
   glMatrixMode(GL_MODELVIEW);
   glLoadMatrixf(modelMatrix);

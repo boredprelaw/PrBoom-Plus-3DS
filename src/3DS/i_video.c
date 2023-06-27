@@ -93,7 +93,7 @@ extern void M_QuitDOOM(int choice);
 
 int vanilla_keymap;
 static void *screen = NULL;
-static C3D_RenderTarget *hw_screen = NULL;
+C3D_RenderTarget *hw_screen = NULL;
 
 ////////////////////////////////////////////////////////////////////////////
 // Input code
@@ -370,7 +370,6 @@ void I_SwapBuffers(void)
 
   // Start next frame
   C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-  C3D_RenderTargetClear(hw_screen, C3D_CLEAR_ALL, 0x0000ffff, 0);
   C3D_FrameDrawOn(hw_screen);
 }
 
@@ -731,6 +730,8 @@ void I_UpdateVideoMode(void)
     C3D_RenderTargetDelete(hw_screen);
     hw_screen = NULL;
 
+    gl_wrapper_cleanup();
+
     C3D_Fini();
   }
   // Was SW renderer just used?
@@ -785,12 +786,13 @@ void I_UpdateVideoMode(void)
   {
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
 
-    hw_screen = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
+    hw_screen = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
     C3D_RenderTargetSetOutput(hw_screen, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+
+    gl_wrapper_init();
 
     // Start first frame
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-    C3D_RenderTargetClear(hw_screen, C3D_CLEAR_ALL, 0x0000ffff, 0);
     C3D_FrameDrawOn(hw_screen);
   }
 
