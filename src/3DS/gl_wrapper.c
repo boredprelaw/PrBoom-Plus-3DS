@@ -460,6 +460,15 @@ void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei widt
     u32 *swizzle_buf = malloc(width * height * 4);
     SwizzleTexBufferRGBA8((u32*)pixels, swizzle_buf, width, height);
 
+    // Reverse the order of the color components
+    for(int i = 0; i < width * height; i++)
+    {
+        swizzle_buf[i] = ((swizzle_buf[i] & 0xff000000) >> 24) |
+                         ((swizzle_buf[i] & 0x00ff0000) >> 8) |
+                         ((swizzle_buf[i] & 0x0000ff00) << 8) |
+                         ((swizzle_buf[i] & 0x000000ff) << 24);
+    }
+
     C3D_TexUpload(&cur_texture->c3d_tex, swizzle_buf);
 
     free(swizzle_buf);
