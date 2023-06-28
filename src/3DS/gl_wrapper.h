@@ -22,7 +22,6 @@ typedef void GLvoid;
 #define GL_TRIANGLE_STRIP 0x0005
 #define GL_TRIANGLE_FAN 0x0006
 #define GL_QUADS 0x0007
-#define GL_QUAD_STRIP 0x0008
 
 #define GL_NEVER 0x0200
 #define GL_LESS 0x0201

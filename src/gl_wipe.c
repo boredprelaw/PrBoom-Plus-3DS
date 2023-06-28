@@ -102,7 +102,7 @@ int gld_wipe_doMelt(int ticks, int *y_lookup)
   glBindTexture(GL_TEXTURE_2D, wipe_scr_start_tex);
   glColor3f(1.0f, 1.0f, 1.0f);
   
-  glBegin(GL_QUAD_STRIP);
+  glBegin(GL_TRIANGLE_STRIP);
   
   for (i=0; i <= SCREENWIDTH; i++)
   {

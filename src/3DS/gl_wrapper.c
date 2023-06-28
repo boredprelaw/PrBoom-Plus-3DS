@@ -528,11 +528,27 @@ void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei widt
 }
 
 void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height) {
-    // u32 src_width, src_height;
-    // u32 dst_size;
+    if(!cur_texture)
+        return;
 
-    // u32 *src = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &src_width, &src_height);
-    // u32 *dst = C3D_Tex2DGetImagePtr(cur_texture, level, &dst_size);
+    u32 tex_size = C3D_TexCalcLevelSize(cur_texture->c3d_tex.size, level);
+
+    u32 *screen = (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+    u32 *texbuf = malloc(tex_size);
+
+    for(int y = 0; y < height; y++) {
+        for(int x = 0; x < width; x++) {
+            texbuf[(y * cur_texture->c3d_tex.width) + x] = screen[(x * height) + y];
+        }
+    }
+
+    u32 *swizzle_buf = malloc(tex_size);
+    SwizzleTexBufferRGBA8(texbuf, swizzle_buf, cur_texture->c3d_tex.width, cur_texture->c3d_tex.height);
+
+    C3D_TexUpload(&cur_texture->c3d_tex, swizzle_buf);
+
+    free(swizzle_buf);
+    free(texbuf);
 }
 
 static inline void _delete_texture(GLuint texture) {
@@ -655,7 +671,19 @@ void glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *p
 }
 
 void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels) {
+    if(!cur_texture)
+        return;
 
+    void *texture_data;
+    u32 texture_size = 0;
+    C3D_TexGetImagePtr(&cur_texture->c3d_tex, texture_data, 0, &texture_size);
+
+    // Just in case...
+    if(!texture_data)
+        return;
+
+    // Copy texture pixels to destination buffer
+    memcpy(pixels, texture_data, texture_size);
 }
 
 void glFlush(void) {
