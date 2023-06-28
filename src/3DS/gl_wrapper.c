@@ -86,17 +86,17 @@ static C3D_MtxStack *cur_mtxstack;
 
 void gl_wrapper_init() {
     // Load the vertex shader, create a shader program and bind it
-	vshader_dvlb = DVLB_ParseFile((u32*)vshader_shbin, vshader_shbin_size);
-	shaderProgramInit(&program);
-	shaderProgramSetVsh(&program, &vshader_dvlb->DVLE[0]);
-	C3D_BindProgram(&program);
+    vshader_dvlb = DVLB_ParseFile((u32*)vshader_shbin, vshader_shbin_size);
+    shaderProgramInit(&program);
+    shaderProgramSetVsh(&program, &vshader_dvlb->DVLE[0]);
+    C3D_BindProgram(&program);
 
     // Configure attributes for use with the vertex shader
-	// Attribute format and element count are ignored in immediate mode
-	C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
-	AttrInfo_Init(attrInfo);
-	AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 4); // v0=color
-	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 4); // v1=texcoord0
+    // Attribute format and element count are ignored in immediate mode
+    C3D_AttrInfo* attrInfo = C3D_GetAttrInfo();
+    AttrInfo_Init(attrInfo);
+    AttrInfo_AddLoader(attrInfo, 0, GPU_FLOAT, 4); // v0=color
+    AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 4); // v1=texcoord0
     AttrInfo_AddLoader(attrInfo, 2, GPU_FLOAT, 4); // v2=position
 
     // Init matrix stacks
