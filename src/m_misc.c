@@ -198,7 +198,6 @@ int gl_hires_override_pwads;
 const char *gl_texture_hires_dir;
 gl_lightmode_t gl_lightmode_default;
 int gl_light_ambient;
-int gl_color_mip_levels;
 int gl_blend_animations;
 spritefuzzmode_t gl_thingspritefuzzmode;
 spritefuzzmode_t gl_weaponspritefuzzmode;
@@ -977,8 +976,6 @@ default_t defaults[] =
    def_bool,ss_stat},
   {"gl_fog_color", {&gl_fog_color},  {0},0,0xffffff,
    def_hex,ss_stat},
-  {"gl_color_mip_levels", {&gl_color_mip_levels},  {0},0,1,
-   def_bool,ss_stat},
   {"gl_blend_animations",{&gl_blend_animations},{0},0,1,
    def_bool,ss_none},
   {"gl_thingspritefuzzmode",{(int*)&gl_thingspritefuzzmode},{fuzz_darken},fuzz_darken,fuzz_last-1,

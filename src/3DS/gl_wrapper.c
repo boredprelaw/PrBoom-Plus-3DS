@@ -1,17 +1,23 @@
 #include "gl_wrapper.h"
+#include "gl_swizzle.h"
 
-#include <math.h>
+#include "../z_zone.h" // For malloc/free
+
 #include <citro3d.h>
 #include "vshader_shbin.h"
 
-#include "../lprintf.h"
+typedef struct _gl_c3d_tex {
+    C3D_Tex c3d_tex;
 
-typedef struct {
-    GLuint id;
-    C3D_Tex *c3d_tex;
+    GLenum wrap_s;
+    GLenum wrap_t;
+    GLenum mag_filter;
+    GLenum min_filter;
 
-    struct gl_c3d_tex *prev;
-    struct gl_c3d_tex *next;
+    int is_initialized;
+
+    struct _gl_c3d_tex *prev;
+    struct _gl_c3d_tex *next;
 } gl_c3d_tex;
 
 extern C3D_RenderTarget *hw_screen;
@@ -33,6 +39,13 @@ static GLboolean cur_depth_mask = GL_TRUE;
 
 static GLfloat cur_color[4];
 static GLfloat cur_texcoord[4];
+
+// Linked list of active GL texture objects
+static gl_c3d_tex *gl_c3d_tex_base = NULL;
+static gl_c3d_tex *gl_c3d_tex_head = NULL;
+
+// Currently bound GL texture
+static gl_c3d_tex *cur_texture = NULL;
 
 
 static DVLB_s* vshader_dvlb;
@@ -242,6 +255,11 @@ void glBegin(GLenum mode) {
     MtxStack_Update(&mtx_projection);
     MtxStack_Update(&mtx_texture);
 
+    if(cur_texture)
+        C3D_TexBind(0, &cur_texture->c3d_tex);
+    else
+        C3D_TexBind(0, NULL);
+
     switch(mode) {
     case GL_TRIANGLE_STRIP:
         C3D_ImmDrawBegin(GPU_TRIANGLE_STRIP);
@@ -319,32 +337,187 @@ void glEnd(void) {
     C3D_ImmDrawEnd();
 }
 
-void glGenTextures(GLsizei n, GLuint *textures) {
+static inline GLuint _gen_texture() {
+    if(!gl_c3d_tex_head) // Linked list has no entries?
+    {
+        gl_c3d_tex_head = malloc(sizeof(gl_c3d_tex));
 
+        gl_c3d_tex_head->prev = NULL;
+        gl_c3d_tex_head->next = NULL;
+
+        gl_c3d_tex_base = gl_c3d_tex_head;
+    }
+    else // Create new entry at the head of the list
+    {
+        gl_c3d_tex_head->next = malloc(sizeof(gl_c3d_tex));
+
+        gl_c3d_tex_head->next->prev = gl_c3d_tex_head;
+        gl_c3d_tex_head->next->next = NULL;
+
+        gl_c3d_tex_head = gl_c3d_tex_head->next;
+    }
+
+    gl_c3d_tex_head->is_initialized = 0;
+
+    // The pointer to the new texture acts as the GL texture ID
+    return (GLuint)gl_c3d_tex_head;
+}
+
+void glGenTextures(GLsizei n, GLuint *textures) {
+    for(int i = 0; i < n; i++)
+        textures[i] = _gen_texture();
+}
+
+static inline gl_c3d_tex *_try_find_texture(GLuint texture) {
+    gl_c3d_tex *cur_entry = gl_c3d_tex_base;
+
+    while(cur_entry) {
+        if((GLuint)cur_entry == texture)
+            return cur_entry;
+
+        cur_entry = cur_entry->next;
+    }
+
+    return NULL;
 }
 
 void glBindTexture(GLenum target, GLuint texture) {
+    if(!texture) {
+        cur_texture = NULL;
+        return;
+    }
 
+    // Find the corresponding C3D texture
+    gl_c3d_tex *gl_bind_tex = _try_find_texture(texture);
+
+    if(!gl_bind_tex)
+        return;
+
+    cur_texture = gl_bind_tex;
+}
+
+static inline GPU_TEXTURE_WRAP_PARAM _gl_to_c3d_texwrap(GLenum mode) {
+    GPU_TEXTURE_WRAP_PARAM ret;
+
+    switch(mode) {
+    case GL_CLAMP:
+        ret = GPU_CLAMP_TO_EDGE;
+        break;
+    default: // GL_REPEAT
+        ret = GPU_REPEAT;
+        break;
+    }
+
+    return ret;
+}
+
+static inline GPU_TEXTURE_FILTER_PARAM _gl_to_c3d_texfilter(GLenum mode) {
+    GPU_TEXTURE_FILTER_PARAM ret;
+
+    switch(mode) {
+    case GL_NEAREST:
+    case GL_NEAREST_MIPMAP_LINEAR:
+    case GL_NEAREST_MIPMAP_NEAREST:
+        ret = GPU_NEAREST;
+        break;
+    default: // GL_LINEAR
+        ret = GPU_LINEAR;
+        break;
+    }
+
+    return ret;
 }
 
 void glTexParameteri(GLenum target, GLenum pname, GLint param) {
+    if(!cur_texture)
+        return;
 
-}
-
-void glTexParameterf(GLenum target, GLenum pname, GLfloat param) {
-
+    switch(pname) {
+    case GL_TEXTURE_WRAP_S: cur_texture->wrap_s = param; break;
+    case GL_TEXTURE_WRAP_T: cur_texture->wrap_t = param; break;
+    case GL_TEXTURE_MAG_FILTER: cur_texture->mag_filter = param; break;
+    case GL_TEXTURE_MIN_FILTER: cur_texture->min_filter = param; break;
+    }
 }
 
 void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels) {
+    if(!cur_texture)
+        return;
 
+    if(cur_texture->is_initialized)
+        C3D_TexDelete(&cur_texture->c3d_tex);
+
+    C3D_TexInit(&cur_texture->c3d_tex, width, height, GPU_RGBA8);
+    C3D_TexSetWrap(&cur_texture->c3d_tex, _gl_to_c3d_texwrap(cur_texture->wrap_s), _gl_to_c3d_texwrap(cur_texture->wrap_t));
+    C3D_TexSetFilter(&cur_texture->c3d_tex, _gl_to_c3d_texfilter(cur_texture->mag_filter), _gl_to_c3d_texfilter(cur_texture->min_filter));
+
+    cur_texture->is_initialized = 1;
+
+    // We can safely leave now if no pixel data (NULL) was provided
+    if(!pixels)
+        return;
+
+    u32 *swizzle_buf = malloc(width * height * 4);
+    SwizzleTexBufferRGBA8((u32*)pixels, swizzle_buf, width, height);
+
+    C3D_TexUpload(&cur_texture->c3d_tex, swizzle_buf);
+
+    free(swizzle_buf);
 }
 
 void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height) {
+    // u32 src_width, src_height;
+    // u32 dst_size;
 
+    // u32 *src = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &src_width, &src_height);
+    // u32 *dst = C3D_Tex2DGetImagePtr(cur_texture, level, &dst_size);
+}
+
+static inline void _delete_texture(GLuint texture) {
+    // Find the corresponding C3D texture
+    gl_c3d_tex *gl_delete_tex = _try_find_texture(texture);
+
+    if(!gl_delete_tex)
+        return;
+
+    if(gl_delete_tex->is_initialized)
+        C3D_TexDelete(&gl_delete_tex->c3d_tex);
+
+    if(gl_delete_tex == cur_texture)
+        cur_texture = NULL;
+
+    gl_c3d_tex *prev = gl_delete_tex->prev;
+    gl_c3d_tex *next = gl_delete_tex->next;
+
+    // Delete (free) the texture
+    free(gl_delete_tex);
+
+    // The deleted texture was...
+    if(!prev && next) // ...at the start of the list
+    {
+        next->prev = NULL;
+        gl_c3d_tex_base = next;
+    }
+    else if(prev && next) // ...between 2 list entries
+    {
+        prev->next = next;
+        next->prev = prev;
+    }
+    else if(prev && !next) // ...at the end of the list
+    {
+        prev->next = NULL;
+        gl_c3d_tex_head = prev;
+    }
+    else // ...the only entry in the list
+    {
+        gl_c3d_tex_base = NULL;
+        gl_c3d_tex_head = NULL;
+    }
 }
 
 void glDeleteTextures(GLsizei n, const GLuint *textures) {
-
+    for(int i = 0; i < n; i++)
+        _delete_texture(textures[i]);
 }
 
 void glFogi(GLenum pname, GLint param) {
@@ -361,10 +534,15 @@ void glFogfv(GLenum pname, const GLfloat *params) {
 
 void glTexEnvi(GLenum target, GLenum pname, GLint param) {
     // Configure the first fragment shading substage to just pass through the vertex color
-	C3D_TexEnv* env = C3D_GetTexEnv(0);
+    //C3D_TexEnv* env = C3D_GetTexEnv(0);
+	//C3D_TexEnvInit(env);
+	//C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+	//C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
+
+    C3D_TexEnv* env = C3D_GetTexEnv(0);
 	C3D_TexEnvInit(env);
-	C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-	C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
+	C3D_TexEnvSrc(env, C3D_Both, GPU_TEXTURE0, GPU_PRIMARY_COLOR, 0);
+	C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
 }
 
 void glGetIntegerv(GLenum pname, GLint *params) {
@@ -390,7 +568,17 @@ void glGetFloatv(GLenum pname, GLfloat *params) {
 }
 
 void glGetTexLevelParameteriv(GLenum target, GLint level, GLenum pname, GLint *params) {
+    if(!cur_texture)
+        return;
 
+    switch(pname) {
+    case GL_TEXTURE_WIDTH:
+        params[0] = cur_texture->c3d_tex.width;
+        break;
+    case GL_TEXTURE_HEIGHT:
+        params[0] = cur_texture->c3d_tex.height;
+        break;
+    }
 }
 
 void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels) {

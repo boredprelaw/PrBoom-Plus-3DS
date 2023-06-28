@@ -198,7 +198,6 @@ void glEnd(void);
 void glGenTextures(GLsizei n, GLuint *textures);
 void glBindTexture(GLenum target, GLuint texture);
 void glTexParameteri(GLenum target, GLenum pname, GLint param);
-void glTexParameterf(GLenum target, GLenum pname, GLfloat param);
 void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
 void glDeleteTextures(GLsizei n, const GLuint *textures);
