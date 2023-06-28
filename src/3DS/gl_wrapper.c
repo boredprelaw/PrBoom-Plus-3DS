@@ -26,16 +26,33 @@ static u32 clear_color = 0x000000ff;
 static u32 clear_depth = 0;
 
 static int cull_enable = 0;
+static GLenum cull_mode = GL_BACK;
+
 static int blend_enable = 0;
+static GLenum blend_sfactor = GL_ONE;
+static GLenum blend_dfactor = GL_ZERO;
+
 static int depth_enable = 0;
+static GLenum depth_func = GL_LESS;
+static GLboolean depth_mask = GL_TRUE;
+
 static int alpha_enable = 0;
+static GLenum alpha_func = GL_ALWAYS;
+static float alpha_ref = 0.0f;
+
 static int scissor_enable = 0;
+static int scissor_x = 0;
+static int scissor_y = 0;
+static int scissor_width = 240;
+static int scissor_height = 400;
 
-// src, dst
-static GLenum cur_blend_factors[2] = { GL_ONE, GL_ZERO };
+static GLenum tev_combine_func_rgb;
+static GLenum tev_source0_rgb;
+static GLenum tev_source1_rgb;
 
-static GLenum cur_depth_func = GL_LESS;
-static GLboolean cur_depth_mask = GL_TRUE;
+static GLenum tev_combine_func_alpha;
+static GLenum tev_source0_alpha;
+static GLenum tev_source1_alpha;
 
 static GLfloat cur_color[4];
 static GLfloat cur_texcoord[4];
@@ -71,8 +88,6 @@ void gl_wrapper_init() {
 	AttrInfo_AddLoader(attrInfo, 1, GPU_FLOAT, 4); // v1=texcoord0
     AttrInfo_AddLoader(attrInfo, 2, GPU_FLOAT, 4); // v2=position
 
-    C3D_CullFace(GPU_CULL_NONE);
-
     // Init matrix stacks
     MtxStack_Init(&mtx_modelview);
     uloc_mv_mtx = shaderInstanceGetUniformLocation(program.vertexShader, "mv_mtx");
@@ -100,91 +115,74 @@ void gl_wrapper_cleanup() {
 }
 
 void gl_wrapper_perspective(float fovy, float aspect, float znear) {
-    Mtx_PerspTilt(MtxStack_Cur(cur_mtxstack), fovy, 400.0f/240.0f, znear, 1000.0f, false);
+    Mtx_PerspTilt(MtxStack_Cur(cur_mtxstack), fovy, 400.0f/240.0f, 1000.0f, znear, false);
 }
 
 
 //========== GRAPHICS FUNCTIONS ==========
 
 void glEnable(GLenum cap) {
-    /* switch(cap) {
-    case GL_CULL_FACE:
-        cull_enable = 1;
-        break;
-    case GL_BLEND:
-        blend_enable = 1;
-        break;
-    case GL_DEPTH_TEST:
-        depth_enable = 1;
-        break;
-    case GL_ALPHA_TEST:
-        alpha_enable = 1;
-        break;
-    case GL_SCISSOR_TEST:
-        scissor_enable = 1;
-        break;
-    } */
+    switch(cap) {
+    case GL_CULL_FACE: cull_enable = 1; break;
+    case GL_BLEND: blend_enable = 1; break;
+    case GL_DEPTH_TEST: depth_enable = 1; break;
+    case GL_ALPHA_TEST: alpha_enable = 1; break;
+    case GL_SCISSOR_TEST: scissor_enable = 1; break;
+    }
 }
 
 void glDisable(GLenum cap) {
-    /* switch(cap) {
-    case GL_CULL_FACE:
-        cull_enable = 0;
+    switch(cap) {
+    case GL_CULL_FACE: cull_enable = 0; break;
+    case GL_BLEND: blend_enable = 0; break;
+    case GL_DEPTH_TEST: depth_enable = 0; break;
+    case GL_ALPHA_TEST: alpha_enable = 0; break;
+    case GL_SCISSOR_TEST: scissor_enable = 0; break;
+    }
+}
+
+static inline GPU_CULLMODE _gl_to_c3d_cull(GLenum mode) {
+    GPU_CULLMODE ret;
+
+    switch(mode) {
+    case GL_FRONT:
+        ret = GPU_CULL_FRONT_CCW;
         break;
-    case GL_BLEND:
-        blend_enable = 0;
+    default: // GL_BACK
+        ret = GPU_CULL_BACK_CCW;
         break;
-    case GL_DEPTH_TEST:
-        depth_enable = 0;
-        break;
-    case GL_ALPHA_TEST:
-        alpha_enable = 0;
-        break;
-    case GL_SCISSOR_TEST:
-        scissor_enable = 0;
-        break;
-    } */
+    }
+
+    return ret;
 }
 
 void glCullFace(GLenum mode) {
-    /* GPU_CULLMODE cull_mode = GPU_CULL_NONE;
+    cull_mode = mode;
+}
 
-    if(mode == GL_FRONT)
-        cull_mode = GPU_CULL_FRONT_CCW;
-    else if(mode == GL_BACK)
-        cull_mode = GPU_CULL_BACK_CCW;
+static inline GPU_BLENDFACTOR _gl_to_c3d_blend(GLenum gl_factor) {
+    GPU_BLENDFACTOR ret;
 
-    C3D_CullFace(cull_enable ? cull_mode : GPU_CULL_NONE); */
+    switch(gl_factor) {
+    case GL_ZERO: ret = GPU_ZERO; break;
+    case GL_ONE: ret = GPU_ONE; break;
+    case GL_SRC_COLOR: ret = GPU_SRC_COLOR; break;
+    case GL_ONE_MINUS_SRC_COLOR: ret = GPU_ONE_MINUS_SRC_COLOR; break;
+    case GL_SRC_ALPHA: ret = GPU_SRC_ALPHA; break;
+    case GL_ONE_MINUS_SRC_ALPHA: ret = GPU_ONE_MINUS_SRC_ALPHA; break;
+    case GL_DST_ALPHA: ret = GPU_DST_ALPHA; break;
+    case GL_ONE_MINUS_DST_ALPHA: ret = GPU_ONE_MINUS_DST_ALPHA; break;
+    case GL_DST_COLOR: ret = GPU_DST_COLOR; break;
+    case GL_ONE_MINUS_DST_COLOR: ret = GPU_ONE_MINUS_DST_COLOR; break;
+    case GL_SRC_ALPHA_SATURATE: ret = GPU_SRC_ALPHA_SATURATE; break;
+    }
+
+    return ret;
 }
 
 void glBlendFunc(GLenum sfactor, GLenum dfactor) {
-    /* cur_blend_factors[0] = sfactor;
-    cur_blend_factors[1] = dfactor;
-
-    GPU_BLENDFACTOR c3d_factors[2] = { GPU_ONE, GPU_ZERO };
-
-    if(blend_enable)
-    {
-        for(int i = 0; i < 2; i++)
-        {
-            switch(cur_blend_factors[i])
-            {
-            case GL_ZERO: c3d_factors[i] = GPU_ZERO; break;
-            case GL_ONE: c3d_factors[i] = GPU_ONE; break;
-            case GL_SRC_COLOR: c3d_factors[i] = GPU_SRC_COLOR; break;
-            case GL_ONE_MINUS_SRC_COLOR: c3d_factors[i] = GPU_ONE_MINUS_SRC_COLOR; break;
-            case GL_SRC_ALPHA: c3d_factors[i] = GPU_SRC_ALPHA; break;
-            case GL_ONE_MINUS_SRC_ALPHA: c3d_factors[i] = GPU_ONE_MINUS_SRC_ALPHA; break;
-            case GL_DST_ALPHA: c3d_factors[i] = GPU_DST_ALPHA; break;
-            case GL_ONE_MINUS_DST_ALPHA: c3d_factors[i] = GPU_ONE_MINUS_DST_ALPHA; break;
-            case GL_DST_COLOR: c3d_factors[i] = GPU_DST_COLOR; break;
-            case GL_ONE_MINUS_DST_COLOR: c3d_factors[i] = GPU_ONE_MINUS_DST_COLOR; break;
-            case GL_SRC_ALPHA_SATURATE: c3d_factors[i] = GPU_SRC_ALPHA_SATURATE; break;
-            }
-        }
-    }
-
-    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, c3d_factors[0], c3d_factors[1], c3d_factors[0], c3d_factors[1]); */
+    blend_sfactor = sfactor;
+    blend_dfactor = dfactor;
 }
 
 static inline GPU_TESTFUNC _gl_to_c3d_testfunc(GLenum gl_testfunc) {
@@ -205,19 +203,16 @@ static inline GPU_TESTFUNC _gl_to_c3d_testfunc(GLenum gl_testfunc) {
 }
 
 void glDepthFunc(GLenum func) {
-    /* cur_depth_func = func;
-
-    C3D_DepthTest(depth_enable, _gl_to_c3d_testfunc(cur_depth_func), cur_depth_mask ? GPU_WRITE_DEPTH : 0); */
+    depth_func = func;
 }
 
 void glDepthMask(GLboolean flag) {
-    /* cur_depth_mask = flag;
-
-    C3D_DepthTest(depth_enable, _gl_to_c3d_testfunc(cur_depth_func), cur_depth_mask ? GPU_WRITE_DEPTH : 0); */
+    depth_mask = flag;
 }
 
 void glAlphaFunc(GLenum func, GLclampf ref) {
-    // C3D_AlphaTest(alpha_enable, _gl_to_c3d_testfunc(func), (int)(ref * 255.0f));
+    alpha_func = func;
+    alpha_ref = ref;
 }
 
 void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {
@@ -238,7 +233,7 @@ void glClear(GLbitfield mask) {
 
     // FIXME: Why tf do the logs say "failed to allocate 2GBs of memory" and exits the
     // game when the depth clear value is set to anything other than 0??? >:(
-    C3D_RenderTargetClear(hw_screen, flags, clear_color, 0);
+    C3D_RenderTargetClear(hw_screen, flags, clear_color, (clear_depth << 16) | clear_depth);
 }
 
 void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {
@@ -246,14 +241,72 @@ void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {
 }
 
 void glScissor(GLint x, GLint y, GLsizei width, GLsizei height) {
-    // C3D_SetScissor(scissor_enable ? GPU_SCISSOR_NORMAL : GPU_SCISSOR_DISABLE, y, x, height, width);
+    scissor_x = y;
+    scissor_y = x;
+    scissor_width = height;
+    scissor_height = width;
+}
+
+static inline GPU_COMBINEFUNC _gl_to_c3d_tev_combine_func(GLenum gl_combine_func) {
+    GPU_COMBINEFUNC ret;
+
+    switch(gl_combine_func) {
+    case GL_DOT3_RGB:
+        ret = GPU_DOT3_RGB;
+        break;
+    case GL_MODULATE:
+        ret = GPU_MODULATE;
+        break;
+    default: // GL_REPLACE
+        ret = GPU_REPLACE;
+        break;
+    }
+
+    return ret;
+}
+
+static inline GPU_TEVSRC _gl_to_c3d_tev_src(GLenum gl_tev_src) {
+    GPU_TEVSRC ret;
+
+    switch(gl_tev_src) {
+    case GL_TEXTURE:
+    case GL_TEXTURE0:
+        ret = GPU_TEXTURE0;
+        break;
+    default: // GL_PRIMARY_COLOR:
+        ret = GPU_PRIMARY_COLOR;
+        break;
+    }
+
+    return ret;
 }
 
 void glBegin(GLenum mode) {
-    // TODO: Figure out if this is expensive
     MtxStack_Update(&mtx_modelview);
     MtxStack_Update(&mtx_projection);
     MtxStack_Update(&mtx_texture);
+
+    // TODO: Use dirty flags to set modified render states when needed
+
+    // C3D_SetScissor(scissor_enable ? GPU_SCISSOR_NORMAL : GPU_SCISSOR_DISABLE, scissor_x, scissor_y, scissor_width, scissor_height);
+    C3D_DepthTest(depth_enable, _gl_to_c3d_testfunc(depth_func), depth_mask ? GPU_WRITE_ALL : GPU_WRITE_COLOR);
+    C3D_AlphaTest(alpha_enable, _gl_to_c3d_testfunc(alpha_func), (int)(alpha_ref * 255.0f));
+    C3D_CullFace(cull_enable ? _gl_to_c3d_cull(cull_mode) : GPU_CULL_NONE);
+
+    GPU_BLENDFACTOR c3d_sfactor = _gl_to_c3d_blend(blend_sfactor);
+    GPU_BLENDFACTOR c3d_dfactor = _gl_to_c3d_blend(blend_dfactor);
+    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, c3d_sfactor, c3d_dfactor, c3d_sfactor, c3d_dfactor);
+
+    C3D_TexEnv* env = C3D_GetTexEnv(0);
+	C3D_TexEnvInit(env);
+
+    C3D_TexEnvFunc(env, C3D_RGB, _gl_to_c3d_tev_combine_func(tev_combine_func_rgb));
+	C3D_TexEnvSrc(env, C3D_RGB, _gl_to_c3d_tev_src(tev_source0_rgb), _gl_to_c3d_tev_src(tev_source1_rgb), 0);
+    C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR, 0);
+
+    C3D_TexEnvFunc(env, C3D_Alpha, _gl_to_c3d_tev_combine_func(tev_combine_func_alpha));
+	C3D_TexEnvSrc(env, C3D_Alpha, _gl_to_c3d_tev_src(tev_source0_alpha), _gl_to_c3d_tev_src(tev_source1_alpha), 0);
+    C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, 0);
 
     if(cur_texture)
         C3D_TexBind(0, &cur_texture->c3d_tex);
@@ -542,25 +595,36 @@ void glFogfv(GLenum pname, const GLfloat *params) {
 }
 
 void glTexEnvi(GLenum target, GLenum pname, GLint param) {
-    // Configure the first fragment shading substage to just pass through the vertex color
-    //C3D_TexEnv* env = C3D_GetTexEnv(0);
-	//C3D_TexEnvInit(env);
-	//C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
-	//C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
-
-    C3D_TexEnv* env = C3D_GetTexEnv(0);
-	C3D_TexEnvInit(env);
-	C3D_TexEnvSrc(env, C3D_Both, GPU_TEXTURE0, GPU_PRIMARY_COLOR, 0);
-	C3D_TexEnvFunc(env, C3D_Both, GPU_MODULATE);
+    if(pname == GL_TEXTURE_ENV_MODE)
+    {
+        switch(param) {
+        case GL_MODULATE:
+            tev_combine_func_rgb = tev_combine_func_alpha = GL_MODULATE;
+            tev_source0_rgb = tev_source0_alpha = GL_TEXTURE0;
+            tev_source1_rgb = tev_source1_alpha = GL_PRIMARY_COLOR;
+            break;
+        }
+    }
+    else
+    {
+        switch(pname) {
+        case GL_COMBINE_RGB: tev_combine_func_rgb = param; break;
+        case GL_SOURCE0_RGB: tev_source0_rgb = param; break;
+        case GL_SOURCE1_RGB: tev_source1_rgb = param; break;
+        case GL_COMBINE_ALPHA: tev_combine_func_alpha = param; break;
+        case GL_SOURCE0_ALPHA: tev_source0_alpha = param; break;
+        case GL_SOURCE1_ALPHA: tev_source1_alpha = param; break;
+        }
+    }
 }
 
 void glGetIntegerv(GLenum pname, GLint *params) {
     switch(pname) {
     case GL_BLEND_DST:
-        params[0] = cur_blend_factors[1];
+        params[0] = blend_dfactor;
         break;
     case GL_BLEND_SRC:
-        params[0] = cur_blend_factors[0];
+        params[0] = blend_sfactor;
         break;
     }
 }
@@ -642,7 +706,7 @@ void glPopMatrix(void) {
 }
 
 void glOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar) {
-    Mtx_OrthoTilt(MtxStack_Cur(cur_mtxstack), (float)left, (float)right, (float)bottom, (float)top, (float)zNear, (float)zFar, false);
+    Mtx_OrthoTilt(MtxStack_Cur(cur_mtxstack), (float)left, (float)right, (float)bottom, (float)top, (float)zFar, (float)zNear, false);
 }
 
 void glTranslatef(GLfloat x, GLfloat y, GLfloat z) {

@@ -130,9 +130,6 @@ typedef void GLvoid;
 
 #define GL_TEXTURE0 0x84C0
 
-// TODO: Remove
-#define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
-
 #define GL_COMBINE 0x8570
 #define GL_COMBINE_RGB 0x8571
 #define GL_COMBINE_ALPHA 0x8572
