@@ -6,6 +6,15 @@
 #include <citro3d.h>
 #include "vshader_shbin.h"
 
+typedef enum _gl_c3d_dirty_flags {
+    DIRTY_FLAGS_CULL    = 0x0001,
+    DIRTY_FLAGS_BLEND   = 0x0002,
+    DIRTY_FLAGS_DEPTH   = 0x0004,
+    DIRTY_FLAGS_ALPHA   = 0x0008,
+    DIRTY_FLAGS_SCISSOR = 0x0010,
+    DIRTY_FLAGS_TEV     = 0x0020,
+} gl_c3d_dirty_flags;
+
 typedef struct _gl_c3d_tex {
     C3D_Tex c3d_tex;
 
@@ -21,6 +30,8 @@ typedef struct _gl_c3d_tex {
 } gl_c3d_tex;
 
 extern C3D_RenderTarget *hw_screen;
+
+static int dirty_flags = 0;
 
 static u32 clear_color = 0x000000ff;
 static u32 clear_depth = 0;
@@ -123,21 +134,51 @@ void gl_wrapper_perspective(float fovy, float aspect, float znear) {
 
 void glEnable(GLenum cap) {
     switch(cap) {
-    case GL_CULL_FACE: cull_enable = 1; break;
-    case GL_BLEND: blend_enable = 1; break;
-    case GL_DEPTH_TEST: depth_enable = 1; break;
-    case GL_ALPHA_TEST: alpha_enable = 1; break;
-    case GL_SCISSOR_TEST: scissor_enable = 1; break;
+    case GL_CULL_FACE:
+        cull_enable = 1;
+        dirty_flags |= DIRTY_FLAGS_CULL;
+        break;
+    case GL_BLEND:
+        blend_enable = 1;
+        dirty_flags |= DIRTY_FLAGS_BLEND;
+        break;
+    case GL_DEPTH_TEST:
+        depth_enable = 1;
+        dirty_flags |= DIRTY_FLAGS_DEPTH;
+        break;
+    case GL_ALPHA_TEST:
+        alpha_enable = 1;
+        dirty_flags |= DIRTY_FLAGS_ALPHA;
+        break;
+    case GL_SCISSOR_TEST:
+        scissor_enable = 1;
+        dirty_flags |= DIRTY_FLAGS_SCISSOR;
+        break;
     }
 }
 
 void glDisable(GLenum cap) {
     switch(cap) {
-    case GL_CULL_FACE: cull_enable = 0; break;
-    case GL_BLEND: blend_enable = 0; break;
-    case GL_DEPTH_TEST: depth_enable = 0; break;
-    case GL_ALPHA_TEST: alpha_enable = 0; break;
-    case GL_SCISSOR_TEST: scissor_enable = 0; break;
+    case GL_CULL_FACE:
+        cull_enable = 0;
+        dirty_flags |= DIRTY_FLAGS_CULL;
+        break;
+    case GL_BLEND:
+        blend_enable = 0;
+        dirty_flags |= DIRTY_FLAGS_BLEND;
+        break;
+    case GL_DEPTH_TEST:
+        depth_enable = 0;
+        dirty_flags |= DIRTY_FLAGS_DEPTH;
+        break;
+    case GL_ALPHA_TEST:
+        alpha_enable = 0;
+        dirty_flags |= DIRTY_FLAGS_ALPHA;
+        break;
+    case GL_SCISSOR_TEST:
+        scissor_enable = 0;
+        dirty_flags |= DIRTY_FLAGS_SCISSOR;
+        break;
     }
 }
 
@@ -158,6 +199,7 @@ static inline GPU_CULLMODE _gl_to_c3d_cull(GLenum mode) {
 
 void glCullFace(GLenum mode) {
     cull_mode = mode;
+    dirty_flags |= DIRTY_FLAGS_CULL;
 }
 
 static inline GPU_BLENDFACTOR _gl_to_c3d_blend(GLenum gl_factor) {
@@ -183,6 +225,7 @@ static inline GPU_BLENDFACTOR _gl_to_c3d_blend(GLenum gl_factor) {
 void glBlendFunc(GLenum sfactor, GLenum dfactor) {
     blend_sfactor = sfactor;
     blend_dfactor = dfactor;
+    dirty_flags |= DIRTY_FLAGS_BLEND;
 }
 
 static inline GPU_TESTFUNC _gl_to_c3d_testfunc(GLenum gl_testfunc) {
@@ -204,15 +247,18 @@ static inline GPU_TESTFUNC _gl_to_c3d_testfunc(GLenum gl_testfunc) {
 
 void glDepthFunc(GLenum func) {
     depth_func = func;
+    dirty_flags |= DIRTY_FLAGS_DEPTH;
 }
 
 void glDepthMask(GLboolean flag) {
     depth_mask = flag;
+    dirty_flags |= DIRTY_FLAGS_DEPTH;
 }
 
 void glAlphaFunc(GLenum func, GLclampf ref) {
     alpha_func = func;
     alpha_ref = ref;
+    dirty_flags |= DIRTY_FLAGS_ALPHA;
 }
 
 void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {
@@ -243,6 +289,7 @@ void glScissor(GLint x, GLint y, GLsizei width, GLsizei height) {
     scissor_y = x;
     scissor_width = height;
     scissor_height = width;
+    dirty_flags |= DIRTY_FLAGS_SCISSOR;
 }
 
 static inline GPU_COMBINEFUNC _gl_to_c3d_tev_combine_func(GLenum gl_combine_func) {
@@ -279,32 +326,57 @@ static inline GPU_TEVSRC _gl_to_c3d_tev_src(GLenum gl_tev_src) {
     return ret;
 }
 
+static inline void _update_dirty_render_states() {
+    if(dirty_flags & DIRTY_FLAGS_CULL)
+    {
+        C3D_CullFace(cull_enable ? _gl_to_c3d_cull(cull_mode) : GPU_CULL_NONE);
+    }
+    if(dirty_flags & DIRTY_FLAGS_BLEND)
+    {
+        if(blend_enable)
+        {
+            GPU_BLENDFACTOR c3d_sfactor = _gl_to_c3d_blend(blend_sfactor);
+            GPU_BLENDFACTOR c3d_dfactor = _gl_to_c3d_blend(blend_dfactor);
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, c3d_sfactor, c3d_dfactor, c3d_sfactor, c3d_dfactor);
+        }
+        else
+        {
+            C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_ONE, GPU_ZERO);
+        }
+    }
+    if(dirty_flags & DIRTY_FLAGS_DEPTH)
+    {
+        C3D_DepthTest(depth_enable, _gl_to_c3d_testfunc(depth_func), depth_mask ? GPU_WRITE_ALL : GPU_WRITE_COLOR);
+    }
+    if(dirty_flags & DIRTY_FLAGS_ALPHA)
+    {
+        C3D_AlphaTest(alpha_enable, _gl_to_c3d_testfunc(alpha_func), (int)(alpha_ref * 255.0f));
+    }
+    if(dirty_flags & DIRTY_FLAGS_SCISSOR)
+    {
+        // C3D_SetScissor(scissor_enable ? GPU_SCISSOR_NORMAL : GPU_SCISSOR_DISABLE, scissor_x, scissor_y, scissor_width, scissor_height);
+    }
+    if(dirty_flags & DIRTY_FLAGS_TEV)
+    {
+        C3D_TexEnv* env = C3D_GetTexEnv(0);
+        C3D_TexEnvInit(env);
+
+        C3D_TexEnvFunc(env, C3D_RGB, _gl_to_c3d_tev_combine_func(tev_combine_func_rgb));
+        C3D_TexEnvSrc(env, C3D_RGB, _gl_to_c3d_tev_src(tev_source0_rgb), _gl_to_c3d_tev_src(tev_source1_rgb), 0);
+        C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR, 0);
+
+        C3D_TexEnvFunc(env, C3D_Alpha, _gl_to_c3d_tev_combine_func(tev_combine_func_alpha));
+        C3D_TexEnvSrc(env, C3D_Alpha, _gl_to_c3d_tev_src(tev_source0_alpha), _gl_to_c3d_tev_src(tev_source1_alpha), 0);
+        C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, 0);
+    }
+}
+
 void glBegin(GLenum mode) {
     MtxStack_Update(&mtx_modelview);
     MtxStack_Update(&mtx_projection);
     MtxStack_Update(&mtx_texture);
 
-    // TODO: Use dirty flags to set modified render states when needed
-
-    // C3D_SetScissor(scissor_enable ? GPU_SCISSOR_NORMAL : GPU_SCISSOR_DISABLE, scissor_x, scissor_y, scissor_width, scissor_height);
-    C3D_DepthTest(depth_enable, _gl_to_c3d_testfunc(depth_func), depth_mask ? GPU_WRITE_ALL : GPU_WRITE_COLOR);
-    C3D_AlphaTest(alpha_enable, _gl_to_c3d_testfunc(alpha_func), (int)(alpha_ref * 255.0f));
-    C3D_CullFace(cull_enable ? _gl_to_c3d_cull(cull_mode) : GPU_CULL_NONE);
-
-    GPU_BLENDFACTOR c3d_sfactor = _gl_to_c3d_blend(blend_sfactor);
-    GPU_BLENDFACTOR c3d_dfactor = _gl_to_c3d_blend(blend_dfactor);
-    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, c3d_sfactor, c3d_dfactor, c3d_sfactor, c3d_dfactor);
-
-    C3D_TexEnv* env = C3D_GetTexEnv(0);
-	C3D_TexEnvInit(env);
-
-    C3D_TexEnvFunc(env, C3D_RGB, _gl_to_c3d_tev_combine_func(tev_combine_func_rgb));
-	C3D_TexEnvSrc(env, C3D_RGB, _gl_to_c3d_tev_src(tev_source0_rgb), _gl_to_c3d_tev_src(tev_source1_rgb), 0);
-    C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR, 0);
-
-    C3D_TexEnvFunc(env, C3D_Alpha, _gl_to_c3d_tev_combine_func(tev_combine_func_alpha));
-	C3D_TexEnvSrc(env, C3D_Alpha, _gl_to_c3d_tev_src(tev_source0_alpha), _gl_to_c3d_tev_src(tev_source1_alpha), 0);
-    C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, 0);
+    _update_dirty_render_states();
 
     if(cur_texture)
         C3D_TexBind(0, &cur_texture->c3d_tex);
@@ -630,6 +702,8 @@ void glTexEnvi(GLenum target, GLenum pname, GLint param) {
         case GL_SOURCE1_ALPHA: tev_source1_alpha = param; break;
         }
     }
+
+    dirty_flags |= DIRTY_FLAGS_TEV;
 }
 
 void glGetIntegerv(GLenum pname, GLint *params) {
