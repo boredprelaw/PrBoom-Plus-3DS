@@ -231,8 +231,6 @@ void glClear(GLbitfield mask) {
     if(mask & GL_DEPTH_BUFFER_BIT)
         flags |= C3D_CLEAR_DEPTH;
 
-    // FIXME: Why tf do the logs say "failed to allocate 2GBs of memory" and exits the
-    // game when the depth clear value is set to anything other than 0??? >:(
     C3D_RenderTargetClear(hw_screen, flags, clear_color, (clear_depth << 16) | clear_depth);
 }
 
