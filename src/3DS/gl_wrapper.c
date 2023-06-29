@@ -13,17 +13,11 @@ typedef enum _gl_c3d_dirty_flags {
     DIRTY_FLAGS_ALPHA   = 0x0008,
     DIRTY_FLAGS_SCISSOR = 0x0010,
     DIRTY_FLAGS_TEV     = 0x0020,
+    DIRTY_FLAGS_FOG     = 0x0040,
 } gl_c3d_dirty_flags;
 
 typedef struct _gl_c3d_tex {
     C3D_Tex c3d_tex;
-
-    GLenum wrap_s;
-    GLenum wrap_t;
-    GLenum mag_filter;
-    GLenum min_filter;
-
-    int is_initialized;
 
     struct _gl_c3d_tex *prev;
     struct _gl_c3d_tex *next;
@@ -65,6 +59,10 @@ static GLenum tev_combine_func_alpha;
 static GLenum tev_source0_alpha;
 static GLenum tev_source1_alpha;
 
+static int fog_enable;
+static GLfloat fog_color[4];
+static GLfloat fog_density;
+
 static GLfloat cur_color[4];
 static GLfloat cur_texcoord[4];
 
@@ -79,6 +77,8 @@ static gl_c3d_tex *cur_texture = NULL;
 static DVLB_s* vshader_dvlb;
 static shaderProgram_s program;
 static int uloc_mv_mtx, uloc_p_mtx, uloc_t_mtx;
+
+static C3D_FogLut fog_Lut;
 
 static C3D_MtxStack mtx_modelview, mtx_projection, mtx_texture;
 static C3D_MtxStack *cur_mtxstack;
@@ -132,54 +132,41 @@ void gl_wrapper_perspective(float fovy, float aspect, float znear) {
 
 //========== GRAPHICS FUNCTIONS ==========
 
-void glEnable(GLenum cap) {
+static inline void _toggle_render_state(GLenum cap, int enable) {
     switch(cap) {
     case GL_CULL_FACE:
-        cull_enable = 1;
+        cull_enable = enable;
         dirty_flags |= DIRTY_FLAGS_CULL;
         break;
     case GL_BLEND:
-        blend_enable = 1;
+        blend_enable = enable;
         dirty_flags |= DIRTY_FLAGS_BLEND;
         break;
     case GL_DEPTH_TEST:
-        depth_enable = 1;
+        depth_enable = enable;
         dirty_flags |= DIRTY_FLAGS_DEPTH;
         break;
     case GL_ALPHA_TEST:
-        alpha_enable = 1;
+        alpha_enable = enable;
         dirty_flags |= DIRTY_FLAGS_ALPHA;
         break;
     case GL_SCISSOR_TEST:
-        scissor_enable = 1;
+        scissor_enable = enable;
         dirty_flags |= DIRTY_FLAGS_SCISSOR;
+        break;
+    case GL_FOG:
+        fog_enable = enable;
+        dirty_flags |= DIRTY_FLAGS_FOG;
         break;
     }
 }
 
+void glEnable(GLenum cap) {
+    _toggle_render_state(cap, 1);
+}
+
 void glDisable(GLenum cap) {
-    switch(cap) {
-    case GL_CULL_FACE:
-        cull_enable = 0;
-        dirty_flags |= DIRTY_FLAGS_CULL;
-        break;
-    case GL_BLEND:
-        blend_enable = 0;
-        dirty_flags |= DIRTY_FLAGS_BLEND;
-        break;
-    case GL_DEPTH_TEST:
-        depth_enable = 0;
-        dirty_flags |= DIRTY_FLAGS_DEPTH;
-        break;
-    case GL_ALPHA_TEST:
-        alpha_enable = 0;
-        dirty_flags |= DIRTY_FLAGS_ALPHA;
-        break;
-    case GL_SCISSOR_TEST:
-        scissor_enable = 0;
-        dirty_flags |= DIRTY_FLAGS_SCISSOR;
-        break;
-    }
+    _toggle_render_state(cap, 0);
 }
 
 static inline GPU_CULLMODE _gl_to_c3d_cull(GLenum mode) {
@@ -369,6 +356,20 @@ static inline void _update_dirty_render_states() {
         C3D_TexEnvSrc(env, C3D_Alpha, _gl_to_c3d_tev_src(tev_source0_alpha), _gl_to_c3d_tev_src(tev_source1_alpha), 0);
         C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, 0);
     }
+    if(dirty_flags & DIRTY_FLAGS_FOG)
+    {
+        FogLut_Exp(&fog_Lut, fog_density * 25.0f, 1.0f, 0.01f, 1.0f);
+        C3D_FogGasMode(fog_enable ? GPU_FOG : GPU_NO_FOG, GPU_DEPTH_DENSITY, true);
+
+        C3D_FogColor( ((int)(fog_color[0] * 255) << 16) |
+                      ((int)(fog_color[1] * 255) << 8) |
+                      ((int)(fog_color[2] * 255)) );
+
+        C3D_FogLutBind(&fog_Lut);
+    }
+
+    // Reset all dirty flags
+    dirty_flags = 0;
 }
 
 void glBegin(GLenum mode) {
@@ -480,7 +481,21 @@ static inline GLuint _gen_texture() {
         gl_c3d_tex_head = gl_c3d_tex_head->next;
     }
 
-    gl_c3d_tex_head->is_initialized = 0;
+    // Set default C3D texture parameters
+    gl_c3d_tex_head->c3d_tex.width = 0;
+    gl_c3d_tex_head->c3d_tex.height = 0;
+    gl_c3d_tex_head->c3d_tex.data = NULL;
+    gl_c3d_tex_head->c3d_tex.fmt = GPU_RGBA8;
+    gl_c3d_tex_head->c3d_tex.size = 0;
+    gl_c3d_tex_head->c3d_tex.param = GPU_TEXTURE_MODE(GPU_TEX_2D);
+    gl_c3d_tex_head->c3d_tex.border = 0;
+    gl_c3d_tex_head->c3d_tex.lodBias = 0;
+    gl_c3d_tex_head->c3d_tex.maxLevel = 0;
+    gl_c3d_tex_head->c3d_tex.minLevel = 0;
+
+    // Force mip linear for fog
+    gl_c3d_tex_head->c3d_tex.param &= ~GPU_TEXTURE_MIP_FILTER(1);
+    gl_c3d_tex_head->c3d_tex.param |= GPU_TEXTURE_MIP_FILTER(GPU_LINEAR);
 
     // The pointer to the new texture acts as the GL texture ID
     return (GLuint)gl_c3d_tex_head;
@@ -556,10 +571,22 @@ void glTexParameteri(GLenum target, GLenum pname, GLint param) {
         return;
 
     switch(pname) {
-    case GL_TEXTURE_WRAP_S: cur_texture->wrap_s = param; break;
-    case GL_TEXTURE_WRAP_T: cur_texture->wrap_t = param; break;
-    case GL_TEXTURE_MAG_FILTER: cur_texture->mag_filter = param; break;
-    case GL_TEXTURE_MIN_FILTER: cur_texture->min_filter = param; break;
+    case GL_TEXTURE_WRAP_S:
+        cur_texture->c3d_tex.param &= ~(GPU_TEXTURE_WRAP_S(3));
+        cur_texture->c3d_tex.param |= GPU_TEXTURE_WRAP_S(_gl_to_c3d_texwrap(param));
+        break;
+    case GL_TEXTURE_WRAP_T:
+        cur_texture->c3d_tex.param &= ~(GPU_TEXTURE_WRAP_T(3));
+        cur_texture->c3d_tex.param |= GPU_TEXTURE_WRAP_T(_gl_to_c3d_texwrap(param));
+        break;
+    case GL_TEXTURE_MAG_FILTER:
+        cur_texture->c3d_tex.param &= ~(GPU_TEXTURE_MAG_FILTER(1));
+        cur_texture->c3d_tex.param |= GPU_TEXTURE_MAG_FILTER(_gl_to_c3d_texfilter(param));
+        break;
+    case GL_TEXTURE_MIN_FILTER:
+        cur_texture->c3d_tex.param &= ~(GPU_TEXTURE_MIN_FILTER(1));
+        cur_texture->c3d_tex.param |= GPU_TEXTURE_MIN_FILTER(_gl_to_c3d_texfilter(param));
+        break;
     }
 }
 
@@ -567,20 +594,23 @@ void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei widt
     if(!cur_texture)
         return;
 
-    if(cur_texture->is_initialized)
-        C3D_TexDelete(&cur_texture->c3d_tex);
+    if(cur_texture->c3d_tex.data) {
+        linearFree(cur_texture->c3d_tex.data);
+        cur_texture->c3d_tex.data = NULL;
+    }
 
-    C3D_TexInit(&cur_texture->c3d_tex, width, height, GPU_RGBA8);
-    C3D_TexSetWrap(&cur_texture->c3d_tex, _gl_to_c3d_texwrap(cur_texture->wrap_s), _gl_to_c3d_texwrap(cur_texture->wrap_t));
-    C3D_TexSetFilter(&cur_texture->c3d_tex, _gl_to_c3d_texfilter(cur_texture->mag_filter), _gl_to_c3d_texfilter(cur_texture->min_filter));
-
-    cur_texture->is_initialized = 1;
+    u32 size = width * height * 4;
+    gl_c3d_tex_head->c3d_tex.width = width;
+    gl_c3d_tex_head->c3d_tex.height = height;
+    gl_c3d_tex_head->c3d_tex.data = linearAlloc(size);
+    gl_c3d_tex_head->c3d_tex.fmt = GPU_RGBA8;
+    gl_c3d_tex_head->c3d_tex.size = size;
 
     // We can safely leave now if no pixel data (NULL) was provided
     if(!pixels)
         return;
 
-    u32 *swizzle_buf = malloc(width * height * 4);
+    u32 *swizzle_buf = malloc(size);
     SwizzleTexBufferRGBA8((u32*)pixels, swizzle_buf, width, height);
 
     // Reverse the order of the color components
@@ -592,7 +622,7 @@ void glTexImage2D(GLenum target, GLint level, GLint internalformat, GLsizei widt
                          ((swizzle_buf[i] & 0x000000ff) << 24);
     }
 
-    C3D_TexUpload(&cur_texture->c3d_tex, swizzle_buf);
+    memcpy(gl_c3d_tex_head->c3d_tex.data, swizzle_buf, size);
 
     free(swizzle_buf);
 }
@@ -601,10 +631,8 @@ void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffse
     if(!cur_texture)
         return;
 
-    u32 tex_size = C3D_TexCalcLevelSize(cur_texture->c3d_tex.size, level);
-
     u32 *screen = (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-    u32 *texbuf = malloc(tex_size);
+    u32 *texbuf = (u32*)gl_c3d_tex_head->c3d_tex.data;
 
     for(int y = 0; y < height; y++) {
         for(int x = 0; x < width; x++) {
@@ -612,13 +640,12 @@ void glCopyTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffse
         }
     }
 
-    u32 *swizzle_buf = malloc(tex_size);
+    u32 *swizzle_buf = malloc(cur_texture->c3d_tex.size);
     SwizzleTexBufferRGBA8(texbuf, swizzle_buf, cur_texture->c3d_tex.width, cur_texture->c3d_tex.height);
 
-    C3D_TexUpload(&cur_texture->c3d_tex, swizzle_buf);
+    memcpy(gl_c3d_tex_head->c3d_tex.data, swizzle_buf, gl_c3d_tex_head->c3d_tex.size);
 
     free(swizzle_buf);
-    free(texbuf);
 }
 
 static inline void _delete_texture(GLuint texture) {
@@ -628,8 +655,10 @@ static inline void _delete_texture(GLuint texture) {
     if(!gl_delete_tex)
         return;
 
-    if(gl_delete_tex->is_initialized)
-        C3D_TexDelete(&gl_delete_tex->c3d_tex);
+    if(gl_delete_tex->c3d_tex.data) {
+        linearFree(gl_delete_tex->c3d_tex.data);
+        gl_delete_tex->c3d_tex.data = NULL;
+    }
 
     if(gl_delete_tex == cur_texture)
         cur_texture = NULL;
@@ -669,15 +698,32 @@ void glDeleteTextures(GLsizei n, const GLuint *textures) {
 }
 
 void glFogi(GLenum pname, GLint param) {
+    // PrBoom+ always uses GL_EXP
 
+    dirty_flags |= DIRTY_FLAGS_FOG;
 }
 
 void glFogf(GLenum pname, GLfloat param) {
+    switch(pname) {
+    case GL_FOG_DENSITY:
+        fog_density = param;
+        break;
+    }
 
+    dirty_flags |= DIRTY_FLAGS_FOG;
 }
 
 void glFogfv(GLenum pname, const GLfloat *params) {
+    switch(pname) {
+    case GL_FOG_COLOR:
+        fog_color[0] = params[0];
+        fog_color[1] = params[1];
+        fog_color[2] = params[2];
+        fog_color[3] = params[3];
+        break;
+    }
 
+    dirty_flags |= DIRTY_FLAGS_FOG;
 }
 
 void glTexEnvi(GLenum target, GLenum pname, GLint param) {
