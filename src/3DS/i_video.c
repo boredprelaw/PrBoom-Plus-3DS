@@ -93,7 +93,9 @@ extern void M_QuitDOOM(int choice);
 
 int vanilla_keymap;
 static void *screen = NULL;
-C3D_RenderTarget *hw_screen = NULL;
+C3D_RenderTarget *hw_screen_l = NULL;
+C3D_RenderTarget *hw_screen_r = NULL;
+C3D_RenderTarget *cur_hw_screen = NULL;
 
 ////////////////////////////////////////////////////////////////////////////
 // Input code
@@ -370,7 +372,6 @@ void I_SwapBuffers(void)
 
   // Start next frame
   C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-  C3D_FrameDrawOn(hw_screen);
 }
 
 void I_ShutdownGraphics(void)
@@ -599,7 +600,7 @@ void I_InitScreenResolution(void)
 
   I_GetScreenResolution();
 
-  if (!screen && !hw_screen)
+  if (!screen && !hw_screen_l)
   {
     // e6y
     // change the screen size for the current session only
@@ -717,7 +718,7 @@ video_mode_t I_GetModeFromString(const char *modestr)
 void I_UpdateVideoMode(void)
 {
   // Was HW renderer just used?
-  if(hw_screen)
+  if(hw_screen_l)
   {
     I_InitScreenResolution();
 
@@ -727,8 +728,10 @@ void I_UpdateVideoMode(void)
     gld_CleanStaticMemory();
 #endif
 
-    C3D_RenderTargetDelete(hw_screen);
-    hw_screen = NULL;
+    C3D_RenderTargetDelete(hw_screen_l);
+    C3D_RenderTargetDelete(hw_screen_r);
+    hw_screen_l = NULL;
+    hw_screen_r = NULL;
 
     gl_wrapper_cleanup();
 
@@ -746,6 +749,7 @@ void I_UpdateVideoMode(void)
   }
 
   gfxInit(GSP_RGBA8_OES, GSP_RGBA8_OES, false);
+  gfxSet3D(true);
 
   if (V_GetMode() != VID_MODEGL)
   {
@@ -789,14 +793,17 @@ void I_UpdateVideoMode(void)
     // for the vanilla game to handle, but maps like nuts.wad will shit the bed...
     C3D_Init(0x200000);
 
-    hw_screen = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
-    C3D_RenderTargetSetOutput(hw_screen, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+    hw_screen_l = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
+    hw_screen_r = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
+    C3D_RenderTargetSetOutput(hw_screen_l, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+    C3D_RenderTargetSetOutput(hw_screen_r, GFX_TOP, GFX_RIGHT, DISPLAY_TRANSFER_FLAGS);
 
     gl_wrapper_init();
 
     // Start first frame
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-    C3D_FrameDrawOn(hw_screen);
+    C3D_FrameDrawOn(hw_screen_l);
+    cur_hw_screen = hw_screen_l;
   }
 
   // e6y: wide-res

@@ -23,7 +23,8 @@ typedef struct _gl_c3d_tex {
     struct _gl_c3d_tex *next;
 } gl_c3d_tex;
 
-extern C3D_RenderTarget *hw_screen;
+extern C3D_RenderTarget *cur_hw_screen;
+float hw_stereo_offset;
 
 static int dirty_flags = 0;
 
@@ -126,7 +127,7 @@ void gl_wrapper_cleanup() {
 }
 
 void gl_wrapper_perspective(float fovy, float aspect, float znear) {
-    Mtx_PerspTilt(MtxStack_Cur(cur_mtxstack), fovy, 400.0f/240.0f, 1000.0f, znear, false);
+    Mtx_PerspStereoTilt(MtxStack_Cur(cur_mtxstack), fovy, 400.0f/240.0f, 1000.0f, znear, hw_stereo_offset, 0.3f, false);
 }
 
 
@@ -264,7 +265,7 @@ void glClear(GLbitfield mask) {
     if(mask & GL_DEPTH_BUFFER_BIT)
         flags |= C3D_CLEAR_DEPTH;
 
-    C3D_RenderTargetClear(hw_screen, flags, clear_color, (clear_depth << 16) | clear_depth);
+    C3D_RenderTargetClear(cur_hw_screen, flags, clear_color, (clear_depth << 16) | clear_depth);
 }
 
 void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {

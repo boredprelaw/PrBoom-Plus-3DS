@@ -254,6 +254,14 @@ void D_Display (fixed_t frac)
   dboolean wipe;
   dboolean viewactive = false, isborder = false;
 
+#ifdef __3DS__
+  float stereo_offs = osGet3DSliderState() / 10;
+  int num_eyes = (stereo_offs > 0.0f) ? 2 : 1;
+#else
+  float stereo_offs = 0.0f;
+  int num_eyes = 1;
+#endif
+
   // e6y
   extern dboolean gamekeydown[];
   if (doSkip)
@@ -300,18 +308,32 @@ void D_Display (fixed_t frac)
       break;
     }
 
-    switch (gamestate) {
-    case GS_INTERMISSION:
-      WI_Drawer();
-      break;
-    case GS_FINALE:
-      F_Drawer();
-      break;
-    case GS_DEMOSCREEN:
-      D_PageDrawer();
-      break;
-    default:
-      break;
+    // Stereoscopic 3D
+    for(int i = 0; i < num_eyes; i++) {
+#ifdef __3DS__
+      if(i == 0) { // Left eye
+        C3D_FrameDrawOn(hw_screen_l);
+        cur_hw_screen = hw_screen_l;
+      }
+      else if(i == 1) { // Right eye
+        C3D_FrameDrawOn(hw_screen_r);
+        cur_hw_screen = hw_screen_r;
+      }
+#endif
+
+      switch (gamestate) {
+      case GS_INTERMISSION:
+        WI_Drawer();
+        break;
+      case GS_FINALE:
+        F_Drawer();
+        break;
+      case GS_DEMOSCREEN:
+        D_PageDrawer();
+        break;
+      default:
+        break;
+      }
     }
   } else if (gametic != basetic) { // In a level
     dboolean redrawborderstuff;
@@ -350,42 +372,58 @@ void D_Display (fixed_t frac)
 
     R_ClearStats();
 
-    // Now do the drawing
-    if (viewactive || map_always_updates)
-    {
-      R_RenderPlayerView (&players[displayplayer]);
-    }
+    // Stereoscopic 3D
+    for(int i = 0; i < num_eyes; i++) {
+#ifdef __3DS__
+      if(i == 0) { // Left eye
+        C3D_FrameDrawOn(hw_screen_l);
+        cur_hw_screen = hw_screen_l;
+        hw_stereo_offset = -stereo_offs;
+      }
+      else if(i == 1) { // Right eye
+        C3D_FrameDrawOn(hw_screen_r);
+        cur_hw_screen = hw_screen_r;
+        hw_stereo_offset = stereo_offs;
+      }
+#endif
 
-    // IDRATE cheat
-    R_ShowStats();
+      // Now do the drawing
+      if (viewactive || map_always_updates)
+      {
+        R_RenderPlayerView (&players[displayplayer]);
+      }
 
-    // e6y
-    // but should NOT be applied for automap, statusbar and HUD
-    use_boom_cm=false;
-    frame_fixedcolormap = 0;
+      // IDRATE cheat
+      R_ShowStats();
 
-    if (automapmode & am_active)
-    {
-      AM_Drawer();
-    }
+      // e6y
+      // but should NOT be applied for automap, statusbar and HUD
+      use_boom_cm=false;
+      frame_fixedcolormap = 0;
 
-    R_RestoreInterpolations();
+      if (automapmode & am_active)
+      {
+        AM_Drawer();
+      }
 
-    ST_Drawer(
-        ((viewheight != SCREENHEIGHT)
-         || ((automapmode & am_active) && !(automapmode & am_overlay))),
-        redrawborderstuff || BorderNeedRefresh,
-        (menuactive == mnact_full));
+      R_RestoreInterpolations();
 
-    BorderNeedRefresh = false;
-    if (V_GetMode() != VID_MODEGL)
-      R_DrawViewBorder();
-    HU_Drawer();
+      ST_Drawer(
+          ((viewheight != SCREENHEIGHT)
+          || ((automapmode & am_active) && !(automapmode & am_overlay))),
+          redrawborderstuff || BorderNeedRefresh,
+          (menuactive == mnact_full));
+
+      BorderNeedRefresh = false;
+      if (V_GetMode() != VID_MODEGL)
+        R_DrawViewBorder();
+      HU_Drawer();
 
 #ifdef GL_DOOM
-    if (V_GetMode() == VID_MODEGL)
-      gld_ProcessExtraAlpha();
+      if (V_GetMode() == VID_MODEGL)
+        gld_ProcessExtraAlpha();
 #endif
+    }
   }
 
   isborderstate      = isborder;
@@ -398,8 +436,22 @@ void D_Display (fixed_t frac)
                     0, "M_PAUSE", CR_DEFAULT, VPT_STRETCH);
   }
 
-  // menus go directly to the screen
-  M_Drawer();          // menu is drawn even on top of everything
+  // Stereoscopic 3D
+  for(int i = 0; i < num_eyes; i++) {
+#ifdef __3DS__
+    if(i == 0) { // Left eye
+      C3D_FrameDrawOn(hw_screen_l);
+      cur_hw_screen = hw_screen_l;
+    }
+    else if(i == 1) { // Right eye
+      C3D_FrameDrawOn(hw_screen_r);
+      cur_hw_screen = hw_screen_r;
+    }
+#endif
+
+    // menus go directly to the screen
+    M_Drawer();          // menu is drawn even on top of everything
+  }
 #ifdef HAVE_NET
   NetUpdate();         // send out any new accumulation
 #else
