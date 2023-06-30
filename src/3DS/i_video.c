@@ -784,7 +784,10 @@ void I_UpdateVideoMode(void)
   }
   else
   {
-    C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+    // TODO: Keep an eye on this. So far, we're using immediate drawing,
+    // which gobbles up a LOT of the command buffer. This should be big enough
+    // for the vanilla game to handle, but maps like nuts.wad will shit the bed...
+    C3D_Init(0x200000);
 
     hw_screen = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
     C3D_RenderTargetSetOutput(hw_screen, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
