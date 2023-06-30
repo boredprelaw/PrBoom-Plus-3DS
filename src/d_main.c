@@ -388,10 +388,10 @@ void D_Display (fixed_t frac)
           C3D_FrameDrawOn(hw_screen_r);
           cur_hw_screen = hw_screen_r;
         }
+#endif
 
         R_DrawViewBorder();
       }
-#endif
     }
 
     // e6y
