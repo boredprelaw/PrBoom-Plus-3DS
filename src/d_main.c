@@ -211,7 +211,7 @@ void D_PostEvent(event_t *ev)
 // The screens to wipe between are already stored, this just does the timing
 // and screen updating
 
-static void D_Wipe(void)
+static void D_Wipe(int num_eyes)
 {
   dboolean done;
   int wipestart = I_GetTime () - 1;
@@ -228,9 +228,24 @@ static void D_Wipe(void)
         }
       while (!tics);
       wipestart = nowtime;
-      done = wipe_ScreenWipe(tics);
+      done = wipe_ScreenWipe(tics, num_eyes);
       I_UpdateNoBlit();
-      M_Drawer();                   // menu is drawn even on top of wipes
+
+      // Stereoscopic 3D
+      for(int i = 0; i < num_eyes; i++) {
+#ifdef __3DS__
+        if(i == 0) { // Left eye
+          C3D_FrameDrawOn(hw_screen_l);
+          cur_hw_screen = hw_screen_l;
+        }
+        else if(i == 1) { // Right eye
+          C3D_FrameDrawOn(hw_screen_r);
+          cur_hw_screen = hw_screen_r;
+        }
+#endif
+        M_Drawer();                   // menu is drawn even on top of wipes
+      }
+
       I_FinishUpdate();             // page flip or blit buffer
     }
   while (!done);
@@ -361,8 +376,23 @@ void D_Display (fixed_t frac)
       borderwillneedredraw = (borderwillneedredraw) || 
         (((automapmode & am_active) && !(automapmode & am_overlay)));
     }
-    if (redrawborderstuff || (V_GetMode() == VID_MODEGL))
-      R_DrawViewBorder();
+    if (redrawborderstuff || (V_GetMode() == VID_MODEGL)) {
+      // Stereoscopic 3D
+      for(int i = 0; i < num_eyes; i++) {
+#ifdef __3DS__
+        if(i == 0) { // Left eye
+          C3D_FrameDrawOn(hw_screen_l);
+          cur_hw_screen = hw_screen_l;
+        }
+        else if(i == 1) { // Right eye
+          C3D_FrameDrawOn(hw_screen_r);
+          cur_hw_screen = hw_screen_r;
+        }
+
+        R_DrawViewBorder();
+      }
+#endif
+    }
 
     // e6y
     // Boom colormaps should be applied for everything in R_RenderPlayerView
@@ -466,7 +496,7 @@ void D_Display (fixed_t frac)
   else {
     // wipe update
     wipe_EndScreen();
-    D_Wipe();
+    D_Wipe(num_eyes);
   }
 
   // e6y

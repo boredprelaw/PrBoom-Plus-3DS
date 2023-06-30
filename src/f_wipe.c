@@ -102,7 +102,7 @@ static int wipe_initMelt(int ticks)
   return 0;
 }
 
-static int wipe_doMelt(int ticks)
+static int wipe_doMelt(int ticks, int num_eyes)
 {
   dboolean done = true;
   int i;
@@ -156,7 +156,20 @@ static int wipe_doMelt(int ticks)
 #ifdef GL_DOOM
   if (V_GetMode() == VID_MODEGL)
   {
-    gld_wipe_doMelt(ticks, y_lookup);
+    // Stereoscopic 3D
+    for(int i = 0; i < num_eyes; i++) {
+#ifdef __3DS__
+      if(i == 0) { // Left eye
+        C3D_FrameDrawOn(hw_screen_l);
+        cur_hw_screen = hw_screen_l;
+      }
+      else if(i == 1) { // Right eye
+        C3D_FrameDrawOn(hw_screen_r);
+        cur_hw_screen = hw_screen_r;
+      }
+#endif
+      gld_wipe_doMelt(ticks, y_lookup);
+    }
   }
 #endif
   return done;
@@ -248,7 +261,7 @@ int wipe_EndScreen(void)
 }
 
 // killough 3/5/98: reformatted and cleaned up
-int wipe_ScreenWipe(int ticks)
+int wipe_ScreenWipe(int ticks, int num_eyes)
 {
   static dboolean go;                               // when zero, stop the wipe
   if(!render_wipescreen) return 0;//e6y
@@ -259,7 +272,7 @@ int wipe_ScreenWipe(int ticks)
       wipe_initMelt(ticks);
     }
   // do a piece of wipe-in
-  if (wipe_doMelt(ticks))     // final stuff
+  if (wipe_doMelt(ticks, num_eyes))     // final stuff
     {
       wipe_exitMelt(ticks);
       go = 0;

@@ -41,7 +41,7 @@ void R_InitMeltRes(void);
  * SCREEN WIPE PACKAGE
  */
 
-int wipe_ScreenWipe (int ticks);
+int wipe_ScreenWipe (int ticks, int num_eyes);
 int wipe_StartScreen(void);
 int wipe_EndScreen  (void);
 
