@@ -78,8 +78,15 @@
   GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) | \
   GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
-//e6y: new mouse code
-//static SDL_Cursor* cursors[2] = {NULL, NULL};
+// 3DS touchpad (mouse)
+static int ctr_mouse_pos[2] = { 0, 0 };
+
+static int ctr_touch_time_base = 0;
+static int ctr_dbl_tch_time_base = 0;
+
+static int is_ctr_double_touch = 0;
+static int is_ctr_double_held = 0;
+static int is_ctr_touch_down = 0;
 
 static int mouse_currently_grabbed = true;
 
@@ -184,22 +191,6 @@ static int I_TranslateKey(SDL_keysym* key)
 /////////////////////////////////////////////////////////////////////////////////
 // Main input code
 
-/* cph - pulled out common button code logic */
-//e6y static 
-static int I_SDLtoDoomMouseState(Uint32 buttonstate)
-{
-  return 0
-      | (buttonstate & SDL_BUTTON(1) ? 1 : 0)
-      | (buttonstate & SDL_BUTTON(2) ? 2 : 0)
-      | (buttonstate & SDL_BUTTON(3) ? 4 : 0)
-      | (buttonstate & SDL_BUTTON(6) ? 8 : 0)
-      | (buttonstate & SDL_BUTTON(7) ? 16 : 0)
-      | (buttonstate & SDL_BUTTON(4) ? 32 : 0)
-      | (buttonstate & SDL_BUTTON(5) ? 64 : 0)
-      | (buttonstate & SDL_BUTTON(8) ? 128 : 0)
-      ;
-}
-
 static void I_GetEvent(void)
 {
   event_t event;
@@ -239,43 +230,65 @@ static void I_GetEvent(void)
       D_PostEvent(&event);
     }
     break;
+    }
+  } */
 
-    case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:
-    if (mouse_enabled)
+  u32 keys_down = hidKeysDown();
+  u32 keys_up = hidKeysUp();
+
+  if(mouse_currently_grabbed)
+  {
+    // Reset mouse buttons state
+    event.type = ev_mouse;
+    event.data1 = is_ctr_double_held ? (1 << 0) : 0;
+    event.data2 = event.data3 = 0;
+    D_PostEvent(&event);
+
+    if(keys_down & KEY_TOUCH)
     {
-      if (Event->button.button == SDL_BUTTON_WHEELUP)
+      if(is_ctr_double_touch)
+        is_ctr_double_held = (I_GetTime_MS() <= ctr_dbl_tch_time_base + 200) ? 1 : 0;
+
+      touchPosition touch;
+      hidTouchRead(&touch);
+
+      // Set the new relative mouse origin
+      ctr_mouse_pos[0] = touch.px;
+      ctr_mouse_pos[1] = touch.py;
+
+      is_ctr_touch_down = 1;
+      ctr_touch_time_base = I_GetTime_MS();
+    }
+
+    if(keys_up & KEY_TOUCH)
+    {
+      // Treat a quick tap on the screen as a left mouse click
+      if(I_GetTime_MS() <= ctr_touch_time_base + 200)
       {
-        event.type = ev_keydown;
-        event.data1 = KEYD_MWHEELUP;
-        mwheeluptic = gametic;
+        event.type = ev_mouse;
+        event.data1 = (1 << 0);
+        event.data2 = event.data3 = 0;
         D_PostEvent(&event);
-      }
-      else if (Event->button.button == SDL_BUTTON_WHEELDOWN)
-      {
-        event.type = ev_keydown;
-        event.data1 = KEYD_MWHEELDOWN;
-        mwheeldowntic = gametic;
-        D_PostEvent(&event);
+
+        is_ctr_double_touch = 1;
+        ctr_dbl_tch_time_base = I_GetTime_MS();
       }
       else
       {
-        event.type = ev_mouse;
-        event.data1 = I_SDLtoDoomMouseState(SDL_GetMouseState(NULL, NULL));
-        event.data2 = event.data3 = 0;
-        D_PostEvent(&event);
+        is_ctr_double_touch = 0;
       }
-    }
-    break;
 
-    case SDL_QUIT:
-      S_StartSound(NULL, sfx_swtchn);
-      M_QuitDOOM(0);
-
-    default:
-      break;
+      is_ctr_double_held = 0;
+      is_ctr_touch_down = 0;
     }
-  } */
+  }
+  else
+  {
+    // Reset mouse buttons state
+    event.type = ev_mouse;
+    event.data1 = event.data2 = event.data3 = 0;
+    D_PostEvent(&event);
+  }
 
   if(mwheeluptic && mwheeluptic + 1 < gametic)
   {
@@ -871,11 +884,17 @@ static void SmoothMouse(int* x, int* y)
 
 static void I_ReadMouse(void)
 {
-  if (mouse_enabled)
+  if (mouse_enabled && is_ctr_touch_down)
   {
-    int x, y;
+    touchPosition touch;
+    hidTouchRead(&touch);
 
-    //SDL_GetRelativeMouseState(&x, &y);
+    int x = (int)touch.px - ctr_mouse_pos[0];
+    int y = (int)touch.py - ctr_mouse_pos[1];
+
+    ctr_mouse_pos[0] = touch.px;
+    ctr_mouse_pos[1] = touch.py;
+
     SmoothMouse(&x, &y);
 
     if (x != 0 || y != 0)
@@ -883,8 +902,8 @@ static void I_ReadMouse(void)
       event_t event;
       event.type = ev_mousemotion;
       event.data1 = 0;
-      event.data2 = x << 4;
-      event.data3 = -y << 4;
+      event.data2 = x << 6;
+      event.data3 = -y << 6;
 
       D_PostEvent(&event);
     }
