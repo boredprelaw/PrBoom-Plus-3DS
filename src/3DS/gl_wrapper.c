@@ -28,8 +28,8 @@ float hw_stereo_offset;
 
 static int dirty_flags = 0;
 
-static u32 clear_color = 0x000000ff;
-static u32 clear_depth = 0;
+static u32 clear_color = 0x00000000;
+static u32 clear_depth = 0xffffffff;
 
 static int cull_enable = 0;
 static GLenum cull_mode = GL_BACK;
@@ -52,20 +52,20 @@ static int scissor_y = 0;
 static int scissor_width = 240;
 static int scissor_height = 400;
 
-static GLenum tev_combine_func_rgb;
-static GLenum tev_source0_rgb;
-static GLenum tev_source1_rgb;
+static GLenum tev_combine_func_rgb = GL_MODULATE;
+static GLenum tev_source0_rgb = GL_TEXTURE;
+static GLenum tev_source1_rgb = GL_PRIMARY_COLOR;
 
-static GLenum tev_combine_func_alpha;
-static GLenum tev_source0_alpha;
-static GLenum tev_source1_alpha;
+static GLenum tev_combine_func_alpha = GL_MODULATE;
+static GLenum tev_source0_alpha = GL_TEXTURE;
+static GLenum tev_source1_alpha = GL_PRIMARY_COLOR;
 
-static int fog_enable;
-static GLfloat fog_color[4];
-static GLfloat fog_density;
+static int fog_enable = 0;
+static GLfloat fog_color[4] = { 0, 0, 0, 0 };
+static GLfloat fog_density = 1.0f;
 
-static GLfloat cur_color[4];
-static GLfloat cur_texcoord[4];
+static GLfloat cur_color[4] = { 1, 1, 1, 1 };
+static GLfloat cur_texcoord[4] = { 0, 0, 0, 1 };
 
 // Linked list of active GL texture objects
 static gl_c3d_tex *gl_c3d_tex_base = NULL;
@@ -120,6 +120,8 @@ void gl_wrapper_init() {
     MtxStack_Update(&mtx_texture);
 
     cur_mtxstack = &mtx_modelview;
+
+    dirty_flags = 0xffffffff;
 }
 
 void gl_wrapper_cleanup() {
@@ -127,7 +129,7 @@ void gl_wrapper_cleanup() {
 }
 
 void gl_wrapper_perspective(float fovy, float aspect, float znear) {
-    Mtx_PerspStereoTilt(MtxStack_Cur(cur_mtxstack), fovy, 400.0f/240.0f, 1000.0f, znear, hw_stereo_offset, 0.3f, false);
+    Mtx_PerspStereoTilt(MtxStack_Cur(cur_mtxstack), fovy, aspect, 1000.0f, znear, hw_stereo_offset, 0.3f, false);
 }
 
 
