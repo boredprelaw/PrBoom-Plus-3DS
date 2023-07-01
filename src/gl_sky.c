@@ -362,23 +362,7 @@ void gld_DrawScreenSkybox(void)
     int i, k;
     float w;
 
-    gld_EnableTexture2D(false);
-
-    for (i = gld_drawinfo.num_items[GLDIT_SWALL] - 1; i >= 0; i--)
-    {
-      GLWall* wall = gld_drawinfo.items[GLDIT_SWALL][i].item.wall;
-
-      glBegin(GL_TRIANGLE_STRIP);
-      glVertex3f(wall->glseg->x1,wall->ytop,wall->glseg->z1);
-      glVertex3f(wall->glseg->x1,wall->ybottom,wall->glseg->z1);
-      glVertex3f(wall->glseg->x2,wall->ytop,wall->glseg->z2);
-      glVertex3f(wall->glseg->x2,wall->ybottom,wall->glseg->z2);
-      glEnd();
-    }
-
-    gld_EnableTexture2D(true);
-
-    glClear(GL_COLOR_BUFFER_BIT);
+    gld_DrawFakeSkyStrips();
 
     if (!mlook_or_fov)
     {
@@ -416,7 +400,7 @@ void gld_DrawScreenSkybox(void)
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     gld_BindTexture(wall->gltexture, 0);
-    w = 160.0f * SCREENWIDTH / WIDE_SCREENWIDTH;
+    w = 250.0f;
     glBegin(GL_TRIANGLE_STRIP);
       glTexCoord2f(fU1, fV1); glVertex3f(-w, +100.5f, -screen_skybox_zplane);
       glTexCoord2f(fU1, fV2); glVertex3f(-w, -100.5f, -screen_skybox_zplane);

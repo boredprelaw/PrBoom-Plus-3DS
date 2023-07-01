@@ -863,8 +863,14 @@ void glTranslatef(GLfloat x, GLfloat y, GLfloat z) {
 }
 
 void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) {
-    C3D_FVec axis = { x, y, z };
-    Mtx_Rotate(MtxStack_Cur(cur_mtxstack), axis, angle, true);
+    // TODO: This is really lazy, but it works, and
+    // Mtx_Rotate was giving me shit for some reason...
+    if(x == 1.0f)
+        Mtx_RotateX(MtxStack_Cur(cur_mtxstack), C3D_AngleFromDegrees(angle), true);
+    else if(y == 1.0f)
+        Mtx_RotateY(MtxStack_Cur(cur_mtxstack), C3D_AngleFromDegrees(angle), true);
+    else if(z == 1.0f)
+        Mtx_RotateZ(MtxStack_Cur(cur_mtxstack), C3D_AngleFromDegrees(angle), true);
 }
 
 void glScalef(GLfloat x, GLfloat y, GLfloat z) {
