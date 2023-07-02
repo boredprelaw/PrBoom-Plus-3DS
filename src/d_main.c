@@ -277,7 +277,7 @@ void D_Display (fixed_t frac)
 
   if(V_GetMode() == VID_MODEGL)
   {
-    stereo_offs = osGet3DSliderState() / 10;
+    stereo_offs = osGet3DSliderState() / 18;
     num_eyes = (stereo_offs > 0.0f) ? 2 : 1;
   }
   else // Software rendered, no 3D

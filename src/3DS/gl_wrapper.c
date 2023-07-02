@@ -238,7 +238,7 @@ void gl_wrapper_cleanup() {
 }
 
 void gl_wrapper_perspective(float fovy, float aspect, float znear) {
-    Mtx_PerspStereoTilt(MtxStack_Cur(cur_mtxstack), fovy, aspect, 1000.0f, znear, hw_stereo_offset, 0.3f, false);
+    Mtx_PerspStereoTilt(MtxStack_Cur(cur_mtxstack), fovy, aspect, 1000.0f, znear, hw_stereo_offset, 0.15f, false);
 }
 
 void gl_wrapper_swap_buffers() {
@@ -478,7 +478,7 @@ static inline void _update_dirty_render_states() {
     }
     if(dirty_flags & DIRTY_FLAGS_FOG)
     {
-        FogLut_Exp(&fog_Lut, fog_density * 16.0f, 1.0f, 0.01f, 1.0f);
+        FogLut_Exp(&fog_Lut, fog_density * 12.0f, 1.0f, 0.01f, 1.0f);
         C3D_FogGasMode(fog_enable ? GPU_FOG : GPU_NO_FOG, GPU_DEPTH_DENSITY, true);
 
         C3D_FogColor( ((int)(fog_color[0] * 255) << 16) |
