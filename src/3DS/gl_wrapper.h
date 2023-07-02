@@ -160,6 +160,7 @@ void gl_wrapper_cleanup();
 
 void gl_wrapper_perspective(float fovy, float aspect, float znear);
 
+void gl_wrapper_swap_buffers();
 
 //========== GRAPHICS FUNCTIONS ==========
 

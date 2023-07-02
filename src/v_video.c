@@ -1688,15 +1688,3 @@ int V_BestColor(const unsigned char *palette, int r, int g, int b)
 
   return bestcolor;
 }
-
-void V_ChangeScreenResolution(void)
-{
-  I_UpdateVideoMode();
-
-#ifdef GL_DOOM
-  if (V_GetMode() == VID_MODEGL)
-  {
-    gld_PreprocessLevel();
-  }
-#endif
-}

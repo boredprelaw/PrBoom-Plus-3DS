@@ -256,8 +256,6 @@ void V_DestroyUnusedTrueColorPalettes(void);
 // CPhipps - function to set the palette to palette number pal.
 void V_SetPalette(int pal);
 
-void V_ChangeScreenResolution(void);
-
 // CPhipps - function to plot a pixel
 
 // V_PlotPixel

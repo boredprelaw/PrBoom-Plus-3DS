@@ -71,12 +71,6 @@
 #include "i_main.h"
 
 #include <3ds.h>
-#include <citro3d.h>
-
-#define DISPLAY_TRANSFER_FLAGS \
-  (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
-  GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) | \
-  GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
 // 3DS touchpad (mouse)
 static int ctr_mouse_pos[2] = { 0, 0 };
@@ -100,9 +94,6 @@ extern void M_QuitDOOM(int choice);
 
 int vanilla_keymap;
 static void *screen = NULL;
-C3D_RenderTarget *hw_screen_l = NULL;
-C3D_RenderTarget *hw_screen_r = NULL;
-C3D_RenderTarget *cur_hw_screen = NULL;
 
 ////////////////////////////////////////////////////////////////////////////
 // Input code
@@ -380,11 +371,7 @@ inline static dboolean I_SkipFrame(void)
 
 void I_SwapBuffers(void)
 {
-  // End frame
-  C3D_FrameEnd(0);
-
-  // Start next frame
-  C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+  gl_wrapper_swap_buffers();
 }
 
 void I_ShutdownGraphics(void)
@@ -490,10 +477,13 @@ void I_FinishUpdate (void)
 
 static void I_ShutdownSDL(void)
 {
+  gfxExit();
 }
 
 void I_PreInitGraphics(void)
 {
+  gfxInitDefault();
+
   I_AtExit(I_ShutdownSDL, true);
 }
 
@@ -730,40 +720,6 @@ video_mode_t I_GetModeFromString(const char *modestr)
 
 void I_UpdateVideoMode(void)
 {
-  // Was HW renderer just used?
-  if(hw_screen_l)
-  {
-    I_InitScreenResolution();
-
-#ifdef GL_DOOM
-    gld_CleanMemory();
-    // hires patches
-    gld_CleanStaticMemory();
-#endif
-
-    C3D_RenderTargetDelete(hw_screen_l);
-    C3D_RenderTargetDelete(hw_screen_r);
-    hw_screen_l = NULL;
-    hw_screen_r = NULL;
-
-    gl_wrapper_cleanup();
-
-    C3D_Fini();
-  }
-  // Was SW renderer just used?
-  else if(screen)
-  {
-    I_InitScreenResolution();
-
-    free(screen);
-    screen = NULL;
-
-    gfxExit();
-  }
-
-  gfxInit(GSP_RGBA8_OES, GSP_RGBA8_OES, false);
-  gfxSet3D(true);
-
   if (V_GetMode() != VID_MODEGL)
   {
     GSPGPU_FramebufferFormat top_fmt;
@@ -786,6 +742,7 @@ void I_UpdateVideoMode(void)
     }
 
     gfxSetScreenFormat(GFX_TOP, top_fmt);
+    gfxSet3D(false);
 
     screen = malloc(screen_pitch * 240);
 
@@ -801,22 +758,10 @@ void I_UpdateVideoMode(void)
   }
   else
   {
-    // TODO: Keep an eye on this. So far, we're using immediate drawing,
-    // which gobbles up a LOT of the command buffer. This should be big enough
-    // for the vanilla game to handle, but maps like nuts.wad will shit the bed...
-    C3D_Init(0x200000);
-
-    hw_screen_l = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
-    hw_screen_r = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
-    C3D_RenderTargetSetOutput(hw_screen_l, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
-    C3D_RenderTargetSetOutput(hw_screen_r, GFX_TOP, GFX_RIGHT, DISPLAY_TRANSFER_FLAGS);
+    gfxSetScreenFormat(GFX_TOP, GSP_RGBA8_OES);
+    gfxSet3D(true);
 
     gl_wrapper_init();
-
-    // Start first frame
-    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-    C3D_FrameDrawOn(hw_screen_l);
-    cur_hw_screen = hw_screen_l;
   }
 
   // e6y: wide-res

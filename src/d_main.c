@@ -234,13 +234,15 @@ static void D_Wipe(int num_eyes)
       // Stereoscopic 3D
       for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
-        if(i == 0) { // Left eye
-          C3D_FrameDrawOn(hw_screen_l);
-          cur_hw_screen = hw_screen_l;
-        }
-        else if(i == 1) { // Right eye
-          C3D_FrameDrawOn(hw_screen_r);
-          cur_hw_screen = hw_screen_r;
+        if (V_GetMode() == VID_MODEGL) {
+          if(i == 0) { // Left eye
+            C3D_FrameDrawOn(hw_screen_l);
+            cur_hw_screen = hw_screen_l;
+          }
+          else if(i == 1) { // Right eye
+            C3D_FrameDrawOn(hw_screen_r);
+            cur_hw_screen = hw_screen_r;
+          }
         }
 #endif
         M_Drawer();                   // menu is drawn even on top of wipes
@@ -270,8 +272,19 @@ void D_Display (fixed_t frac)
   dboolean viewactive = false, isborder = false;
 
 #ifdef __3DS__
-  float stereo_offs = osGet3DSliderState() / 10;
-  int num_eyes = (stereo_offs > 0.0f) ? 2 : 1;
+  float stereo_offs;
+  int num_eyes;
+
+  if(V_GetMode() == VID_MODEGL)
+  {
+    stereo_offs = osGet3DSliderState() / 10;
+    num_eyes = (stereo_offs > 0.0f) ? 2 : 1;
+  }
+  else // Software rendered, no 3D
+  {
+    stereo_offs = 0.0f;
+    num_eyes = 1;
+  }
 #else
   float stereo_offs = 0.0f;
   int num_eyes = 1;
@@ -326,13 +339,15 @@ void D_Display (fixed_t frac)
     // Stereoscopic 3D
     for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
-      if(i == 0) { // Left eye
-        C3D_FrameDrawOn(hw_screen_l);
-        cur_hw_screen = hw_screen_l;
-      }
-      else if(i == 1) { // Right eye
-        C3D_FrameDrawOn(hw_screen_r);
-        cur_hw_screen = hw_screen_r;
+      if (V_GetMode() == VID_MODEGL) {
+        if(i == 0) { // Left eye
+          C3D_FrameDrawOn(hw_screen_l);
+          cur_hw_screen = hw_screen_l;
+        }
+        else if(i == 1) { // Right eye
+          C3D_FrameDrawOn(hw_screen_r);
+          cur_hw_screen = hw_screen_r;
+        }
       }
 #endif
 
@@ -380,13 +395,15 @@ void D_Display (fixed_t frac)
       // Stereoscopic 3D
       for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
-        if(i == 0) { // Left eye
-          C3D_FrameDrawOn(hw_screen_l);
-          cur_hw_screen = hw_screen_l;
-        }
-        else if(i == 1) { // Right eye
-          C3D_FrameDrawOn(hw_screen_r);
-          cur_hw_screen = hw_screen_r;
+        if (V_GetMode() == VID_MODEGL) {
+          if(i == 0) { // Left eye
+            C3D_FrameDrawOn(hw_screen_l);
+            cur_hw_screen = hw_screen_l;
+          }
+          else if(i == 1) { // Right eye
+            C3D_FrameDrawOn(hw_screen_r);
+            cur_hw_screen = hw_screen_r;
+          }
         }
 #endif
 
@@ -405,15 +422,17 @@ void D_Display (fixed_t frac)
     // Stereoscopic 3D
     for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
-      if(i == 0) { // Left eye
-        C3D_FrameDrawOn(hw_screen_l);
-        cur_hw_screen = hw_screen_l;
-        hw_stereo_offset = -stereo_offs;
-      }
-      else if(i == 1) { // Right eye
-        C3D_FrameDrawOn(hw_screen_r);
-        cur_hw_screen = hw_screen_r;
-        hw_stereo_offset = stereo_offs;
+      if (V_GetMode() == VID_MODEGL) {
+        if(i == 0) { // Left eye
+          C3D_FrameDrawOn(hw_screen_l);
+          cur_hw_screen = hw_screen_l;
+          hw_stereo_offset = -stereo_offs;
+        }
+        else if(i == 1) { // Right eye
+          C3D_FrameDrawOn(hw_screen_r);
+          cur_hw_screen = hw_screen_r;
+          hw_stereo_offset = stereo_offs;
+        }
       }
 #endif
 
@@ -469,13 +488,15 @@ void D_Display (fixed_t frac)
   // Stereoscopic 3D
   for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
-    if(i == 0) { // Left eye
-      C3D_FrameDrawOn(hw_screen_l);
-      cur_hw_screen = hw_screen_l;
-    }
-    else if(i == 1) { // Right eye
-      C3D_FrameDrawOn(hw_screen_r);
-      cur_hw_screen = hw_screen_r;
+    if (V_GetMode() == VID_MODEGL) {
+      if(i == 0) { // Left eye
+        C3D_FrameDrawOn(hw_screen_l);
+        cur_hw_screen = hw_screen_l;
+      }
+      else if(i == 1) { // Right eye
+        C3D_FrameDrawOn(hw_screen_r);
+        cur_hw_screen = hw_screen_r;
+      }
     }
 #endif
 

@@ -304,7 +304,6 @@ void M_ChangeTextureParams(void);
 void M_General(int);      // killough 10/98
 void M_DrawCompat(void);  // killough 10/98
 void M_DrawGeneral(void); // killough 10/98
-void M_ChangeVideoMode(void);
 void M_ChangeApplyPalette(void);
 
 menu_t NewDef;                                              // phares 5/04/98
@@ -3251,7 +3250,7 @@ static const char *gltexformats[] = {
 
 setup_menu_t gen_settings1[] = { // General Settings screen1
   {"Video",                          S_SKIP|S_TITLE,     m_null, G_X, G_Y+ 1*8},
-  {"Video mode",                     S_CHOICE,           m_null, G_X, G_Y+ 2*8, {"videomode"}, 0, 0, M_ChangeVideoMode, videomodes},
+  {"Video mode",                     S_CHOICE|S_PRGWARN, m_null, G_X, G_Y+ 2*8, {"videomode"}, 0, 0, 0, videomodes},
   {"Aspect Ratio",                   S_CHOICE,           m_null, G_X, G_Y+ 3*8, {"render_aspect"}, 0, 0, M_ChangeAspectRatio, render_aspects_list},
   {"Status Bar and Menu Appearance", S_CHOICE,           m_null, G_X, G_Y+ 4*8, {"render_stretch_hud"}, 0, 0, M_ChangeStretch, render_stretch_list},
   
@@ -3466,11 +3465,6 @@ void M_Trans(void) // To reset translucency after setting it in menu
 
   if (general_translucency)
     R_InitTranMap(0);
-}
-
-void M_ChangeVideoMode(void)
-{
-  V_ChangeScreenResolution();
 }
 
 void M_ChangeDemoSmoothTurns(void)

@@ -366,7 +366,7 @@ default_t defaults[] =
   {"full_sounds",{&full_sounds},{0},0,1,def_bool,ss_none}, // disable sound cutoffs
 
   {"Video settings",{NULL},{0},UL,UL,def_none,ss_none},
-  {"videomode",{NULL, &default_videomode},{0,"32bit"},UL,UL,def_str,ss_none},
+  {"videomode",{NULL, &default_videomode},{0,"OpenGL"},UL,UL,def_str,ss_none},
   {"translucency",{&default_translucency},{1},0,1,   // phares
    def_bool,ss_none}, // enables translucency
   {"tran_filter_pct",{&tran_filter_pct},{66},0,100,         // killough 2/21/98
@@ -968,8 +968,8 @@ default_t defaults[] =
    def_bool,ss_stat},
   {"gl_texture_hires_dir", {NULL,&gl_texture_hires_dir}, {0,""},UL,UL,
    def_str,ss_none},
-  {"gl_lightmode",{(int*)&gl_lightmode_default},{gl_lightmode_glboom},
-   gl_lightmode_glboom, gl_lightmode_last-1, def_int,ss_none},
+  {"gl_lightmode",{(int*)&gl_lightmode_default},{gl_lightmode_fogbased},
+   gl_lightmode_fogbased, gl_lightmode_last-1, def_int,ss_none},
   {"gl_light_ambient", {&gl_light_ambient},  {20},1,255,
    def_int,ss_stat},
   {"gl_fog", {&gl_fog},  {1},0,1,

@@ -6,6 +6,11 @@
 #include <citro3d.h>
 #include "vshader_shbin.h"
 
+#define DISPLAY_TRANSFER_FLAGS \
+    (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
+    GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) | \
+    GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
+
 typedef enum _gl_c3d_dirty_flags {
     DIRTY_FLAGS_CULL    = 0x0001,
     DIRTY_FLAGS_BLEND   = 0x0002,
@@ -26,46 +31,46 @@ typedef struct _gl_c3d_tex {
 extern C3D_RenderTarget *cur_hw_screen;
 float hw_stereo_offset;
 
-static int dirty_flags = 0;
+static int dirty_flags;
 
-static u32 clear_color = 0x00000000;
-static u32 clear_depth = 0xffffffff;
+static u32 clear_color;
+static u32 clear_depth;
 
-static int cull_enable = 0;
-static GLenum cull_mode = GL_BACK;
+static int cull_enable;
+static GLenum cull_mode;
 
-static int blend_enable = 0;
-static GLenum blend_sfactor = GL_ONE;
-static GLenum blend_dfactor = GL_ZERO;
+static int blend_enable;
+static GLenum blend_sfactor;
+static GLenum blend_dfactor;
 
-static int depth_enable = 0;
-static GLenum depth_func = GL_LESS;
-static GLboolean depth_mask = GL_TRUE;
+static int depth_enable;
+static GLenum depth_func;
+static GLboolean depth_mask;
 
-static int alpha_enable = 0;
-static GLenum alpha_func = GL_ALWAYS;
-static float alpha_ref = 0.0f;
+static int alpha_enable;
+static GLenum alpha_func;
+static float alpha_ref;
 
-static int scissor_enable = 0;
-static int scissor_x = 0;
-static int scissor_y = 0;
-static int scissor_width = 240;
-static int scissor_height = 400;
+static int scissor_enable;
+static int scissor_x;
+static int scissor_y;
+static int scissor_width;
+static int scissor_height;
 
-static GLenum tev_combine_func_rgb = GL_MODULATE;
-static GLenum tev_source0_rgb = GL_TEXTURE;
-static GLenum tev_source1_rgb = GL_PRIMARY_COLOR;
+static GLenum tev_combine_func_rgb;
+static GLenum tev_source0_rgb;
+static GLenum tev_source1_rgb;
 
-static GLenum tev_combine_func_alpha = GL_MODULATE;
-static GLenum tev_source0_alpha = GL_TEXTURE;
-static GLenum tev_source1_alpha = GL_PRIMARY_COLOR;
+static GLenum tev_combine_func_alpha;
+static GLenum tev_source0_alpha;
+static GLenum tev_source1_alpha;
 
-static int fog_enable = 0;
-static GLfloat fog_color[4] = { 0, 0, 0, 0 };
-static GLfloat fog_density = 1.0f;
+static int fog_enable;
+static GLfloat fog_color[4];
+static GLfloat fog_density;
 
-static GLfloat cur_color[4] = { 1, 1, 1, 1 };
-static GLfloat cur_texcoord[4] = { 0, 0, 0, 1 };
+static GLfloat cur_color[4];
+static GLfloat cur_texcoord[4];
 
 // Linked list of active GL texture objects
 static gl_c3d_tex *gl_c3d_tex_base = NULL;
@@ -74,6 +79,10 @@ static gl_c3d_tex *gl_c3d_tex_head = NULL;
 // Currently bound GL texture
 static gl_c3d_tex *cur_texture = NULL;
 
+
+C3D_RenderTarget *hw_screen_l = NULL;
+C3D_RenderTarget *hw_screen_r = NULL;
+C3D_RenderTarget *cur_hw_screen = NULL;
 
 static DVLB_s* vshader_dvlb;
 static shaderProgram_s program;
@@ -84,8 +93,70 @@ static C3D_FogLut fog_Lut;
 static C3D_MtxStack mtx_modelview, mtx_projection, mtx_texture;
 static C3D_MtxStack *cur_mtxstack;
 
+static inline void _set_default_render_states() {
+    clear_color = 0x00000000;
+    clear_depth = 0xffffffff;
+
+    cull_enable = 0;
+    cull_mode = GL_BACK;
+
+    blend_enable = 0;
+    blend_sfactor = GL_ONE;
+    blend_dfactor = GL_ZERO;
+
+    depth_enable = 0;
+    depth_func = GL_LESS;
+    depth_mask = GL_TRUE;
+
+    alpha_enable = 0;
+    alpha_func = GL_ALWAYS;
+    alpha_ref = 0.0f;
+
+    scissor_enable = 0;
+    scissor_x = 0;
+    scissor_y = 0;
+    scissor_width = 240;
+    scissor_height = 400;
+
+    tev_combine_func_rgb = GL_MODULATE;
+    tev_source0_rgb = GL_TEXTURE;
+    tev_source1_rgb = GL_PRIMARY_COLOR;
+
+    tev_combine_func_alpha = GL_MODULATE;
+    tev_source0_alpha = GL_TEXTURE;
+    tev_source1_alpha = GL_PRIMARY_COLOR;
+
+    fog_enable = 0;
+
+    fog_color[0] = 0.0f;
+    fog_color[1] = 0.0f;
+    fog_color[2] = 0.0f;
+    fog_color[3] = 0.0f;
+
+    fog_density = 1.0f;
+
+    cur_color[0] = 1.0f;
+    cur_color[1] = 1.0f;
+    cur_color[2] = 1.0f;
+    cur_color[3] = 1.0f;
+
+    cur_texcoord[0] = 0.0f;
+    cur_texcoord[1] = 0.0f;
+    cur_texcoord[2] = 0.0f;
+    cur_texcoord[3] = 1.0f;
+}
 
 void gl_wrapper_init() {
+    // TODO: Keep an eye on this. So far, we're using immediate drawing,
+    // which gobbles up a LOT of the command buffer. This should be big enough
+    // for the vanilla game to handle, but maps like nuts.wad will shit the bed...
+    C3D_Init(0x200000);
+
+    hw_screen_l = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
+    hw_screen_r = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH16);
+    C3D_RenderTargetSetOutput(hw_screen_l, GFX_TOP, GFX_LEFT, DISPLAY_TRANSFER_FLAGS);
+    C3D_RenderTargetSetOutput(hw_screen_r, GFX_TOP, GFX_RIGHT, DISPLAY_TRANSFER_FLAGS);
+
     // Load the vertex shader, create a shader program and bind it
     vshader_dvlb = DVLB_ParseFile((u32*)vshader_shbin, vshader_shbin_size);
     shaderProgramInit(&program);
@@ -119,17 +190,63 @@ void gl_wrapper_init() {
     Mtx_Identity(MtxStack_Cur(&mtx_texture));
     MtxStack_Update(&mtx_texture);
 
+    // Default matrix mode
     cur_mtxstack = &mtx_modelview;
 
+    // Set default render state parameters
+    _set_default_render_states();
     dirty_flags = 0xffffffff;
+
+    // Start first frame
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+    C3D_FrameDrawOn(hw_screen_l);
+    cur_hw_screen = hw_screen_l;
+}
+
+static inline void _release_all_gl_textures() {
+    gl_c3d_tex *gl_delete_tex = gl_c3d_tex_base;
+
+    while(gl_delete_tex) {
+        if(gl_delete_tex->c3d_tex.data)
+            linearFree(gl_delete_tex->c3d_tex.data);
+
+        gl_delete_tex = gl_delete_tex->next;
+    }
+
+    gl_c3d_tex_base = NULL;
+    gl_c3d_tex_head = NULL;
+
+    cur_texture = NULL;
 }
 
 void gl_wrapper_cleanup() {
+    // Release allocated textures
+    _release_all_gl_textures();
+
+    // Release shader objects
+    shaderProgramFree(&program);
     DVLB_Free(vshader_dvlb);
+
+    // Release framebuffer objects
+    C3D_RenderTargetDelete(hw_screen_l);
+    C3D_RenderTargetDelete(hw_screen_r);
+    hw_screen_l = NULL;
+    hw_screen_r = NULL;
+    cur_hw_screen = NULL;
+
+    C3D_Fini();
 }
 
 void gl_wrapper_perspective(float fovy, float aspect, float znear) {
     Mtx_PerspStereoTilt(MtxStack_Cur(cur_mtxstack), fovy, aspect, 1000.0f, znear, hw_stereo_offset, 0.3f, false);
+}
+
+void gl_wrapper_swap_buffers() {
+    // End frame
+    C3D_FrameEnd(0);
+
+    // Start next frame
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 }
 
 
