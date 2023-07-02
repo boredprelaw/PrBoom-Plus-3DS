@@ -461,7 +461,7 @@ static inline void _update_dirty_render_states() {
     }
     if(dirty_flags & DIRTY_FLAGS_SCISSOR)
     {
-        // C3D_SetScissor(scissor_enable ? GPU_SCISSOR_NORMAL : GPU_SCISSOR_DISABLE, scissor_x, scissor_y, scissor_width, scissor_height);
+        C3D_SetScissor(scissor_enable ? GPU_SCISSOR_NORMAL : GPU_SCISSOR_DISABLE, scissor_x, scissor_y, scissor_x + scissor_width, scissor_y + scissor_height);
     }
     if(dirty_flags & DIRTY_FLAGS_TEV)
     {
