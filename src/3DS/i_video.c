@@ -72,6 +72,9 @@
 
 #include <3ds.h>
 
+// 0 = mouse, 1 = keyboard
+static int ctr_input_mode = 0;
+
 // 3DS touchpad (mouse)
 static int ctr_mouse_pos[2] = { 0, 0 };
 
@@ -81,6 +84,8 @@ static int ctr_dbl_tch_time_base = 0;
 static int is_ctr_double_touch = 0;
 static int is_ctr_double_held = 0;
 static int is_ctr_touch_down = 0;
+
+static int ctr_key_down = 0;
 
 static int mouse_currently_grabbed = true;
 
@@ -108,194 +113,142 @@ video_mode_t I_GetModeFromString(const char *modestr);
 /////////////////////////////////////////////////////////////////////////////////
 // Keyboard handling
 
-//
-//  Translates the key currently in key
-//
-static int I_TranslateKey(SDL_keysym* key)
-{
-  int rc = 0;
-
-  switch (key->sym) {
-  case SDLK_LEFT: rc = KEYD_LEFTARROW;  break;
-  case SDLK_RIGHT:  rc = KEYD_RIGHTARROW; break;
-  case SDLK_DOWN: rc = KEYD_DOWNARROW;  break;
-  case SDLK_UP:   rc = KEYD_UPARROW;  break;
-  case SDLK_ESCAPE: rc = KEYD_ESCAPE; break;
-  case SDLK_RETURN: rc = KEYD_ENTER;  break;
-  case SDLK_TAB:  rc = KEYD_TAB;    break;
-  case SDLK_F1:   rc = KEYD_F1;   break;
-  case SDLK_F2:   rc = KEYD_F2;   break;
-  case SDLK_F3:   rc = KEYD_F3;   break;
-  case SDLK_F4:   rc = KEYD_F4;   break;
-  case SDLK_F5:   rc = KEYD_F5;   break;
-  case SDLK_F6:   rc = KEYD_F6;   break;
-  case SDLK_F7:   rc = KEYD_F7;   break;
-  case SDLK_F8:   rc = KEYD_F8;   break;
-  case SDLK_F9:   rc = KEYD_F9;   break;
-  case SDLK_F10:  rc = KEYD_F10;    break;
-  case SDLK_F11:  rc = KEYD_F11;    break;
-  case SDLK_F12:  rc = KEYD_F12;    break;
-  case SDLK_BACKSPACE:  rc = KEYD_BACKSPACE;  break;
-  case SDLK_DELETE: rc = KEYD_DEL;  break;
-  case SDLK_INSERT: rc = KEYD_INSERT; break;
-  case SDLK_PAGEUP: rc = KEYD_PAGEUP; break;
-  case SDLK_PAGEDOWN: rc = KEYD_PAGEDOWN; break;
-  case SDLK_HOME: rc = KEYD_HOME; break;
-  case SDLK_END:  rc = KEYD_END;  break;
-  case SDLK_PAUSE:  rc = KEYD_PAUSE;  break;
-  case SDLK_EQUALS: rc = KEYD_EQUALS; break;
-  case SDLK_MINUS:  rc = KEYD_MINUS;  break;
-  case SDLK_KP0:  rc = KEYD_KEYPAD0;  break;
-  case SDLK_KP1:  rc = KEYD_KEYPAD1;  break;
-  case SDLK_KP2:  rc = KEYD_KEYPAD2;  break;
-  case SDLK_KP3:  rc = KEYD_KEYPAD3;  break;
-  case SDLK_KP4:  rc = KEYD_KEYPAD4;  break;
-  case SDLK_KP5:  rc = KEYD_KEYPAD5;  break;
-  case SDLK_KP6:  rc = KEYD_KEYPAD6;  break;
-  case SDLK_KP7:  rc = KEYD_KEYPAD7;  break;
-  case SDLK_KP8:  rc = KEYD_KEYPAD8;  break;
-  case SDLK_KP9:  rc = KEYD_KEYPAD9;  break;
-  case SDLK_KP_PLUS:  rc = KEYD_KEYPADPLUS; break;
-  case SDLK_KP_MINUS: rc = KEYD_KEYPADMINUS;  break;
-  case SDLK_KP_DIVIDE:  rc = KEYD_KEYPADDIVIDE; break;
-  case SDLK_KP_MULTIPLY: rc = KEYD_KEYPADMULTIPLY; break;
-  case SDLK_KP_ENTER: rc = KEYD_KEYPADENTER;  break;
-  case SDLK_KP_PERIOD:  rc = KEYD_KEYPADPERIOD; break;
-  case SDLK_LSHIFT:
-  case SDLK_RSHIFT: rc = KEYD_RSHIFT; break;
-  case SDLK_LCTRL:
-  case SDLK_RCTRL:  rc = KEYD_RCTRL;  break;
-  case SDLK_LALT:
-  case SDLK_LSUPER:
-  case SDLK_RALT:
-  case SDLK_RSUPER:  rc = KEYD_RALT;   break;
-  case SDLK_CAPSLOCK: rc = KEYD_CAPSLOCK; break;
-  case SDLK_PRINT: rc = KEYD_PRINTSC; break;
-  case SDLK_SCROLLOCK: rc = KEYD_SCROLLLOCK; break;
-  default:    rc = key->sym;    break;
-  }
-
-  return rc;
-
-}
+static char ctr_kb_map[40*14] = {
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x1B,0x00,0x00,0xBB,0x00,0xBC,0x00,0xBD,0x00,0xBE,0x00,0x00,0xBF,0x00,0xC0,0x00,0xC1,0x00,0xC2,0x00,0x00,0xC3,0x00,0xC4,0x00,0xD7,0x00,0xD8,0x00,0x00,0x00,0x00,0x00,0xFE,0x00,0xC6,0x00,0xff,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x60,0x00,0x31,0x00,0x32,0x00,0x33,0x00,0x34,0x00,0x35,0x00,0x36,0x00,0x37,0x00,0x38,0x00,0x39,0x00,0x30,0x00,0x2D,0x00,0x3D,0x00,0x7F,0x7F,0x7F,0x00,0x00,0xD2,0x00,0xC7,0x00,0xC9,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x09,0x09,0x09,0x00,0x00,0x71,0x00,0x77,0x00,0x65,0x00,0x72,0x00,0x74,0x00,0x79,0x00,0x75,0x00,0x69,0x00,0x6F,0x00,0x70,0x00,0x5B,0x00,0x5D,0x00,0x0D,0x0D,0x00,0x00,0xC8,0x00,0xCF,0x00,0xD1,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0D,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0xBA,0xBA,0xBA,0xBA,0x00,0x00,0x61,0x00,0x73,0x00,0x64,0x00,0x66,0x00,0x67,0x00,0x68,0x00,0x6A,0x00,0x6B,0x00,0x6C,0x00,0x3B,0x00,0x27,0x00,0x23,0x00,0x0D,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0xB6,0xB6,0xB6,0xB6,0x00,0x5C,0x00,0x7A,0x00,0x78,0x00,0x63,0x00,0x76,0x00,0x62,0x00,0x6E,0x00,0x6D,0x00,0x2C,0x00,0x2E,0x00,0x2F,0x00,0xB6,0xB6,0xB6,0xB6,0x00,0x00,0x00,0x00,0xad,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x9D,0x9D,0x00,0xB8,0xB8,0x00,0xB8,0xB8,0x00,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0xB8,0xB8,0x00,0x00,0x00,0x00,0xB8,0xB8,0x00,0xB8,0xB8,0x00,0x00,0xac,0x00,0xaf,0x00,0xae,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
 
 /////////////////////////////////////////////////////////////////////////////////
 // Main input code
+
+static int I_IsPointInRect(int px, int py, int x1, int y1, int x2, int y2)
+{
+  return (px >= x1) && (px <= x2) && (py >= y1) && (py <= y2);
+}
 
 static void I_GetEvent(void)
 {
   event_t event;
 
-  SDL_Event SDLEvent;
-  SDL_Event *Event = &SDLEvent;
-
-  static int mwheeluptic = 0, mwheeldowntic = 0;
-
-  /* while (SDL_PollEvent(Event))
-  {
-    switch (Event->type) {
-    case SDL_KEYDOWN:
-      if (Event->key.keysym.mod & KMOD_LALT)
-      {
-        // Prevent executing action on Alt-Tab
-        if (Event->key.keysym.sym == SDLK_TAB)
-        {
-          break;
-        }
-        // Immediately exit on Alt+F4 ("Boss Key")
-        else if (Event->key.keysym.sym == SDLK_F4)
-        {
-          I_SafeExit(0);
-          break;
-        }
-      }
-      event.type = ev_keydown;
-      event.data1 = I_TranslateKey(&Event->key.keysym);
-      D_PostEvent(&event);
-      break;
-
-    case SDL_KEYUP:
-    {
-      event.type = ev_keyup;
-      event.data1 = I_TranslateKey(&Event->key.keysym);
-      D_PostEvent(&event);
-    }
-    break;
-    }
-  } */
-
   u32 keys_down = hidKeysDown();
   u32 keys_up = hidKeysUp();
 
-  if(mouse_currently_grabbed)
+  touchPosition touch;
+  hidTouchRead(&touch);
+
+  if((keys_down & KEY_TOUCH) && I_IsPointInRect(touch.px, touch.py, 32, 208, 120, 240))
   {
-    // Reset mouse buttons state
-    event.type = ev_mouse;
-    event.data1 = is_ctr_double_held ? (1 << 0) : 0;
-    event.data2 = event.data3 = 0;
-    D_PostEvent(&event);
+    ctr_input_mode = !ctr_input_mode;
+    return;
+  }
 
-    if(keys_down & KEY_TOUCH)
+  if(ctr_input_mode) // Keyboard
+  {
+    for(int y = 0; y < 14; y++)
     {
-      if(is_ctr_double_touch)
-        is_ctr_double_held = (I_GetTime_MS() <= ctr_dbl_tch_time_base + 200) ? 1 : 0;
+      for(int x = 0; x < 40; x++)
+      {
+        if((keys_down & KEY_TOUCH) && I_IsPointInRect(touch.px, touch.py, (x*8), (y*8), (x*8) + 8, (y*8) + 8))
+        {
+          int translate_key = ctr_kb_map[(y*40) + x];
 
-      touchPosition touch;
-      hidTouchRead(&touch);
+          if(translate_key != 0)
+          {
+            ctr_key_down = translate_key;
 
-      // Set the new relative mouse origin
-      ctr_mouse_pos[0] = touch.px;
-      ctr_mouse_pos[1] = touch.py;
-
-      is_ctr_touch_down = 1;
-      ctr_touch_time_base = I_GetTime_MS();
+            event.type = ev_keydown;
+            event.data1 = translate_key;
+            D_PostEvent(&event);
+          }
+        }
+      }
     }
 
-    if(keys_up & KEY_TOUCH)
+    if((keys_up & KEY_TOUCH) && ctr_key_down != 0)
     {
-      // Treat a quick tap on the screen as a left mouse click
-      if(I_GetTime_MS() <= ctr_touch_time_base + 200)
-      {
-        event.type = ev_mouse;
-        event.data1 = (1 << 0);
-        event.data2 = event.data3 = 0;
-        D_PostEvent(&event);
-
-        is_ctr_double_touch = 1;
-        ctr_dbl_tch_time_base = I_GetTime_MS();
-      }
-      else
-      {
-        is_ctr_double_touch = 0;
-      }
-
-      is_ctr_double_held = 0;
-      is_ctr_touch_down = 0;
+      event.type = ev_keyup;
+      event.data1 = ctr_key_down;
+      D_PostEvent(&event);
     }
   }
-  else
+  else // Mouse
   {
-    // Reset mouse buttons state
-    event.type = ev_mouse;
-    event.data1 = event.data2 = event.data3 = 0;
-    D_PostEvent(&event);
-  }
+    if(mouse_currently_grabbed)
+    {
+      // Reset mouse buttons state
+      event.type = ev_mouse;
+      event.data1 = is_ctr_double_held ? (1 << 0) : 0;
+      event.data2 = event.data3 = 0;
+      D_PostEvent(&event);
 
-  if(mwheeluptic && mwheeluptic + 1 < gametic)
-  {
-    event.type = ev_keyup;
-    event.data1 = KEYD_MWHEELUP;
-    D_PostEvent(&event);
-    mwheeluptic = 0;
-  }
+      if(keys_down & KEY_TOUCH)
+      {
+        if(is_ctr_double_touch)
+          is_ctr_double_held = (I_GetTime_MS() <= ctr_dbl_tch_time_base + 200) ? 1 : 0;
 
-  if(mwheeldowntic && mwheeldowntic + 1 < gametic)
-  {
-    event.type = ev_keyup;
-    event.data1 = KEYD_MWHEELDOWN;
-    D_PostEvent(&event);
-    mwheeldowntic = 0;
+        // Set the new relative mouse origin
+        ctr_mouse_pos[0] = touch.px;
+        ctr_mouse_pos[1] = touch.py;
+
+        is_ctr_touch_down = 1;
+        ctr_touch_time_base = I_GetTime_MS();
+      }
+
+      if(keys_up & KEY_TOUCH)
+      {
+        // Treat a quick tap on the screen as a left mouse click
+        if(I_GetTime_MS() <= ctr_touch_time_base + 200)
+        {
+          event.type = ev_mouse;
+          event.data1 = (1 << 0);
+          event.data2 = event.data3 = 0;
+          D_PostEvent(&event);
+
+          is_ctr_double_touch = 1;
+          ctr_dbl_tch_time_base = I_GetTime_MS();
+        }
+        else
+        {
+          is_ctr_double_touch = 0;
+        }
+
+        is_ctr_double_held = 0;
+        is_ctr_touch_down = 0;
+      }
+    }
+    else
+    {
+      // Reset mouse buttons state
+      event.type = ev_mouse;
+      event.data1 = event.data2 = event.data3 = 0;
+      D_PostEvent(&event);
+    }
   }
+}
+
+// These are just raw BGR8 bitmap images
+extern const unsigned char _acbottom_off[];
+extern const unsigned char _acbottom_on[];
+
+//
+// I_DrawBottomScreen
+//
+static void I_DrawBottomScreen (void)
+{
+  u8 *framebuf = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+  memcpy(framebuf, ctr_input_mode ? _acbottom_on : _acbottom_off, 240*320*3);
 }
 
 //
@@ -403,6 +356,8 @@ void I_FinishUpdate (void)
   //e6y: new mouse code
   UpdateGrab();
 
+  I_DrawBottomScreen();
+
   // The screen wipe following pressing the exit switch on a level
   // is noticably jerkier with I_SkipFrame
   // if (I_SkipFrame())return;
@@ -483,6 +438,7 @@ static void I_ShutdownSDL(void)
 void I_PreInitGraphics(void)
 {
   gfxInitDefault();
+  gfxSetDoubleBuffering(GFX_BOTTOM, false);
 
   I_AtExit(I_ShutdownSDL, true);
 }
