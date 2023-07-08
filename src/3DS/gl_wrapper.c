@@ -619,10 +619,10 @@ void glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha) {
 }
 
 void glColor4ubv(const GLubyte *v) {
-    cur_color[0] = v[0] * 255.0f;
-    cur_color[1] = v[1] * 255.0f;
-    cur_color[2] = v[2] * 255.0f;
-    cur_color[3] = v[3] * 255.0f;
+    cur_color[0] = v[0] / 255.0f;
+    cur_color[1] = v[1] / 255.0f;
+    cur_color[2] = v[2] / 255.0f;
+    cur_color[3] = v[3] / 255.0f;
 }
 
 void glColor3f(GLfloat red, GLfloat green, GLfloat blue) {
@@ -1006,10 +1006,24 @@ void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoi
     if(!cur_texture)
         return;
 
-    // TODO: Unswizzle the texture to regain the linear texture data
+    int tex_width = cur_texture->c3d_tex.width;
+    int tex_height = cur_texture->c3d_tex.height;
+
+    // Unswizzle the texture into temporary buffer
+    u32 *unswizzle_buf = malloc(cur_texture->c3d_tex.size);
+    SwizzleTexBufferRGBA8((u32*)cur_texture->c3d_tex.data, unswizzle_buf, tex_width, tex_height);
 
     // Copy texture pixels to destination buffer
-    memcpy(pixels, cur_texture->c3d_tex.data, cur_texture->c3d_tex.size);
+    u32 *pixel_ptr = (u32*)pixels;
+    for(int i = 0; i < tex_width * tex_height; i++)
+    {
+        pixel_ptr[i] = ((unswizzle_buf[i] & 0xff000000) >> 24) |
+                       ((unswizzle_buf[i] & 0x00ff0000) >> 8) |
+                       ((unswizzle_buf[i] & 0x0000ff00) << 8) |
+                       ((unswizzle_buf[i] & 0x000000ff) << 24);
+    }
+
+    free(unswizzle_buf);
 }
 
 void glFlush(void) {
