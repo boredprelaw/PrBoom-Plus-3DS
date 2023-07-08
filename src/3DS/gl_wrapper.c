@@ -948,16 +948,10 @@ void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoi
     if(!cur_texture)
         return;
 
-    void *texture_data;
-    u32 texture_size = 0;
-    C3D_TexGetImagePtr(&cur_texture->c3d_tex, texture_data, 0, &texture_size);
-
-    // Just in case...
-    if(!texture_data)
-        return;
+    // TODO: Unswizzle the texture to regain the linear texture data
 
     // Copy texture pixels to destination buffer
-    memcpy(pixels, texture_data, texture_size);
+    memcpy(pixels, cur_texture->c3d_tex.data, cur_texture->c3d_tex.size);
 }
 
 void glFlush(void) {
