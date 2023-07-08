@@ -1,6 +1,8 @@
 #ifndef __3DS_GL_WRAPPER__
 #define __3DS_GL_WRAPPER__
 
+#include <3ds.h>
+
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
 typedef unsigned int GLbitfield;
@@ -158,7 +160,11 @@ typedef void GLvoid;
 void gl_wrapper_init();
 void gl_wrapper_cleanup();
 
+int gl_wrapper_is_initialized();
+
 void gl_wrapper_perspective(float fovy, float aspect, float znear);
+
+void gl_wrapper_select_screen(gfx3dSide_t side);
 
 void gl_wrapper_swap_buffers();
 

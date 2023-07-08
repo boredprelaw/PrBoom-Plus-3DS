@@ -38,14 +38,6 @@
 
 #ifdef __3DS__
 #include "3DS/gl_wrapper.h"
-#include <citro3d.h>
-
-// Citro3D framebuffers
-extern C3D_RenderTarget *hw_screen_l;
-extern C3D_RenderTarget *hw_screen_r;
-extern C3D_RenderTarget *cur_hw_screen;
-extern float hw_stereo_offset;
-
 #else
 #include <GL/gl.h>
 #include <GL/glext.h>

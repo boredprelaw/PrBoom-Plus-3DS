@@ -77,10 +77,6 @@
 #include "umapinfo.h"
 #include "statdump.h"
 
-#ifdef __3DS__
-#include <3ds.h>
-#endif
-
 //e6y
 #include "r_demo.h"
 #include "e6y.h"
@@ -235,14 +231,10 @@ static void D_Wipe(int num_eyes)
       for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
         if (V_GetMode() == VID_MODEGL) {
-          if(i == 0) { // Left eye
-            C3D_FrameDrawOn(hw_screen_l);
-            cur_hw_screen = hw_screen_l;
-          }
-          else if(i == 1) { // Right eye
-            C3D_FrameDrawOn(hw_screen_r);
-            cur_hw_screen = hw_screen_r;
-          }
+          if(i == 0) // Left eye
+            gl_wrapper_select_screen(GFX_LEFT);
+          else if(i == 1) // Right eye
+            gl_wrapper_select_screen(GFX_RIGHT);
         }
 #endif
         M_Drawer();                   // menu is drawn even on top of wipes
@@ -262,6 +254,11 @@ static void D_Wipe(int num_eyes)
 gamestate_t    wipegamestate = GS_DEMOSCREEN;
 extern dboolean setsizeneeded;
 extern int     showMessages;
+
+// For stereo 3D projection offset
+#ifdef __3DS__
+extern float hw_stereo_offset;
+#endif
 
 void D_Display (fixed_t frac)
 {
@@ -340,14 +337,10 @@ void D_Display (fixed_t frac)
     for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
       if (V_GetMode() == VID_MODEGL) {
-        if(i == 0) { // Left eye
-          C3D_FrameDrawOn(hw_screen_l);
-          cur_hw_screen = hw_screen_l;
-        }
-        else if(i == 1) { // Right eye
-          C3D_FrameDrawOn(hw_screen_r);
-          cur_hw_screen = hw_screen_r;
-        }
+        if(i == 0) // Left eye
+          gl_wrapper_select_screen(GFX_LEFT);
+        else if(i == 1) // Right eye
+          gl_wrapper_select_screen(GFX_RIGHT);
       }
 #endif
 
@@ -396,14 +389,10 @@ void D_Display (fixed_t frac)
       for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
         if (V_GetMode() == VID_MODEGL) {
-          if(i == 0) { // Left eye
-            C3D_FrameDrawOn(hw_screen_l);
-            cur_hw_screen = hw_screen_l;
-          }
-          else if(i == 1) { // Right eye
-            C3D_FrameDrawOn(hw_screen_r);
-            cur_hw_screen = hw_screen_r;
-          }
+          if(i == 0) // Left eye
+            gl_wrapper_select_screen(GFX_LEFT);
+          else if(i == 1) // Right eye
+            gl_wrapper_select_screen(GFX_RIGHT);
         }
 #endif
 
@@ -424,13 +413,11 @@ void D_Display (fixed_t frac)
 #ifdef __3DS__
       if (V_GetMode() == VID_MODEGL) {
         if(i == 0) { // Left eye
-          C3D_FrameDrawOn(hw_screen_l);
-          cur_hw_screen = hw_screen_l;
+          gl_wrapper_select_screen(GFX_LEFT);
           hw_stereo_offset = -stereo_offs;
         }
         else if(i == 1) { // Right eye
-          C3D_FrameDrawOn(hw_screen_r);
-          cur_hw_screen = hw_screen_r;
+          gl_wrapper_select_screen(GFX_RIGHT);
           hw_stereo_offset = stereo_offs;
         }
       }
@@ -489,14 +476,10 @@ void D_Display (fixed_t frac)
   for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
     if (V_GetMode() == VID_MODEGL) {
-      if(i == 0) { // Left eye
-        C3D_FrameDrawOn(hw_screen_l);
-        cur_hw_screen = hw_screen_l;
-      }
-      else if(i == 1) { // Right eye
-        C3D_FrameDrawOn(hw_screen_r);
-        cur_hw_screen = hw_screen_r;
-      }
+      if(i == 0) // Left eye
+        gl_wrapper_select_screen(GFX_LEFT);
+      else if(i == 1) // Right eye
+        gl_wrapper_select_screen(GFX_RIGHT);
     }
 #endif
 

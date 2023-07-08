@@ -32,11 +32,6 @@
  *-----------------------------------------------------------------------------
  */
 
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "z_zone.h"
 #include "doomdef.h"
 #include "i_video.h"
@@ -159,14 +154,10 @@ static int wipe_doMelt(int ticks, int num_eyes)
     // Stereoscopic 3D
     for(int i = 0; i < num_eyes; i++) {
 #ifdef __3DS__
-      if(i == 0) { // Left eye
-        C3D_FrameDrawOn(hw_screen_l);
-        cur_hw_screen = hw_screen_l;
-      }
-      else if(i == 1) { // Right eye
-        C3D_FrameDrawOn(hw_screen_r);
-        cur_hw_screen = hw_screen_r;
-      }
+      if(i == 0) // Left eye
+        gl_wrapper_select_screen(GFX_LEFT);
+      else if(i == 1) // Right eye
+        gl_wrapper_select_screen(GFX_RIGHT);
 #endif
       gld_wipe_doMelt(ticks, y_lookup);
     }

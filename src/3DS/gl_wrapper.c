@@ -12,13 +12,14 @@
     GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 
 typedef enum _gl_c3d_dirty_flags {
-    DIRTY_FLAGS_CULL    = 0x0001,
-    DIRTY_FLAGS_BLEND   = 0x0002,
-    DIRTY_FLAGS_DEPTH   = 0x0004,
-    DIRTY_FLAGS_ALPHA   = 0x0008,
-    DIRTY_FLAGS_SCISSOR = 0x0010,
-    DIRTY_FLAGS_TEV     = 0x0020,
-    DIRTY_FLAGS_FOG     = 0x0040,
+    DIRTY_FLAGS_CULL        = 0x0001,
+    DIRTY_FLAGS_BLEND       = 0x0002,
+    DIRTY_FLAGS_DEPTH       = 0x0004,
+    DIRTY_FLAGS_ALPHA       = 0x0008,
+    DIRTY_FLAGS_VIEWPORT    = 0x0010,
+    DIRTY_FLAGS_SCISSOR     = 0x0020,
+    DIRTY_FLAGS_TEV         = 0x0040,
+    DIRTY_FLAGS_FOG         = 0x0080,
 } gl_c3d_dirty_flags;
 
 typedef struct _gl_c3d_tex {
@@ -27,9 +28,6 @@ typedef struct _gl_c3d_tex {
     struct _gl_c3d_tex *prev;
     struct _gl_c3d_tex *next;
 } gl_c3d_tex;
-
-extern C3D_RenderTarget *cur_hw_screen;
-float hw_stereo_offset;
 
 static int dirty_flags;
 
@@ -57,6 +55,11 @@ static int scissor_y;
 static int scissor_width;
 static int scissor_height;
 
+static int viewport_x;
+static int viewport_y;
+static int viewport_width;
+static int viewport_height;
+
 static GLenum tev_combine_func_rgb;
 static GLenum tev_source0_rgb;
 static GLenum tev_source1_rgb;
@@ -79,10 +82,12 @@ static gl_c3d_tex *gl_c3d_tex_head = NULL;
 // Currently bound GL texture
 static gl_c3d_tex *cur_texture = NULL;
 
+int gl_is_inited = 0;
 
 C3D_RenderTarget *hw_screen_l = NULL;
 C3D_RenderTarget *hw_screen_r = NULL;
 C3D_RenderTarget *cur_hw_screen = NULL;
+float hw_stereo_offset;
 
 static DVLB_s* vshader_dvlb;
 static shaderProgram_s program;
@@ -117,6 +122,11 @@ static inline void _set_default_render_states() {
     scissor_y = 0;
     scissor_width = 240;
     scissor_height = 400;
+
+    viewport_x = 0;
+    viewport_y = 0;
+    viewport_width = 240;
+    viewport_height = 400;
 
     tev_combine_func_rgb = GL_MODULATE;
     tev_source0_rgb = GL_TEXTURE;
@@ -201,6 +211,8 @@ void gl_wrapper_init() {
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
     C3D_FrameDrawOn(hw_screen_l);
     cur_hw_screen = hw_screen_l;
+
+    gl_is_inited = 1;
 }
 
 static inline void _release_all_gl_textures() {
@@ -235,10 +247,23 @@ void gl_wrapper_cleanup() {
     cur_hw_screen = NULL;
 
     C3D_Fini();
+
+    gl_is_inited = 0;
+}
+
+int gl_wrapper_is_initialized() {
+    return gl_is_inited;
 }
 
 void gl_wrapper_perspective(float fovy, float aspect, float znear) {
     Mtx_PerspStereoTilt(MtxStack_Cur(cur_mtxstack), fovy, aspect, 1000.0f, znear, hw_stereo_offset, 0.15f, false);
+}
+
+void gl_wrapper_select_screen(gfx3dSide_t side) {
+    C3D_RenderTarget *rt = (side == GFX_LEFT) ? hw_screen_l : hw_screen_r;
+
+    C3D_FrameDrawOn(rt);
+    cur_hw_screen = rt;
 }
 
 void gl_wrapper_swap_buffers() {
@@ -388,7 +413,11 @@ void glClear(GLbitfield mask) {
 }
 
 void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {
-    C3D_SetViewport(y, x, height, width);
+    viewport_x = y;
+    viewport_y = x;
+    viewport_width = height;
+    viewport_height = width;
+    dirty_flags |= (DIRTY_FLAGS_VIEWPORT | DIRTY_FLAGS_SCISSOR);
 }
 
 void glScissor(GLint x, GLint y, GLsizei width, GLsizei height) {
@@ -458,6 +487,10 @@ static inline void _update_dirty_render_states() {
     if(dirty_flags & DIRTY_FLAGS_ALPHA)
     {
         C3D_AlphaTest(alpha_enable, _gl_to_c3d_testfunc(alpha_func), (int)(alpha_ref * 255.0f));
+    }
+    if(dirty_flags & DIRTY_FLAGS_VIEWPORT)
+    {
+        C3D_SetViewport(viewport_x, viewport_y, viewport_width, viewport_height);
     }
     if(dirty_flags & DIRTY_FLAGS_SCISSOR)
     {

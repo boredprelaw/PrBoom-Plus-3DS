@@ -559,7 +559,7 @@ void I_InitScreenResolution(void)
 
   I_GetScreenResolution();
 
-  if (!screen && !hw_screen_l)
+  if (!screen && !gl_wrapper_is_initialized())
   {
     // e6y
     // change the screen size for the current session only
