@@ -93,7 +93,6 @@ int gl_is_inited = 0;
 
 static C3D_RenderTarget *hw_screen_l = NULL;
 static C3D_RenderTarget *hw_screen_r = NULL;
-static C3D_RenderTarget *cur_hw_screen = NULL;
 float hw_stereo_offset;
 
 static DVLB_s* vshader_dvlb;
@@ -220,8 +219,6 @@ void gl_wrapper_init() {
 
     // Start first frame
     C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-    C3D_FrameDrawOn(hw_screen_l);
-    cur_hw_screen = hw_screen_l;
 
     gl_is_inited = 1;
 }
@@ -255,7 +252,6 @@ void gl_wrapper_cleanup() {
     C3D_RenderTargetDelete(hw_screen_r);
     hw_screen_l = NULL;
     hw_screen_r = NULL;
-    cur_hw_screen = NULL;
 
     C3D_Fini();
 
@@ -272,9 +268,7 @@ void gl_wrapper_perspective(float fovy, float aspect, float znear) {
 
 void gl_wrapper_select_screen(gfx3dSide_t side) {
     C3D_RenderTarget *rt = (side == GFX_LEFT) ? hw_screen_l : hw_screen_r;
-
     C3D_FrameDrawOn(rt);
-    cur_hw_screen = rt;
 }
 
 void gl_wrapper_swap_buffers() {
