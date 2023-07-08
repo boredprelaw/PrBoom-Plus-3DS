@@ -647,10 +647,9 @@ void glTexCoord2fv(const GLfloat *v) {
 }
 
 void glVertex2i(GLint x, GLint y) {
-    cur_texcoord[0] = (GLfloat)x;
-    cur_texcoord[1] = (GLfloat)y;
-    cur_texcoord[2] = 0.0f;
-    cur_texcoord[3] = 1.0f;
+    C3D_ImmSendAttrib(cur_color[0], cur_color[1], cur_color[2], cur_color[3]);
+    C3D_ImmSendAttrib(cur_texcoord[0], cur_texcoord[1], cur_texcoord[2], cur_texcoord[3]);
+    C3D_ImmSendAttrib((GLfloat)x, (GLfloat)y, 0.0f, 1.0f);
 }
 
 void glVertex2f(GLfloat x, GLfloat y) {
