@@ -6,6 +6,9 @@
 #include <citro3d.h>
 #include "vshader_shbin.h"
 
+#define ANG_PI 3.14159265358979323846
+#define DEG2RAD(x) (x * ANG_PI / 180.0)
+
 #define DISPLAY_TRANSFER_FLAGS \
     (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) | \
     GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) | \
@@ -84,9 +87,9 @@ static gl_c3d_tex *cur_texture = NULL;
 
 int gl_is_inited = 0;
 
-C3D_RenderTarget *hw_screen_l = NULL;
-C3D_RenderTarget *hw_screen_r = NULL;
-C3D_RenderTarget *cur_hw_screen = NULL;
+static C3D_RenderTarget *hw_screen_l = NULL;
+static C3D_RenderTarget *hw_screen_r = NULL;
+static C3D_RenderTarget *cur_hw_screen = NULL;
 float hw_stereo_offset;
 
 static DVLB_s* vshader_dvlb;
@@ -1016,11 +1019,11 @@ void glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) {
     // TODO: This is really lazy, but it works, and
     // Mtx_Rotate was giving me shit for some reason...
     if(x == 1.0f)
-        Mtx_RotateX(MtxStack_Cur(cur_mtxstack), C3D_AngleFromDegrees(angle), true);
+        Mtx_RotateX(MtxStack_Cur(cur_mtxstack), DEG2RAD(angle), true);
     else if(y == 1.0f)
-        Mtx_RotateY(MtxStack_Cur(cur_mtxstack), C3D_AngleFromDegrees(angle), true);
+        Mtx_RotateY(MtxStack_Cur(cur_mtxstack), DEG2RAD(angle), true);
     else if(z == 1.0f)
-        Mtx_RotateZ(MtxStack_Cur(cur_mtxstack), C3D_AngleFromDegrees(angle), true);
+        Mtx_RotateZ(MtxStack_Cur(cur_mtxstack), DEG2RAD(angle), true);
 }
 
 void glScalef(GLfloat x, GLfloat y, GLfloat z) {
