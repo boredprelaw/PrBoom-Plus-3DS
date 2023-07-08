@@ -280,7 +280,6 @@ void gld_Init(int width, int height)
 {
   GLfloat params[4]={0.0f,0.0f,1.0f,0.0f};
 
-  gld_InitOpenGL();
   gld_InitPalettedTextures();
   gld_InitTextureParams();
 
@@ -684,7 +683,7 @@ void gld_FillPatch(int lump, int x, int y, int width, int height, enum patch_tra
 
 void gld_DrawLine_f(float x0, float y0, float x1, float y1, int BaseColor)
 {
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
+#if defined(USE_VERTEX_ARRAYS)
   const unsigned char *playpal = V_GetPlaypal();
   unsigned char r, g, b, a;
   map_line_t *line;
@@ -1640,7 +1639,7 @@ static void gld_DrawFlat(GLFlat *flat)
   gld_BindFlat(flat->gltexture, flags);
   gld_StaticLightAlpha(flat->light, flat->alpha);
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
+#if defined(USE_VERTEX_ARRAYS)
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glTranslatef(0.0f,flat->z,0.0f);
@@ -1653,7 +1652,7 @@ static void gld_DrawFlat(GLFlat *flat)
   if (flat->sectornum>=0)
   {
     // go through all loops of this sector
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
+#if defined(USE_VERTEX_ARRAYS)
     for (loopnum=0; loopnum<sectorloops[flat->sectornum].loopcount; loopnum++)
     {
       // set the current loop
@@ -1687,7 +1686,7 @@ static void gld_DrawFlat(GLFlat *flat)
 
   glPopMatrix();
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
+#if defined(USE_VERTEX_ARRAYS)
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
 #endif
@@ -2412,12 +2411,6 @@ void gld_DrawScene(player_t *player)
   gl_EnableFog(true);
   gl_EnableFog(false);
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-#endif
-
   //e6y: skybox
   skybox = 0;
   if (gl_drawskys != skytype_none)
@@ -2438,13 +2431,13 @@ void gld_DrawScene(player_t *player)
     }
   }
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (gl_ext_arb_vertex_buffer_object)
-  {
-    GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, flats_vbo_id);
-  }
+#if defined(USE_VERTEX_ARRAYS)
   glVertexPointer(3, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_x);
   glTexCoordPointer(2, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_u);
+
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
 #endif
 
   //
@@ -2662,17 +2655,6 @@ void gld_DrawScene(player_t *player)
       glAlphaFunc(GL_GEQUAL, 0.5f);
       glEnable(GL_ALPHA_TEST);
   }
-
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (gl_ext_arb_vertex_buffer_object)
-  {
-    // bind with 0, so, switch back to normal pointer operation
-    GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-  }
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-#endif
 }
 
 #endif

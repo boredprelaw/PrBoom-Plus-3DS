@@ -31,10 +31,6 @@
  *---------------------------------------------------------------------
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <stdio.h>
 
 #include "doomtype.h"
@@ -42,43 +38,7 @@
 
 #ifdef GL_DOOM
 
-#include <SDL/SDL.h>
 #include "gl_opengl.h"
-
-dboolean gl_ext_arb_vertex_buffer_object = false;
-
-// VBO
-//PFNGLGENBUFFERSARBPROC GLEXT_glGenBuffersARB = NULL;
-//PFNGLDELETEBUFFERSARBPROC GLEXT_glDeleteBuffersARB = NULL;
-//PFNGLBINDBUFFERARBPROC GLEXT_glBindBufferARB = NULL;
-//PFNGLBUFFERDATAARBPROC GLEXT_glBufferDataARB = NULL;
-
-void gld_InitOpenGL()
-{
-  // VBO
-#ifdef USE_VBO
-  gl_ext_arb_vertex_buffer_object = true;
-
-  if (gl_ext_arb_vertex_buffer_object)
-  {
-    GLEXT_glGenBuffersARB = SDL_GL_GetProcAddress("glGenBuffersARB");
-    GLEXT_glDeleteBuffersARB = SDL_GL_GetProcAddress("glDeleteBuffersARB");
-    GLEXT_glBindBufferARB = SDL_GL_GetProcAddress("glBindBufferARB");
-    GLEXT_glBufferDataARB = SDL_GL_GetProcAddress("glBufferDataARB");
-
-    if (!GLEXT_glGenBuffersARB || !GLEXT_glDeleteBuffersARB ||
-        !GLEXT_glBindBufferARB || !GLEXT_glBufferDataARB)
-      gl_ext_arb_vertex_buffer_object = false;
-  }
-  if (gl_ext_arb_vertex_buffer_object)
-    lprintf(LO_INFO,"using GL_ARB_vertex_buffer_object\n");
-#else
-  gl_ext_arb_vertex_buffer_object = false;
-#endif
-
-  gld_EnableTexture2D(true);
-  gld_EnableTexture2D(false);
-}
 
 void gld_EnableTexture2D(int enable)
 {

@@ -34,8 +34,7 @@
 #ifndef _GL_OPENGL_H
 #define _GL_OPENGL_H
 
-//#define USE_VERTEX_ARRAYS
-//#define USE_VBO
+#define USE_VERTEX_ARRAYS
 
 #include "doomtype.h"
 
@@ -47,16 +46,6 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #endif
-
-extern dboolean gl_ext_arb_vertex_buffer_object;
-
-// VBO
-//extern PFNGLGENBUFFERSARBPROC GLEXT_glGenBuffersARB;
-//extern PFNGLDELETEBUFFERSARBPROC GLEXT_glDeleteBuffersARB;
-//extern PFNGLBINDBUFFERARBPROC GLEXT_glBindBufferARB;
-//extern PFNGLBUFFERDATAARBPROC GLEXT_glBufferDataARB;
-  
-void gld_InitOpenGL();
 
 //states
 void gld_EnableTexture2D(int enable);

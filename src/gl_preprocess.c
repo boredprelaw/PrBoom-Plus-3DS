@@ -616,37 +616,6 @@ void gld_PreprocessLevel(void)
 
   gld_FreeDrawInfo();
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (!gl_preprocessed)
-  {
-    if (gl_ext_arb_vertex_buffer_object)
-    {
-      if (flats_vbo_id)
-      {
-        // delete VBO when already exists
-        GLEXT_glDeleteBuffersARB(1, &flats_vbo_id);
-      }
-      // generate a new VBO and get the associated ID
-      GLEXT_glGenBuffersARB(1, &flats_vbo_id);
-      // bind VBO in order to use
-      GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, flats_vbo_id);
-      // upload data to VBO
-      GLEXT_glBufferDataARB(GL_ARRAY_BUFFER,
-        gld_num_vertexes * sizeof(flats_vbo[0]),
-        flats_vbo, GL_STATIC_DRAW_ARB);
-
-      free(flats_vbo);
-      flats_vbo = NULL;
-
-      // bind VBO in order to use
-      GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, flats_vbo_id);
-    }
-
-    glVertexPointer(3, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_x);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(flats_vbo[0]), flats_vbo_u);
-  }
-#endif
-
   //e6y
   gld_InitVertexData();
 

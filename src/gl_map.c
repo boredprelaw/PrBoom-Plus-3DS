@@ -129,7 +129,7 @@ void gld_DrawNiceThings(int fx, int fy, int fw, int fh)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   gld_EnableTexture2D(true);
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
+#if defined(USE_VERTEX_ARRAYS)
   // activate vertex array, texture coord array and color arrays
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -145,7 +145,7 @@ void gld_DrawNiceThings(int fx, int fy, int fw, int fh)
 
     glBindTexture(GL_TEXTURE_2D, am_icons[i].tex_id);
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
+#if defined(USE_VERTEX_ARRAYS)
     {
       map_nice_thing_t *thing = &((map_nice_thing_t*)things->data)[0];
 
@@ -179,13 +179,6 @@ void gld_DrawNiceThings(int fx, int fy, int fw, int fh)
 #endif
   }
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  // deactivate vertex array, texture coord array and color arrays
-  glDisableClientState(GL_VERTEX_ARRAY);
-  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-  glDisableClientState(GL_COLOR_ARRAY);
-#endif
-
   gld_ResetLastTexture();
   glDisable(GL_SCISSOR_TEST);
 }
@@ -202,13 +195,14 @@ void gld_ClearNiceThings(void)
 
 void gld_DrawMapLines(void)
 {
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
+#if defined(USE_VERTEX_ARRAYS)
   if (map_lines.count > 0)
   {
     map_point_t *point = (map_point_t*)map_lines.data;
 
     gld_EnableTexture2D(false);
     glEnableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
     glVertexPointer(2, GL_FLOAT, sizeof(point[0]), &point->x);
@@ -217,8 +211,6 @@ void gld_DrawMapLines(void)
     glDrawArrays(GL_LINES, 0, map_lines.count * 2);
 
     gld_EnableTexture2D(true);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
   }
 #endif
 }

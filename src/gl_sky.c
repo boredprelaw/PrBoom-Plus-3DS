@@ -673,36 +673,11 @@ static void RenderDome(SkyBoxParams_t *sky)
 
     gld_BuildSky(rows, columns, sky, 0);
     gld_BuildSky(rows, columns, sky, INVERSECOLORMAP);
-
-#ifdef USE_VBO
-    if (gl_ext_arb_vertex_buffer_object)
-    {
-      if (vbo->id)
-      {
-        // delete VBO when already exists
-        GLEXT_glDeleteBuffersARB(1, &vbo->id);
-      }
-      // generate a new VBO and get the associated ID
-      GLEXT_glGenBuffersARB(1, &vbo->id);
-      // bind VBO in order to use
-      GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, vbo->id);
-      // upload data to VBO
-      GLEXT_glBufferDataARB(GL_ARRAY_BUFFER,
-        vbosize * sizeof(vbo->data[0]),
-        vbo->data, GL_STATIC_DRAW_ARB);
-    }
-#endif
   }
 
   gld_BindTexture(SkyBox.wall.gltexture, 0);
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (gl_ext_arb_vertex_buffer_object)
-  {
-    // bind VBO in order to use
-    GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, vbo->id);
-  }
-
+#if defined(USE_VERTEX_ARRAYS)
   // activate and specify pointers to arrays
   glVertexPointer(3, GL_FLOAT, sizeof(vbo->data[0]), sky_vbo_x);
   glTexCoordPointer(2, GL_FLOAT, sizeof(vbo->data[0]), sky_vbo_u);
@@ -740,7 +715,7 @@ static void RenderDome(SkyBoxParams_t *sky)
       if (j == 0 ? loop->use_texture : !loop->use_texture)
         continue;
 
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
+#if defined(USE_VERTEX_ARRAYS)
       glDrawArrays(loop->mode, loop->vertexindex, loop->vertexcount);
 #else
       {
@@ -766,16 +741,6 @@ static void RenderDome(SkyBoxParams_t *sky)
 
   // current color is undefined after glDrawArrays
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-#if defined(USE_VERTEX_ARRAYS) || defined(USE_VBO)
-  if (gl_ext_arb_vertex_buffer_object)
-  {
-    // bind with 0, so, switch back to normal pointer operation
-    GLEXT_glBindBufferARB(GL_ARRAY_BUFFER, 0);
-  }
-  // deactivate color array
-  glDisableClientState(GL_COLOR_ARRAY);
-#endif
 }
 
 void gld_DrawDomeSkyBox(void)

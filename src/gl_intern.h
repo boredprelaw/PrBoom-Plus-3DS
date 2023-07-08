@@ -498,9 +498,9 @@ typedef struct vbo_vertex_s
   unsigned char r, g, b, a;
 } vbo_vertex_t;
 #define NULL_VBO_VERTEX ((vbo_vertex_t*)NULL)
-#define sky_vbo_x (gl_ext_arb_vertex_buffer_object ? &NULL_VBO_VERTEX->x : &vbo->data[0].x)
-#define sky_vbo_u (gl_ext_arb_vertex_buffer_object ? &NULL_VBO_VERTEX->u : &vbo->data[0].u)
-#define sky_vbo_r (gl_ext_arb_vertex_buffer_object ? &NULL_VBO_VERTEX->r : &vbo->data[0].r)
+#define sky_vbo_x (&vbo->data[0].x)
+#define sky_vbo_u (&vbo->data[0].u)
+#define sky_vbo_r (&vbo->data[0].r)
 
 typedef struct vbo_xyz_uv_s
 {
@@ -509,8 +509,8 @@ typedef struct vbo_xyz_uv_s
 } vbo_xyz_uv_t;
 extern vbo_xyz_uv_t *flats_vbo;
 #define NULL_VBO_XYZ_UV ((vbo_xyz_uv_t*)NULL)
-#define flats_vbo_x (gl_ext_arb_vertex_buffer_object ? &NULL_VBO_XYZ_UV->x : &flats_vbo[0].x)
-#define flats_vbo_u (gl_ext_arb_vertex_buffer_object ? &NULL_VBO_XYZ_UV->u : &flats_vbo[0].u)
+#define flats_vbo_x (&flats_vbo[0].x)
+#define flats_vbo_u (&flats_vbo[0].u)
 
 typedef struct vbo_xy_uv_rgba_s
 {
