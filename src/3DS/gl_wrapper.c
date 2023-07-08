@@ -439,6 +439,8 @@ void glClear(GLbitfield mask) {
     C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR, 0);
     C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, 0);
 
+    C3D_FogGasMode(GPU_NO_FOG, GPU_DEPTH_DENSITY, true);
+
     C3D_Mtx ident_mtx;
     Mtx_Identity(&ident_mtx);
 
