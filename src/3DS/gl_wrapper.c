@@ -34,8 +34,12 @@ typedef struct _gl_c3d_tex {
 
 static int dirty_flags;
 
-static u32 clear_color;
-static u32 clear_depth;
+static float clear_color_r;
+static float clear_color_g;
+static float clear_color_b;
+static float clear_color_a;
+
+static float clear_depth;
 
 static int cull_enable;
 static GLenum cull_mode;
@@ -102,8 +106,12 @@ static C3D_MtxStack mtx_modelview, mtx_projection, mtx_texture;
 static C3D_MtxStack *cur_mtxstack;
 
 static inline void _set_default_render_states() {
-    clear_color = 0x00000000;
-    clear_depth = 0xffffffff;
+    clear_color_r = 0.0f;
+    clear_color_g = 0.0f;
+    clear_color_b = 0.0f;
+    clear_color_a = 0.0f;
+
+    clear_depth = -1.0f;
 
     cull_enable = 0;
     cull_mode = GL_BACK;
@@ -397,22 +405,70 @@ void glAlphaFunc(GLenum func, GLclampf ref) {
 }
 
 void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {
-    clear_color = ((u32)(red * 255) << 24) | ((u32)(green * 255) << 16) | ((u32)(blue * 255) << 8) | (u32)(alpha * 255);
+    clear_color_r = red;
+    clear_color_g = green;
+    clear_color_b = blue;
+    clear_color_a = alpha;
 }
 
 void glClearDepth(GLclampd depth) {
-    clear_depth = (u32)(depth * 0xffff);
+    clear_depth = -depth;
 }
 
 void glClear(GLbitfield mask) {
-    C3D_ClearBits flags = 0;
+    GPU_WRITEMASK write_mask = 0;
 
     if(mask & GL_COLOR_BUFFER_BIT)
-        flags |= C3D_CLEAR_COLOR;
+        write_mask |= GPU_WRITE_COLOR;
     if(mask & GL_DEPTH_BUFFER_BIT)
-        flags |= C3D_CLEAR_DEPTH;
+        write_mask |= GPU_WRITE_DEPTH;
 
-    C3D_RenderTargetClear(cur_hw_screen, flags, clear_color, (clear_depth << 16) | clear_depth);
+    C3D_CullFace(GPU_CULL_FRONT_CCW);
+    C3D_AlphaTest(false, GPU_ALWAYS, 0);
+    C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_ONE, GPU_ZERO, GPU_ONE, GPU_ZERO);
+    C3D_DepthTest(true, GPU_ALWAYS, write_mask);
+
+    C3D_SetViewport(0, 0, 240, 400);
+    C3D_SetScissor(scissor_enable ? GPU_SCISSOR_NORMAL : GPU_SCISSOR_DISABLE, scissor_x, scissor_y, scissor_x + scissor_width, scissor_y + scissor_height);
+
+    C3D_TexEnv* env = C3D_GetTexEnv(0);
+    C3D_TexEnvInit(env);
+
+    C3D_TexEnvFunc(env, C3D_Both, GPU_REPLACE);
+    C3D_TexEnvSrc(env, C3D_Both, GPU_PRIMARY_COLOR, 0, 0);
+    C3D_TexEnvOpRgb(env, GPU_TEVOP_RGB_SRC_COLOR, GPU_TEVOP_RGB_SRC_COLOR, 0);
+    C3D_TexEnvOpAlpha(env, GPU_TEVOP_A_SRC_ALPHA, GPU_TEVOP_A_SRC_ALPHA, 0);
+
+    C3D_Mtx ident_mtx;
+    Mtx_Identity(&ident_mtx);
+
+    C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uloc_mv_mtx, &ident_mtx);
+	C3D_FVUnifMtx4x4(GPU_VERTEX_SHADER, uloc_p_mtx,  &ident_mtx);
+
+    mtx_modelview.isDirty = true;
+    mtx_projection.isDirty = true;
+
+    C3D_ImmDrawBegin(GPU_TRIANGLE_FAN);
+
+    C3D_ImmSendAttrib(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
+    C3D_ImmSendAttrib(0.0f, 0.0f, 0.0f, 1.0f);
+    C3D_ImmSendAttrib(-1.0f, -1.0f, clear_depth, 1.0f);
+
+    C3D_ImmSendAttrib(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
+    C3D_ImmSendAttrib(0.0f, 0.0f, 0.0f, 1.0f);
+    C3D_ImmSendAttrib(-1.0f, 1.0f, clear_depth, 1.0f);
+
+    C3D_ImmSendAttrib(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
+    C3D_ImmSendAttrib(0.0f, 0.0f, 0.0f, 1.0f);
+    C3D_ImmSendAttrib(1.0f, 1.0f, clear_depth, 1.0f);
+
+    C3D_ImmSendAttrib(clear_color_r, clear_color_g, clear_color_b, clear_color_a);
+    C3D_ImmSendAttrib(0.0f, 0.0f, 0.0f, 1.0f);
+    C3D_ImmSendAttrib(1.0f, -1.0f, clear_depth, 1.0f);
+
+    C3D_ImmDrawEnd();
+
+    dirty_flags = 0xffffffff;
 }
 
 void glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {
