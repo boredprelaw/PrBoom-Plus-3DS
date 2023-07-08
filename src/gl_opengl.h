@@ -34,7 +34,7 @@
 #ifndef _GL_OPENGL_H
 #define _GL_OPENGL_H
 
-#define USE_VERTEX_ARRAYS
+// #define USE_VERTEX_ARRAYS
 
 #include "doomtype.h"
 
