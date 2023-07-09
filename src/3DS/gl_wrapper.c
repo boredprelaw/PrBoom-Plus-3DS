@@ -1020,7 +1020,19 @@ void glGetTexImage(GLenum target, GLint level, GLenum format, GLenum type, GLvoi
 }
 
 void glFlush(void) {
+    // HACK: Because C3D_FrameEnd() swaps the gfx buffers, we need to swap them
+    // back straight aftwards to prevent a brief flicker of the next frame
+    // (which, because we're in glFlush(), we don't want to present just yet)
+    C3D_FrameEnd(0);
+    gfxScreenSwapBuffers(GFX_TOP, true);
 
+    // Now that the C3D frame has "ended", we can safely transfer the
+    // framebuffer in VRAM back to the main framebuffer in main RAM
+    u32 dim = GX_BUFFER_DIM(hw_screen_l->frameBuf.width, hw_screen_l->frameBuf.height);
+    C3D_SyncDisplayTransfer((u32*)hw_screen_l->frameBuf.colorBuf, dim, (u32*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL), dim, DISPLAY_TRANSFER_FLAGS);
+
+    // Resume the C3D frame
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 }
 
 void glFinish(void) {
