@@ -249,7 +249,7 @@ default_t defaults[] =
   {"demo_smoothturnsfactor", {&demo_smoothturnsfactor},  {6},1,SMOOTH_PLAYING_MAXFACTOR,
    def_int,ss_stat},
   {"boom_autoswitch", {(int*)&boom_autoswitch}, {1}, 0, 1, def_bool, ss_none},
-   
+
   {"Files",{NULL},{0},UL,UL,def_none,ss_none},
   /* cph - MBF-like wad/deh/bex autoload code */
   {"wadfile_1",{NULL,&wad_files[1]},{0,""},UL,UL,def_str,ss_none},
@@ -644,8 +644,10 @@ default_t defaults[] =
    def_int,ss_keys}, // joystick button number to use for running
   {"joyb_use",{&joybuse},{3},0,UL,
    def_int,ss_keys}, // joystick button number to use for use/open
-  {"joyb_nextweapon",{&joybnextweapon},{2},0,UL,
-   def_int,ss_keys}, // joystick button number to use for use/open
+  {"joyb_prevweapon",{&joybprevweapon},{12},0,UL,
+   def_int,ss_keys}, // joystick button number to use for prev weapon
+  {"joyb_nextweapon",{&joybnextweapon},{13},0,UL,
+   def_int,ss_keys}, // joystick button number to use for next weapon
 
   {"Chat macros",{NULL},{0},UL,UL,def_none,ss_none},
   {"chatmacro0", {0,&chat_macros[0]}, {0,HUSTR_CHATMACRO0},UL,UL,
@@ -1025,23 +1027,23 @@ default_t defaults[] =
 
   {"Prboom-plus demo patterns list. Put your patterns here",{NULL},{0},UL,UL,def_none,ss_none},
   {"demo_patterns_mask", {NULL, &demo_patterns_mask, &demo_patterns_count, &demo_patterns_list}, {0,"demo_pattern",9, &demo_patterns_list_def[0]},UL,UL,def_arr,ss_none},
-  {"demo_pattern0", {NULL,&demo_patterns_list_def[0]}, 
+  {"demo_pattern0", {NULL,&demo_patterns_list_def[0]},
    {0,"DOOM 2: Hell on Earth/((lv)|(nm)|(pa)|(ty))\\d\\d.\\d\\d\\d\\.lmp/doom2.wad"},UL,UL,def_str,ss_none},
-  {"demo_pattern1", {NULL,&demo_patterns_list_def[1]}, 
+  {"demo_pattern1", {NULL,&demo_patterns_list_def[1]},
    {0,"DOOM 2: Plutonia Experiment/p(c|f|l|n|p|r|s|t)\\d\\d.\\d\\d\\d\\.lmp/doom2.wad|plutonia.wad"},UL,UL,def_str,ss_none},
-  {"demo_pattern2", {NULL,&demo_patterns_list_def[2]}, 
+  {"demo_pattern2", {NULL,&demo_patterns_list_def[2]},
    {0,"DOOM 2: TNT - Evilution/((e(c|f|v|p|r|s|t))|(tn))\\d\\d.\\d\\d\\d\\.lmp/doom2.wad|tnt.wad"},UL,UL,def_str,ss_none},
-  {"demo_pattern3", {NULL,&demo_patterns_list_def[3]}, 
+  {"demo_pattern3", {NULL,&demo_patterns_list_def[3]},
    {0,"The Ultimate DOOM/(((e|f|n|p|r|t|u)\\dm\\d)|(n\\ds\\d)).\\d\\d\\d\\.lmp/doom.wad"},UL,UL,def_str,ss_none},
-  {"demo_pattern4", {NULL,&demo_patterns_list_def[4]}, 
+  {"demo_pattern4", {NULL,&demo_patterns_list_def[4]},
    {0,"Alien Vendetta/a(c|f|n|p|r|s|t|v)\\d\\d.\\d\\d\\d\\.lmp/doom2.wad|av.wad|av.deh"},UL,UL,def_str,ss_none},
-  {"demo_pattern5", {NULL,&demo_patterns_list_def[5]}, 
+  {"demo_pattern5", {NULL,&demo_patterns_list_def[5]},
    {0,"Requiem/r(c|f|n|p|q|r|s|t)\\d\\d.\\d\\d\\d\\.lmp/doom2.wad|requiem.wad|req21fix.wad|reqmus.wad"},UL,UL,def_str,ss_none},
-  {"demo_pattern6", {NULL,&demo_patterns_list_def[6]}, 
+  {"demo_pattern6", {NULL,&demo_patterns_list_def[6]},
    {0,"Hell Revealed/h(c|e|f|n|p|r|s|t)\\d\\d.\\d\\d\\d\\.lmp/doom2.wad|hr.wad|hrmus.wad"},UL,UL,def_str,ss_none},
-  {"demo_pattern7", {NULL,&demo_patterns_list_def[7]}, 
+  {"demo_pattern7", {NULL,&demo_patterns_list_def[7]},
    {0,"Memento Mori/mm\\d\\d.\\d\\d\\d\\.lmp/doom2.wad|mm.wad|mmmus.wad"},UL,UL,def_str,ss_none},
-  {"demo_pattern8", {NULL,&demo_patterns_list_def[8]}, 
+  {"demo_pattern8", {NULL,&demo_patterns_list_def[8]},
    {0,"Memento Mori 2/m2\\d\\d.\\d\\d\\d\\.lmp/doom2.wad|mm2.wad|mm2mus.wad"},UL,UL,def_str,ss_none},
 
   {"Weapon preferences",{NULL},{0},UL,UL,def_none,ss_none},
@@ -1425,7 +1427,7 @@ void M_LoadDefaults (void)
           int *pcount = item->location.array_size;
           int *index = &item->location.array_index;
           char ***arr = (char***)(item->location.array_data);
-          if (!strncmp(def, *(item->location.ppsz), strlen(*(item->location.ppsz))) 
+          if (!strncmp(def, *(item->location.ppsz), strlen(*(item->location.ppsz)))
               && ((item->maxvalue == UL) || *(item->location.array_size) < item->maxvalue) )
           {
             if ((*index) + 1 > *pcount)
@@ -1509,7 +1511,7 @@ void M_LoadDefaults (void)
 }
 
 int M_StrToInt(const char *s, int *l)
-{      
+{
   return (
     (sscanf(s, " 0x%x", l) == 1) ||
     (sscanf(s, " 0X%x", l) == 1) ||
@@ -1519,7 +1521,7 @@ int M_StrToInt(const char *s, int *l)
 }
 
 int M_StrToFloat(const char *s, float *f)
-{      
+{
   return (
     (sscanf(s, " %f", f) == 1)
   );

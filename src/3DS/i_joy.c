@@ -84,6 +84,10 @@ void I_PollJoystick(void)
     ev.data1 |= (1 << 10);
   if (kHeld & KEY_DRIGHT)
     ev.data1 |= (1 << 11);
+  if (kHeld & KEY_ZL)
+    ev.data1 |= (1 << 12);
+  if (kHeld & KEY_ZR)
+    ev.data1 |= (1 << 13);
 
   circlePosition cpos;
   hidCircleRead(&cpos);

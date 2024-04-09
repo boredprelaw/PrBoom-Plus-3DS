@@ -100,7 +100,7 @@ struct MapEntry *G_LookupMapinfo(int gameepisode, int gamemap);
 
 // e6y
 // It is signature for new savegame format with continuous numbering.
-// Now it is not necessary to add a new level of compatibility in case 
+// Now it is not necessary to add a new level of compatibility in case
 // of need to savegame format change from one minor version to another.
 // The old format is still supported.
 #define NEWFORMATSIG "\xff\xff\xff\xff"
@@ -110,7 +110,7 @@ static dboolean  netdemo;
 static const byte *demobuffer;   /* cph - only used for playback */
 static int demolength; // check for overrun (missing DEMOMARKER)
 static FILE    *demofp; /* cph - record straight to file */
-//e6y static 
+//e6y static
 const byte *demo_p;
 const byte *demo_continue_p = NULL;
 static short    consistancy[MAXPLAYERS][BACKUPTICS];
@@ -278,6 +278,7 @@ int     joybstrafe;
 int     joybstrafeleft;
 int     joybstraferight;
 int     joybuse;
+int     joybprevweapon;
 int     joybnextweapon;
 int     joybspeed;
 
@@ -341,7 +342,7 @@ static int   joyxmove;
 static int   joyymove;
 static int   joyrxmove;
 static int   joyrymove;
-static dboolean joyarray[13];
+static dboolean joyarray[15];
 static dboolean *joybuttons = &joyarray[1];    // allow [-1]
 
 // Game events info
@@ -543,7 +544,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       if (gamekeydown[key_left] || mousebuttons[mousebturnleft] || joybuttons[joybleft])
         cmd->angleturn += angleturn[tspeed];
     }
-  
+
   // Gamepad left stick X
   side += (joyxmove * sidemove[speed]) / 10;
 
@@ -559,7 +560,7 @@ void G_BuildTiccmd(ticcmd_t* cmd)
     side += sidemove[speed];
   if (gamekeydown[key_strafeleft] || joybuttons[joybstrafeleft])
     side -= sidemove[speed];
-  
+
   forward += (joyymove * forwardmove[speed]) / 10;
 
     // buttons
@@ -576,6 +577,13 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // clear double clicks if hit use button
       dclicks = 0;
     }
+
+  if (gamestate == GS_LEVEL) {
+
+  }
+  // Prev weapon with joypad
+  if (joybuttons[joybprevweapon])
+    next_weapon = -1;
 
   // Next weapon with joypad
   if (joybuttons[joybnextweapon])
@@ -1084,10 +1092,13 @@ dboolean G_Responder (event_t* ev)
       joybuttons[9] = ev->data1 & 512;
       joybuttons[10] = ev->data1 & 1024;
       joybuttons[11] = ev->data1 & 2048;
+      joybuttons[12] = ev->data1 & 4096;
+      joybuttons[13] = ev->data1 & 8192;
       joyxmove = ev->data2;
       joyymove = ev->data3;
       joyrxmove = ev->data4;
       joyrymove = ev->data5;
+
       return true;    // eat events
 
     default:
@@ -3030,7 +3041,7 @@ void G_ReadOneTick(ticcmd_t* cmd, const byte **data_p)
     cmd->angleturn = (((signed int)(*(*data_p)++))<<8) + lowbyte;
   }
   cmd->buttons = (unsigned char)(*(*data_p)++);
-  
+
   // e6y: ability to play tasdoom demos directly
   if (compatibility_level == tasdoom_compatibility)
   {
@@ -3117,7 +3128,7 @@ void G_RecordDemo (const char* name)
     free(demo_filename);
     demo_filename = strdup(BaseName(demoname));
   }
-  
+
   // the original name chosen for the demo
   if (!orig_demoname)
   {
@@ -3489,7 +3500,7 @@ void G_BeginRecording (void)
         case prboom_4_compatibility: v = 212; break;
         case prboom_5_compatibility: v = 213; break;
         case prboom_6_compatibility:
-				     v = 214; 
+				     v = 214;
 				     longtics = 1;
 				     break;
         default: I_Error("G_BeginRecording: PrBoom compatibility level unrecognised?");
@@ -3700,7 +3711,7 @@ void G_SaveRestoreGameOptions(int save)
     {1, 0, &help_friends},
     {1, 0, &dog_jumping},
     {1, 0, &monkeys},
-  
+
     {2, 0, (int*)&forceOldBsp},
     {-1, -1, NULL}
   };
@@ -3911,7 +3922,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size, unsigned int par
         for (i = 0; demo_p < string_end; i++)
         {
           char cur = *demo_p++;
-          
+
           if (cur < '0' || cur > '9')
           {
             if (cur != 0)
@@ -3970,7 +3981,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size, unsigned int par
       {
         I_Error("G_ReadDemoHeader: Unable to determine map for UMAPINFO demo.");
       }
-    
+
       demo_p = string_end;
     }
 
@@ -4051,7 +4062,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size, unsigned int par
           map = *demo_p++;
           deathmatch = respawnparm = fastparm =
             nomonsters = consoleplayer = 0;
-          
+
           // e6y
           // Ability to force -nomonsters and -respawn for playback of 1.2 demos.
           // Demos recorded with Doom.exe 1.2 did not contain any information
@@ -4236,7 +4247,7 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size, unsigned int par
 
     if (demo_playerscount > 0 && demolength > 0)
     {
-      do        
+      do
       {
         demo_tics_count++;
         p += bytes_per_tic;
@@ -4245,8 +4256,8 @@ const byte* G_ReadDemoHeaderEx(const byte *demo_p, size_t size, unsigned int par
 
       demo_tics_count /= demo_playerscount;
 
-      sprintf(demo_len_st, "\x1b\x35/%d:%02d", 
-        demo_tics_count/TICRATE/60, 
+      sprintf(demo_len_st, "\x1b\x35/%d:%02d",
+        demo_tics_count/TICRATE/60,
         (demo_tics_count%(60*TICRATE))/TICRATE);
     }
   }
@@ -4299,7 +4310,7 @@ dboolean G_CheckDemoStatus (void)
     {
       demorecording = false;
       fputc(DEMOMARKER, demofp);
-      
+
       //e6y
       G_WriteDemoFooter(demofp);
       fclose(demofp);
@@ -4427,7 +4438,7 @@ void P_WalkTicker()
     side += sidemove[speed];
   if (gamekeydown[key_strafeleft])
     side -= sidemove[speed];
-  
+
   forward += (joyymove * forwardmove[speed]) / 10;
 
   //mouse
@@ -4524,7 +4535,7 @@ void G_ReadDemoContinueTiccmd (ticcmd_t* cmd)
   if (!demo_continue_p)
     return;
 
-  if (gametic <= demo_tics_count && 
+  if (gametic <= demo_tics_count &&
     demo_continue_p + bytes_per_tic <= demobuffer + demolength &&
     *demo_continue_p != DEMOMARKER)
   {
