@@ -344,6 +344,7 @@ static int   joyrxmove;
 static int   joyrymove;
 static dboolean joyarray[15];
 static dboolean *joybuttons = &joyarray[1];    // allow [-1]
+static dboolean joybuttonsdown[15];
 
 // Game events info
 static buttoncode_t special_event; // Event triggered by local player, to send
@@ -577,17 +578,6 @@ void G_BuildTiccmd(ticcmd_t* cmd)
       // clear double clicks if hit use button
       dclicks = 0;
     }
-
-  if (gamestate == GS_LEVEL) {
-
-  }
-  // Prev weapon with joypad
-  if (joybuttons[joybprevweapon])
-    next_weapon = -1;
-
-  // Next weapon with joypad
-  if (joybuttons[joybnextweapon])
-    next_weapon = 1;
 
   // Toggle between the top 2 favorite weapons.                   // phares
   // If not currently aiming one of these, switch to              // phares
@@ -1035,6 +1025,8 @@ dboolean G_Responder (event_t* ev)
     }
   }
 
+
+
   switch (ev->type)
     {
     case ev_keydown:
@@ -1092,12 +1084,38 @@ dboolean G_Responder (event_t* ev)
       joybuttons[9] = ev->data1 & 512;
       joybuttons[10] = ev->data1 & 1024;
       joybuttons[11] = ev->data1 & 2048;
-      joybuttons[12] = ev->data1 & 4096;
-      joybuttons[13] = ev->data1 & 8192;
       joyxmove = ev->data2;
       joyymove = ev->data3;
       joyrxmove = ev->data4;
       joyrymove = ev->data5;
+
+      if (ev->data1 & 4096)
+      {
+        if (gamestate == GS_LEVEL && !joybuttonsdown[12])
+        {
+          next_weapon = -1;
+        }
+
+        joybuttonsdown[12] = true;
+      }
+      else
+      {
+        joybuttonsdown[12] = false;
+      }
+
+      if (ev->data1 & 8192)
+      {
+        if (gamestate == GS_LEVEL && !joybuttonsdown[13])
+        {
+          next_weapon = 1;
+        }
+
+        joybuttonsdown[13] = true;
+      }
+      else
+      {
+        joybuttonsdown[13] = false;
+      }
 
       return true;    // eat events
 
