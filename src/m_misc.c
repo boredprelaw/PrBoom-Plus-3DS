@@ -628,11 +628,11 @@ default_t defaults[] =
    def_int,ss_keys},
   {"joyb_down",{&joybdown},{9},0,UL,
    def_int,ss_keys},
-  {"joyb_left",{&joybleft},{4},0,UL,
+  {"joyb_left",{&joybleft},{2},0,UL,
    def_int,ss_keys},
-  {"joyb_right",{&joybright},{5},0,UL,
+  {"joyb_right",{&joybright},{0},0,UL,
    def_int,ss_keys},
-  {"joyb_fire",{&joybfire},{0},0,UL,
+  {"joyb_fire",{&joybfire},{5},0,UL,
    def_int,ss_keys}, // joystick button number to use for fire
   {"joyb_strafe",{&joybstrafe},{1},0,UL,
    def_int,ss_keys}, // joystick button number to use for strafing
@@ -640,7 +640,7 @@ default_t defaults[] =
    def_int,ss_keys}, // joystick button number to use for strafe left
   {"joyb_straferight",{&joybstraferight},{11},0,UL,
    def_int,ss_keys}, // joystick button number to use for strafe right
-  {"joyb_speed",{&joybspeed},{2},0,UL,
+  {"joyb_speed",{&joybspeed},{4},0,UL,
    def_int,ss_keys}, // joystick button number to use for running
   {"joyb_use",{&joybuse},{3},0,UL,
    def_int,ss_keys}, // joystick button number to use for use/open
