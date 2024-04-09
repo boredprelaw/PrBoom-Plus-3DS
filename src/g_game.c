@@ -269,6 +269,7 @@ int     mousebturnright;
 int     mousebturnleft;
 int     mousebuse;
 int     mousebspeed;
+int     joyswapxaxis;
 int     joybup;
 int     joybdown;
 int     joybleft;
@@ -1084,9 +1085,19 @@ dboolean G_Responder (event_t* ev)
       joybuttons[9] = ev->data1 & 512;
       joybuttons[10] = ev->data1 & 1024;
       joybuttons[11] = ev->data1 & 2048;
-      joyxmove = ev->data2;
+
+      if (joyswapxaxis)
+      {
+        joyrxmove = ev->data2;  // Circle pad to rotate
+        joyxmove = ev->data4;  // C-Stick to strafe
+      }
+      else
+      {
+        joyxmove = ev->data2;  // Circle pad to strafe
+        joyrxmove = ev->data4;  // C-Stick to rotate
+      }
+
       joyymove = ev->data3;
-      joyrxmove = ev->data4;
       joyrymove = ev->data5;
 
       if (ev->data1 & 4096)

@@ -31,6 +31,7 @@
  *
  *-----------------------------------------------------------------------------*/
 
+extern int joyswapxaxis;
 extern int joybup;
 extern int joybdown;
 extern int joybleft;

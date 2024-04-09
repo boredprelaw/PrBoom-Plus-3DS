@@ -648,6 +648,8 @@ default_t defaults[] =
    def_int,ss_keys}, // joystick button number to use for prev weapon
   {"joyb_nextweapon",{&joybnextweapon},{13},0,UL,
    def_int,ss_keys}, // joystick button number to use for next weapon
+  {"joy_swapxaxis", {&joyswapxaxis}, {0},0,1,
+   def_bool,ss_auto},  // Map C-Stick x axis to Circle Pad
 
   {"Chat macros",{NULL},{0},UL,UL,def_none,ss_none},
   {"chatmacro0", {0,&chat_macros[0]}, {0,HUSTR_CHATMACRO0},UL,UL,
