@@ -111,6 +111,7 @@ typedef struct default_s
 // CPhipps - What is the max. key code that X will send us?
 #define MAX_KEY 65536
 #define MAX_MOUSEB 8
+#define MAX_JOYB 14
 
 #define UL (-123456789) /* magic number for no min or max for parameter */
 

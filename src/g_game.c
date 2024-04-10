@@ -343,9 +343,11 @@ static int   joyxmove;
 static int   joyymove;
 static int   joyrxmove;
 static int   joyrymove;
-static dboolean joyarray[15];
+
+static dboolean joyarray[MAX_JOYB + 1];
 static dboolean *joybuttons = &joyarray[1];    // allow [-1]
-static dboolean joybuttonsdown[15];
+static dboolean joydownarray[MAX_JOYB + 1];
+static dboolean *joybuttonsdown = &joydownarray[1];    // allow [-1]
 
 // Game events info
 static buttoncode_t special_event; // Event triggered by local player, to send
@@ -1085,6 +1087,8 @@ dboolean G_Responder (event_t* ev)
       joybuttons[9] = ev->data1 & 512;
       joybuttons[10] = ev->data1 & 1024;
       joybuttons[11] = ev->data1 & 2048;
+      joybuttons[12] = ev->data1 & 4096;
+      joybuttons[13] = ev->data1 & 8192;
 
       if (joyswapxaxis)
       {
@@ -1100,32 +1104,21 @@ dboolean G_Responder (event_t* ev)
       joyymove = ev->data3;
       joyrymove = ev->data5;
 
-      if (ev->data1 & 4096)
+
+      if (gamestate == GS_LEVEL)
       {
-        if (gamestate == GS_LEVEL && !joybuttonsdown[12])
+        if (joybuttons[joybprevweapon] && !joybuttonsdown[joybprevweapon])
         {
           next_weapon = -1;
         }
-
-        joybuttonsdown[12] = true;
-      }
-      else
-      {
-        joybuttonsdown[12] = false;
-      }
-
-      if (ev->data1 & 8192)
-      {
-        if (gamestate == GS_LEVEL && !joybuttonsdown[13])
+        else if (joybuttons[joybnextweapon] && !joybuttonsdown[joybnextweapon])
         {
           next_weapon = 1;
         }
-
-        joybuttonsdown[13] = true;
       }
-      else
-      {
-        joybuttonsdown[13] = false;
+
+      for (int i = 0; i < MAX_JOYB; i++) {
+        joybuttonsdown[i] = joybuttons[i];
       }
 
       return true;    // eat events
