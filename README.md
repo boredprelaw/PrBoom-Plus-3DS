@@ -27,7 +27,7 @@ In addition, all video modes apart from 8-bit are supported. By default, the GPU
 
 ## Setup
 Before doing anything, [dump the DSP firm](https://github.com/zoogie/DSP1/releases) so that the sound will work.
-Download `prboom-plus-3DS.zip` and `prboom-plus.3dsx/cia` from the [latest release](https://github.com/iAmGhost/PrBoom-Plus-3DS/releases/latest) page.
+Download `prboom-plus-3DS.zip` from [here](https://github.com/iAmGhost/PrBoom-Plus-3DS/releases/tag/v1.0.1) and `prboom-plus.3dsx/cia` from the [latest release](https://github.com/iAmGhost/PrBoom-Plus-3DS/releases/latest) page.
 Extract the ZIP to the root of the SD card. If you're planning to run the .3dsx version, copy `prboom-plus.3dsx` to `/3ds/PrBoom-Plus`.
 If you're planning to run the .cia version, copy `prboom-plus.cia` to anywhere on the SD card, then install it using [FBI](https://github.com/Steveice10/FBI).
 Obtain the WAD for the game you want to run and also copy it to `/3ds/PrBoom-Plus/`. **Only have one game WAD in this folder at a time.**
