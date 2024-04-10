@@ -6,7 +6,8 @@ This is forked version of [PrBoom+ Nintendo 3DS Port by Voxel9](https://github.c
 
 Changelist:
 * Fixed joyb_nextweapon triggered multiple times for single press- which caused changing weapon randomly.
-* Added joyb_prevweapon key.
+* Added joyb_prevweapon button.
+* Added joyb_map button, mapped to select button by default.
 * Added joy_swapxaxis option. Set 1 to rotate left/right with circle pad instead of strafing.
 * Added ZL, ZR button binding.
 * Updated default keymaps to better suit the New 3DS. Edit `prboom-plus.cfg` if you don't like it.
