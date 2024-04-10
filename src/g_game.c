@@ -282,6 +282,7 @@ int     joybuse;
 int     joybprevweapon;
 int     joybnextweapon;
 int     joybspeed;
+int     joybmap;
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -1115,6 +1116,15 @@ dboolean G_Responder (event_t* ev)
         {
           next_weapon = 1;
         }
+      }
+
+
+      if (joybuttons[joybmap] && !joybuttonsdown[joybmap])
+      {
+        event_t key_ev;
+        key_ev.type = ev_keydown;
+        key_ev.data1 = key_map;
+        D_PostEvent(&key_ev);
       }
 
       for (int i = 0; i < MAX_JOYB; i++) {
