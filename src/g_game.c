@@ -282,7 +282,6 @@ int     joybuse;
 int     joybprevweapon;
 int     joybnextweapon;
 int     joybspeed;
-int     joybmap;
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -344,11 +343,9 @@ static int   joyxmove;
 static int   joyymove;
 static int   joyrxmove;
 static int   joyrymove;
-
-static dboolean joyarray[MAX_JOYB + 1];
+static dboolean joyarray[15];
 static dboolean *joybuttons = &joyarray[1];    // allow [-1]
-static dboolean joydownarray[MAX_JOYB + 1];
-static dboolean *joybuttonsdown = &joydownarray[1];    // allow [-1]
+static dboolean joybuttonsdown[15];
 
 // Game events info
 static buttoncode_t special_event; // Event triggered by local player, to send
@@ -1088,8 +1085,6 @@ dboolean G_Responder (event_t* ev)
       joybuttons[9] = ev->data1 & 512;
       joybuttons[10] = ev->data1 & 1024;
       joybuttons[11] = ev->data1 & 2048;
-      joybuttons[12] = ev->data1 & 4096;
-      joybuttons[13] = ev->data1 & 8192;
 
       if (joyswapxaxis)
       {
@@ -1105,30 +1100,32 @@ dboolean G_Responder (event_t* ev)
       joyymove = ev->data3;
       joyrymove = ev->data5;
 
-
-      if (gamestate == GS_LEVEL)
+      if (ev->data1 & 4096)
       {
-        if (joybuttons[joybprevweapon] && !joybuttonsdown[joybprevweapon])
+        if (gamestate == GS_LEVEL && !joybuttonsdown[12])
         {
           next_weapon = -1;
         }
-        else if (joybuttons[joybnextweapon] && !joybuttonsdown[joybnextweapon])
+
+        joybuttonsdown[12] = true;
+      }
+      else
+      {
+        joybuttonsdown[12] = false;
+      }
+
+      if (ev->data1 & 8192)
+      {
+        if (gamestate == GS_LEVEL && !joybuttonsdown[13])
         {
           next_weapon = 1;
         }
+
+        joybuttonsdown[13] = true;
       }
-
-
-      if (joybuttons[joybmap] && !joybuttonsdown[joybmap])
+      else
       {
-        event_t key_ev;
-        key_ev.type = ev_keydown;
-        key_ev.data1 = key_map;
-        D_PostEvent(&key_ev);
-      }
-
-      for (int i = 0; i < MAX_JOYB; i++) {
-        joybuttonsdown[i] = joybuttons[i];
+        joybuttonsdown[13] = false;
       }
 
       return true;    // eat events

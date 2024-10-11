@@ -648,8 +648,6 @@ default_t defaults[] =
    def_int,ss_keys}, // joystick button number to use for prev weapon
   {"joyb_nextweapon",{&joybnextweapon},{13},0,UL,
    def_int,ss_keys}, // joystick button number to use for next weapon
-  {"joyb_map",{&joybmap},{7},0,UL,
-   def_int,ss_keys}, // joystick button number to use for automap
   {"joy_swapxaxis", {&joyswapxaxis}, {0},0,1,
    def_bool,ss_auto},  // Map C-Stick x axis to Circle Pad
 

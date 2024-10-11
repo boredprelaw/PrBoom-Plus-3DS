@@ -44,7 +44,6 @@ extern int joybuse;
 extern int joybprevweapon;
 extern int joybnextweapon;
 extern int joybspeed;
-extern int joybmap;
 
 void I_InitJoystick(void);
 void I_PollJoystick(void);
